@@ -317,6 +317,9 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		addAttr(doc, itemElement, "prerequisite", item.isPrerequisite() ? "true" : "false");
 		addAttr(doc, itemElement, "subrequirement", item.getSubrequirement() ? "true" : "false");
 		addAttr(doc, itemElement, "requirementtext", item.getRequirementText());
+		addAttr(doc, itemElement, "nextpage", item.getNextPage() ? "true" : "false");
+		addAttr(doc, itemElement, "format", item.getFormat());
+
 		if (item.getType() == SimplePageItem.PAGE)
 		    addPage(doc, itemElement, new Long(item.getSakaiId()));
 		pageElement.appendChild(itemElement);
@@ -533,6 +536,12 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		   s = itemElement.getAttribute("requirementtext");
 		   if (s != null)
 		       item.setRequirementText(s);
+		   s = itemElement.getAttribute("nextpage");
+		   if (s != null)
+		       item.setNextPage(s.equals("true"));
+		   s = itemElement.getAttribute("format");
+		   if (s != null)
+		       item.setFormat(s);
 
 		   simplePageToolDao.saveItem(item);
 	       }
