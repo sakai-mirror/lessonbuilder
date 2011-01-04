@@ -1670,6 +1670,8 @@ public class SimplePageBean {
 	 */
 	public void track(long itemId, String path) {
 		String userId = getCurrentUserId();
+		if (userId == null)
+		    userId = ".anon";
 		SimplePageLogEntry entry = getLogEntry(itemId);
 
 		if (entry == null) {
@@ -1722,7 +1724,10 @@ public class SimplePageBean {
 		SimplePageLogEntry entry = logCache.get((Long)itemId);
 		if (entry != null)
 		    return entry;
-		entry = simplePageToolDao.getLogEntry(getCurrentUserId(), itemId);
+		String userId = getCurrentUserId();
+		if (userId == null)
+		    userId = ".anon";
+		entry = simplePageToolDao.getLogEntry(userId, itemId);
 		logCache.put((Long)itemId, entry);
 		return entry;
 	}
@@ -2131,7 +2136,10 @@ public class SimplePageBean {
 			return;  // already ok
 		    // if no log entry, create a dummy entry
 		    if (shouldHaveAccess) {
-			SimplePageLogEntry entry = new SimplePageLogEntry(getCurrentUserId(), itemId);
+			String userId = getCurrentUserId();
+			if (userId == null)
+			    userId = ".anon";
+			SimplePageLogEntry entry = new SimplePageLogEntry(userId, itemId);
 			entry.setDummy(true);
 			simplePageToolDao.saveItem(entry);
 			logCache.put((Long)itemId, entry);
