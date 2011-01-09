@@ -34,6 +34,25 @@ The rest of this document talks about other things you might
 want to know about. However you can try out Lesson Builder
 without doing anything beyond this point.
 
+SAKAI VERSIONS
+
+This code has been used at Rutgers in 2.7.0 and 2.7.1. It should
+work in 2.5 or 2.6, though some changes in the pom.xml files may be
+needed. To go between 2.7.0 and 2.7.1 all you need to change
+the version number in the <parent> declaration for pom.xml here.
+This is, in 
+
+  <parent>
+    <artifactId>master</artifactId>
+    <groupId>org.sakaiproject</groupId>
+    <relativePath>../master/pom.xml</relativePath>
+    <version>2.7.1</version>
+<!--   <version>M2</version>--><!-- 2.5.x -->
+  </parent>
+
+use 2.7.0 or 2.7.1, to match your version of Sakai. For earlier versions
+more changes are likely to be needed.
+
 SAMIGO FIX
 
 You can skip this section when you're first trying out Lesson Builder.
