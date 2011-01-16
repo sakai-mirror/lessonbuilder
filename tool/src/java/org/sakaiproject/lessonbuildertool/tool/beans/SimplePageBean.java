@@ -795,7 +795,7 @@ public class SimplePageBean {
 	    if (sessionManager.getCurrentToolSession().getAttribute("current-pagetool-page") == null) {
 		// no page in session, which means it was reset
 		String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
-		return simplePageToolDao.findMostRecentlyVisitedPage(toolId);
+		return simplePageToolDao.findMostRecentlyVisitedPage(getCurrentUserId(), toolId);
 	    } else
 		return null;
 	}
@@ -935,12 +935,16 @@ public class SimplePageBean {
 		path = new ArrayList<PathEntry>();
 		SimplePageLogEntry logEntry = getLogEntry(pageItemId);
 		if (logEntry != null) {
-
 		    String items[] = null;
 		    if (logEntry.getPath() != null)
 			items = logEntry.getPath().split(",");
 		    if (items != null) {
 			for(String s: items) {
+			    // don't see how this could happen, but it did
+			    if (s.trim().equals("")) {
+				log.warn("attempt to set invalid path: invalid item: " + op + ":" + logEntry.getPath());
+				return null;
+			    }
 			    SimplePageItem i = findItem(Long.valueOf(s));
 			    if (i == null || i.getType() != SimplePageItem.PAGE) {
 				log.warn("attempt to set invalid path: invalid item: " + op);

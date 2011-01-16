@@ -112,11 +112,14 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	    return result;
 	}
 
-        public PageData findMostRecentlyVisitedPage(final String toolId) {
-	    Object [] fields = new Object[1];
-	    fields[0] = toolId;
+    public PageData findMostRecentlyVisitedPage(final String userId, final String toolId) {
+	    Object [] fields = new Object[4];
+	    fields[0] = userId;
+	    fields[1] = toolId;
+	    fields[2] = userId;
+	    fields[3] = toolId;
 	    
-	    List<PageData> rv = SqlService.dbRead("select a.itemId, a.id, b.sakaiId, b.name from lesson_builder_log a, lesson_builder_items b where a.lastViewed = (select max(lastViewed) from lesson_builder_log where toolId = ?) and a.itemId = b.id", fields, new SqlReader() {
+	    List<PageData> rv = SqlService.dbRead("select a.itemId, a.id, b.sakaiId, b.name from lesson_builder_log a, lesson_builder_items b where a.userId=? and a.toolId=? and a.lastViewed = (select max(lastViewed) from lesson_builder_log where userId=? and toolId = ?) and a.itemId = b.id", fields, new SqlReader() {
 		    public Object readSqlResultRecord(ResultSet result) {
 			try {
 			    PageData ret = new PageData();

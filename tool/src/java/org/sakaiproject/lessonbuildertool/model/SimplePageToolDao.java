@@ -42,7 +42,7 @@ public interface SimplePageToolDao {
 
         public SimplePageItem findNextPageItemOnPage(long pageId, int sequence);
 
-	public PageData findMostRecentlyVisitedPage(String tooldId);
+        public PageData findMostRecentlyVisitedPage(final String userId, final String tooldId);
 
         public List<SimplePageItem> findItemsInSite(String siteId);
 

@@ -148,8 +148,12 @@ public class PagePickerProducer implements ViewComponentProducer, NavigationCase
 			// if not top (which will be done anyway) schedule it to show after
 			// pageid = 0 is a top level page; it will be shown anyway
 			// if no sub pages, no need to expand it later
-			if (!topLevelPages.contains(pageNum) && hasSubPages(pageNum)) {
-			    nexts.add(item);
+			if (!topLevelPages.contains(pageNum)) {
+			    if (hasSubPages(pageNum))
+				nexts.add(item);
+			    else
+				// we're done with this page, dont show again
+				pageMap.remove(pageNum);
 			}
 		    } else
 			findAllPages(item, entries, pageMap, topLevelPages, level +1);
