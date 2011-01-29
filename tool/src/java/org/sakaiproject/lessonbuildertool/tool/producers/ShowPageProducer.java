@@ -47,6 +47,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import java.net.URL;
+import java.net.URLEncoder;
+
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -114,6 +117,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
         private SimplePageToolService simplePageToolService;
         private FormatAwareDateInputEvolver dateevolver;
 	private TimeService timeService;
+        private HttpServletRequest httpServletRequest;
 
     // I don't much like the static, because it opens us to a possible race condition, but I don't see much option
     // see the setter. It has to be static becaue it's used in makeLink, which is static so it can be used
@@ -205,6 +209,16 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	    return url;
 	}
 
+       public String myUrl() {
+	   String url = httpServletRequest.getScheme() + "://" + 
+	       httpServletRequest.getServerName();
+	   int port = httpServletRequest.getServerPort();
+	   if (!((url.startsWith("http:") && port == 80) ||
+		 (url.startsWith("https:") && port == 443)))
+	       url = url + ":" + Integer.toString(port);
+	   return url;
+       }
+
     // NOTE:
     // pages should normally be called with 3 arguments:
     // sendingPageId - the page to show
@@ -217,6 +231,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
     //    nothing is specified
 
 	public void fillComponents(UIContainer tofill, ViewParameters params, ComponentChecker checker) {
+
 		Locale M_locale = null;
 		String langLoc[] = localegetter.get().toString().split("_");
 		if ( langLoc.length >= 2 ) {
@@ -696,11 +711,18 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 					String movieUrl = i.getURL();
 					String oMimeType = mimeType; // in case we change it for FLV or others
+					boolean useFlvPlayer = false;
+					boolean useJwPlayer = false;
 					// FLV is special. There's no player for flash video in the browser
 					// it shows with a special flash program, which I supply
 					if (mimeType != null && mimeType.equals("video/x-flv")) {
 					    mimeType = "application/x-shockwave-flash";
-					    movieUrl = "/sakai-lessonbuildertool-tool/templates/OSplayer.swf?movie=" + movieUrl + "&autoload=on&autoplay=off";
+					    useJwPlayer = ServerConfigurationService.getBoolean("lessonbuilder.usejwplayer", false);
+					    if (useJwPlayer)
+						movieUrl = "/sakai-lessonbuildertool-tool/templates/jwflvplayer.swf";
+					    else
+						movieUrl = "/sakai-lessonbuildertool-tool/templates/StrobeMediaPlayback.swf";
+					    useFlvPlayer = true;
 					}
 					item2 = UIOutput.make(tableRow, "movieObject").
 					    decorate(new UIFreeAttributeDecorator("data", movieUrl)).
@@ -715,8 +737,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    item2.decorate(new UIFreeAttributeDecorator("height", height.getOld())).
 						decorate(new UIFreeAttributeDecorator("width", width.getOld()));
 
+					if (useFlvPlayer)
+					    UIOutput.make(tableRow, "flashvars").
+						decorate(new UIFreeAttributeDecorator("value", (useJwPlayer ? "file=" : "src=") +
+						      URLEncoder.encode(myUrl() +  i.getURL())));
+
 					UIOutput.make(tableRow, "movieURLInject").
-					    decorate(new UIFreeAttributeDecorator("value", movieUrl));
+						decorate(new UIFreeAttributeDecorator("value", movieUrl));
 					UILink.make(tableRow, "noplugin", i.getName(), movieUrl);
 
 					// item = UIOutput.make(tableRow, "movieSrcURLInject").
@@ -866,6 +893,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 	public void setSimplePageBean(SimplePageBean simplePageBean) {
 		this.simplePageBean = simplePageBean;
+	}
+
+        public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
+	        this.httpServletRequest = httpServletRequest;
 	}
 
 	private boolean makeLink(UIContainer container, String ID, SimplePageItem i, boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {

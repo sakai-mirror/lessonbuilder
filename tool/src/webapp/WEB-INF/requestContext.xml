@@ -28,6 +28,9 @@
                 </property>
         </bean>
 
+         <bean id="httpServletRequest" factory-bean="httpServletFactory"
+	       factory-method="getHttpServletRequest" />
+
 	<!-- the producer beans -->
 	<bean class="org.sakaiproject.lessonbuildertool.tool.producers.ShowPageProducer" >
 		<property name="messageLocator" ref="messageLocator"/>
@@ -40,6 +43,7 @@
 		<property name="forumEntity" ref="org.sakaiproject.lessonbuildertool.service.ForumEntity"/>
 		<property name="timeService" ref="org.sakaiproject.time.api.TimeService" />
                 <property name="localeGetter" ref="requestLocaleProxy" />
+		<property name="httpServletRequest" ref="httpServletRequest" />
 	</bean>
 	
 	<bean class="org.sakaiproject.lessonbuildertool.tool.producers.ReorderProducer" >
