@@ -33,7 +33,7 @@
           <id>oirt-new-maven</id>
           <name>local Maven Repository</name>
           <layout>default</layout>
-          <url>file:./maven2/</url>
+          <url>file:${basedir}/maven2/</url>
           <snapshots>
             <enabled>false</enabled>
           </snapshots>
