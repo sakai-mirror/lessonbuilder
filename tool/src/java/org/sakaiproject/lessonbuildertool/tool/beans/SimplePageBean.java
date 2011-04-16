@@ -1831,9 +1831,9 @@ public class SimplePageBean {
     // called by reorder tool to do the reordering
 	public String reorder() {
 
-	        if (!canEditPage())
+		if (!canEditPage()) {
 		    return "permission-fail";
-
+		}
 		if (order == null) {
 			return "cancel";
 		}
