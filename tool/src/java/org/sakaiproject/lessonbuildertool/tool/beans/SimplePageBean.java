@@ -2570,7 +2570,15 @@ public class SimplePageBean {
 							  MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
 		    res.setContentType(mimeType);
 		    res.setContent(file.getInputStream());
-		    contentHostingService.commitResource(res,  NotificationService.NOTI_NONE);
+		    try {
+			contentHostingService.commitResource(res,  NotificationService.NOTI_NONE);
+			// there's a bug in the kernel that can cause
+			// a null pointer if it can't determine the encoding
+			// type. Since we want this code to work on old
+			// systems, work around it. KNL-714
+		    } catch (java.lang.NullPointerException e) {
+			setErrMessage(messageLocator.getMessage("simplepage.resourcepossibleerror"));
+		    }
 		    sakaiId = res.getId();
 
 		} catch (org.sakaiproject.exception.OverQuotaException ignore) {
