@@ -3006,6 +3006,31 @@ public class SimplePageBean {
 	    }
 	}
 
+	public void importCc() {
+	    System.out.println("importCc");
+	    if (!canEditPage())
+		return;
+
+	    MultipartFile file = null;
+
+	    if (multipartMap.size() > 0) {
+		// user specified a file, create it
+		file = multipartMap.values().iterator().next();
+		if (file.isEmpty())
+		    file = null;
+	    }
+
+	    if (file != null) {
+		try {
+		    System.out.println("have a file");
+		    System.out.println("name: " + file.getOriginalFilename());
+		    System.out.println("content type: " + file.getContentType());
+		    System.out.println("input stream: " + file.getInputStream());
+		} catch (Exception e) {
+		    System.out.println("exception in importcc " + e);
+		}
+	    }
+	}
 
     // called by edit dialog to update parameters of a Youtube item
 	public void updateYoutube() {

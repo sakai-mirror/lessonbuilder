@@ -77,6 +77,15 @@ $(function() {
 		draggable: false
 	});
 	
+	$('#import-cc-dialog').dialog({
+		autoOpen: false,
+		width: 600,
+		modal: false,
+		resizable: false,
+		draggable: false
+	});
+	
+
 	$('.subpage-link').click(function(){
 		var position =  $(this).position();
 		$("#subpage-dialog").dialog("option", "position", [position.left, position.top]);
@@ -96,6 +105,14 @@ $(function() {
 		    $("#page-gradebook").attr("checked", true);
 		}
 		$('#edit-title-dialog').dialog('open');
+		return false;
+	});
+
+	$('#import-cc').click(function(){
+		var position =  $(this).position();
+		$("#import-cc-dialog").dialog("option", "position", [position.left, position.top]);
+		$('.hideOnDialog').hide();
+		$('#import-cc-dialog').dialog('open');
 		return false;
 	});
 
@@ -143,6 +160,7 @@ $(function() {
 	    $("#edit-multimedia-dialog").dialog("option", "width", outerWidth-10);
 	    $("#add-multimedia-dialog").dialog("option", "width", outerWidth-10);
 	    $("#edit-title-dialog").dialog("option", "width", outerWidth-10);
+	    $("#import-cc-dialog").dialog("option", "width", outerWidth-10);
 	    $("#new-page-dialog").dialog("option", "width", outerWidth-10);
 	    $("#remove-page-dialog").dialog("option", "width", outerWidth-10);
 	    $("#youtube-dialog").dialog("option", "width", outerWidth-10);
@@ -582,6 +600,10 @@ function closeEditTitleDialog() {
 function closeNewPageDialog() {
 	$('#new-page-dialog').dialog('close');
 	$('#new-page-error-container').hide();
+}
+
+function closeImportCcDialog() {
+	$('#import-cc-dialog').dialog('close');
 }
 
 function closeRemovePageDialog() {

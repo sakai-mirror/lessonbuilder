@@ -413,6 +413,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			    UIOutput.make(tofill, "new-page").
 				decorate(new UIFreeAttributeDecorator("title", 
 				      messageLocator.getMessage("simplepage.new-page-tooltip")));
+			    UIOutput.make(tofill, "import-cc").
+				decorate(new UIFreeAttributeDecorator("title", 
+				      messageLocator.getMessage("simplepage.import_cc")));
 			}
 
 			UIOutput.make(tofill, "dialogDiv");
@@ -1037,6 +1040,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		createEditTitleDialog(tofill, currentPage, pageItem);
 		createNewPageDialog(tofill, currentPage, pageItem);
 		createRemovePageDialog(tofill, currentPage, pageItem);
+		createImportCcDialog(tofill);
 		createYoutubeDialog(tofill);
 		createMovieDialog(tofill, currentPage);
 	}
@@ -1272,7 +1276,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		createToolBarLink(AssignmentPickerProducer.VIEW_ID, toolBar, "add-assignment", "simplepage.assignment", currentPage, "simplepage.assignment");
 		createToolBarLink(QuizPickerProducer.VIEW_ID, toolBar, "add-quiz", "simplepage.quiz", currentPage, "simplepage.quiz");
 		createToolBarLink(ForumPickerProducer.VIEW_ID, toolBar, "add-forum", "simplepage.forum", currentPage, "simplepage.forum");
-
 		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-multimedia", "simplepage.multimedia", true, currentPage, "simplepage.multimedia.tooltip");
 		createToolBarLink(PermissionsHelperProducer.VIEW_ID, toolBar, "permissions", "simplepage.permissions", currentPage, "simplepage.permissions.tooltip");
 		UILink.make(toolBar, "help", messageLocator.getMessage("simplepage.help"), messageLocator.getMessage("simplepage.general-instructions"));
@@ -1432,6 +1435,16 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIInput.make(form, "mm-is-mm", "#{simplePageBean.isMultimedia}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 	}
+
+        private void createImportCcDialog(UIContainer tofill) {
+		UIOutput.make(tofill, "import-cc-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
+
+		UIForm form = UIForm.make(tofill, "import-cc-form");
+
+		UICommand.make(form, "import-cc-submit", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
+		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
+	}
+
 
 	private void createEditMultimediaDialog(UIContainer tofill, SimplePage currentPage) {
 		UIOutput.make(tofill, "edit-multimedia-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.editMultimedia")));
