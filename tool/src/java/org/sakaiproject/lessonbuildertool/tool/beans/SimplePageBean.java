@@ -43,6 +43,12 @@ import java.util.HashSet;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,6 +102,11 @@ import uk.org.ponder.rsf.components.UIInternalLink;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.producers.ShowPageProducer;
 import org.sakaiproject.lessonbuildertool.tool.producers.ShowItemProducer;
+
+import org.sakaiproject.lessonbuildertool.cc.CartridgeLoader;
+import org.sakaiproject.lessonbuildertool.cc.ZipLoader;
+import org.sakaiproject.lessonbuildertool.cc.Parser;
+import org.sakaiproject.lessonbuildertool.cc.PrintHandler;
 
 /**
  * Backing bean for Simple pages
@@ -3022,12 +3033,33 @@ public class SimplePageBean {
 
 	    if (file != null) {
 		try {
+		    File cc = File.createTempFile("ccloader", "file");
+		    File root = File.createTempFile("ccloader", "root");
+		    if (root.exists())
+			root.delete();
+		    root.mkdir();
+		    BufferedInputStream bis = new BufferedInputStream(file.getInputStream());
+		    BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cc));
+		    byte[] buffer = new byte[8096];
+		    int n = 0;
+		    while ((n = bis.read(buffer, 0, 8096)) >= 0) {
+			if (n > 0)
+			    bos.write(buffer, 0, n);
+		    }
+		    bis.close();
+		    bos.close();
+
+		    CartridgeLoader cartridgeLoader = ZipLoader.getUtilities(cc, root.getCanonicalPath());
+		    Parser parser = Parser.createCartridgeParser(cartridgeLoader);
+		    parser.parse(new PrintHandler());
+
 		    System.out.println("have a file");
 		    System.out.println("name: " + file.getOriginalFilename());
 		    System.out.println("content type: " + file.getContentType());
 		    System.out.println("input stream: " + file.getInputStream());
 		} catch (Exception e) {
 		    System.out.println("exception in importcc " + e);
+		    e.printStackTrace();
 		}
 	    }
 	}

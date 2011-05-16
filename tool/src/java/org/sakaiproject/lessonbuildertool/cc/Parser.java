@@ -161,6 +161,8 @@ public class Parser extends AbstractParser {
         }
       } 
       //now we need to check for the question bank...
+      if (the_manifest.getChild(CC_RESOURCES, CC_NS) != null &&
+	  the_manifest.getChild(CC_RESOURCES, CC_NS).getChildren(CC_RESOURCE, CC_NS) != null)
       for (Iterator iter=the_manifest.getChild(CC_RESOURCES, CC_NS).getChildren(CC_RESOURCE, CC_NS).iterator(); iter.hasNext(); ) {
         Element resource=(Element)iter.next();
         if (resource.getAttributeValue(CC_RES_TYPE).equals(QUESTION_BANK)) {

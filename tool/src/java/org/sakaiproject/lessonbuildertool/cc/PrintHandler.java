@@ -49,7 +49,7 @@ import org.jdom.Element;
  * nothing.
  */
 
-public class PrintHandler   implements AssessmentHandler, DiscussionHandler, AuthorizationHandler,
+public class PrintHandler extends DefaultHandler implements AssessmentHandler, DiscussionHandler, AuthorizationHandler,
                                        MetadataHandler, LearningApplicationResourceHandler, QuestionBankHandler,
                                        WebContentHandler, WebLinkHandler{
 
