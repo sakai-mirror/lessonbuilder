@@ -111,12 +111,12 @@ public abstract class AbstractParser {
     try {
       result=builder.build(the_cartridge.getFile(the_file)).getRootElement();
       XMLOutputter outputter = new XMLOutputter();
-      try {
-	  outputter.output(result, System.out);       
-      }
-      catch (IOException e) {
-	  System.err.println("output problem " + e);
-      }
+      //      try {
+	  //	  outputter.output(result, System.out);       
+      //}
+      //      catch (IOException e) {
+      //	  System.err.println("output problem " + e);
+      //      }
 
     } catch (JDOMException e) {
       throw new ParseException(e);

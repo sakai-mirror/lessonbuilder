@@ -97,13 +97,13 @@ public class DefaultHandler implements AssessmentHandler, DiscussionHandler, Aut
 
   public void endResource() {}
 
-  public void setCCItemXml(Element the_xml, Element resource) {}
+  public void setCCItemXml(Element the_xml, Element resource, AbstractParser parser, CartridgeLoader loader) {}
 
   public void setManifestXml(Element the_xml) {}
 
   public void setResourceXml(Element the_xml) {}
 
-  public void startCCFolder(String the_id) {}
+  public void startCCFolder(Element folder) {}
 
   public void startCCItem(String the_id, String the_title) {}
 

@@ -49,13 +49,13 @@ public interface Handler {
   
   public void setManifestXml(Element the_xml);
 
-  public void startCCFolder(String the_id);
+  public void startCCFolder(Element folder);
   
   public void endCCFolder();
   
   public void startCCItem(String the_id, String the_title);
   
-  public void setCCItemXml(Element the_xml, Element resource);
+  public void setCCItemXml(Element the_xml, Element resource, AbstractParser parser, CartridgeLoader loader);
   
   public void endCCItem();
   

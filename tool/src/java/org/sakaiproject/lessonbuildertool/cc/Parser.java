@@ -232,7 +232,7 @@ public class Parser extends AbstractParser {
       Element resource=findResource(the_item.getAttributeValue(CC_ITEM_IDREF), the_resources);
       the_handler.startCCItem(the_item.getAttributeValue(CC_ITEM_ID),
                               the_item.getChildText(CC_ITEM_TITLE, CC_NS));
-      the_handler.setCCItemXml(the_item, resource);
+      the_handler.setCCItemXml(the_item, resource, this, utils);
       ContentParser parser=parsers.get(resource.getAttributeValue(CC_RES_TYPE));
       if (parser==null) {
         throw new ParseException("content type not recongised");
@@ -242,7 +242,7 @@ public class Parser extends AbstractParser {
       parser.parseContent(the_handler, utils, resource, isProtected(resource));
       the_handler.endCCItem();
     } else {
-      the_handler.startCCFolder(the_item.getAttributeValue(CC_ITEM_ID));
+      the_handler.startCCFolder(the_item);
       for (Iterator iter=the_item.getChildren(CC_ITEM, CC_NS).iterator();iter.hasNext();) {
         processItem((Element)iter.next(), the_resources, the_handler);
       }
