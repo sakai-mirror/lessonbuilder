@@ -51,6 +51,7 @@ import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
 import org.jdom.xpath.XPath;
+import org.jdom.output.XMLOutputter;
 
 public abstract class AbstractParser {
 
@@ -109,6 +110,14 @@ public abstract class AbstractParser {
     Element result=null;
     try {
       result=builder.build(the_cartridge.getFile(the_file)).getRootElement();
+      XMLOutputter outputter = new XMLOutputter();
+      try {
+	  outputter.output(result, System.out);       
+      }
+      catch (IOException e) {
+	  System.err.println("output problem " + e);
+      }
+
     } catch (JDOMException e) {
       throw new ParseException(e);
     }

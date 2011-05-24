@@ -55,7 +55,7 @@ public interface Handler {
   
   public void startCCItem(String the_id, String the_title);
   
-  public void setCCItemXml(Element the_xml);
+  public void setCCItemXml(Element the_xml, Element resource);
   
   public void endCCItem();
   

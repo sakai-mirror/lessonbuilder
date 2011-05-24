@@ -42,6 +42,8 @@ package org.sakaiproject.lessonbuildertool.cc;
  **********************************************************************************/
 
 import org.jdom.Element;
+import org.jdom.Namespace;
+import java.util.List;
 
 /* PJN NOTE:
  * This class is an example of what an implementer might want to do as regards overloading DefaultHandler.
@@ -55,6 +57,24 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
 
   
+  private static final String HREF="href";
+  private static final String TYPE="type";
+  private static final String FILE="file";
+  private static final String XML=".xml";
+  private static final Namespace CC_NS = Namespace.getNamespace("ims", "http://www.imsglobal.org/xsd/imscc/imscp_v1p1");
+  private static final String CC_ITEM_TITLE="title";
+  private static final String CC_WEBCONTENT="webcontent";
+  private static final String CC_WEBLINK0="imswl_xmlv1p0";
+  private static final String CC_WEBLINK1="imswl_xmlv1p1";
+  private static final String CC_TOPIC0="imsdt_xmlv1p0";
+  private static final String CC_TOPIC1="imsdt_xmlv1p1";
+  private static final String CC_ASSESSMENT0="imsqti_xmlv1p2/imscc_xmlv1p0/assessment";
+  private static final String CC_ASSESSMENT1="imsqti_xmlv1p2/imscc_xmlv1p1/assessment";
+  private static final String CC_QUESTION_BANK0="imsqti_xmlv1p2/imscc_xmlv1p0/question-bank";
+  private static final String CC_QUESTION_BANK1="imsqti_xmlv1p2/imscc_xmlv1p1/question-bank";
+  private static final String CC_BLTI0="imsbasiclti_xmlv1p0";
+  private static final String CC_BLTI1="imsbasiclti_xmlv1p1";
+
   public void setAssessmentDetails(String the_ident, String the_title) {
     System.err.println("assessment ident: "+the_ident +" title: "+the_title);
   }
@@ -76,8 +96,36 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
     System.err.println("title: "+the_title);
   }
 
-  public void setCCItemXml(Element the_xml) {
-    System.err.println("item xml: "+the_xml);
+  private String getFileName(Element resource) {
+      Element file = resource.getChild(FILE, CC_NS);
+      if (file != null)
+	  return file.getAttributeValue(HREF);
+      else
+	  return null;
+  }
+
+  public void setCCItemXml(Element the_xml, Element resource) {
+      System.err.println("item xml: "+the_xml + 
+			 " title " + the_xml.getChildText(CC_ITEM_TITLE, CC_NS) +
+			 " type " + resource.getAttributeValue(TYPE) +
+			 " href " + resource.getAttributeValue(HREF));
+      String type = resource.getAttributeValue(TYPE);
+      
+      if (type.equals(CC_WEBCONTENT))
+	  System.err.println("web content " + resource.getAttributeValue(HREF));
+      else if (type.equals(CC_WEBLINK0) || type.equals(CC_WEBLINK1))
+	  System.err.println("weblink " + getFileName(resource));
+      else if (type.equals(CC_TOPIC0) || type.equals(CC_TOPIC1))
+	  System.err.println("topic " + getFileName(resource));
+      else if (type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1))
+	  System.err.println("assessment " + getFileName(resource));
+      else if (type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1))
+	  System.err.println("question bank " + getFileName(resource));
+      else if (type.equals(CC_BLTI0) || type.equals(CC_BLTI1))
+	  System.err.println("blti " + getFileName(resource));
+      else
+	  System.err.println("unimplemented type: " + resource.getAttributeValue(TYPE));
+
   }
 
   public void addAttachment(String attachment_path) {

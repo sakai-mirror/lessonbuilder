@@ -156,8 +156,11 @@ public class Parser extends AbstractParser {
       path.addNamespace(CC_NS);
       Element item = (Element)path.selectSingleNode(the_manifest);
       if (item!=null) {     
+	  System.out.println("have item " + item);
         for (Iterator iter=item.getChildren(CC_ITEM, CC_NS).iterator();iter.hasNext();) {
-          processItem((Element)iter.next(), the_manifest.getChild(CC_RESOURCES, CC_NS), the_handler);
+	    Element thisitem = (Element)iter.next();
+	    System.out.println("processitem " + thisitem + "::" + the_manifest.getChild(CC_RESOURCES, CC_NS));
+          processItem((Element)thisitem, the_manifest.getChild(CC_RESOURCES, CC_NS), the_handler);
         }
       } 
       //now we need to check for the question bank...
@@ -229,7 +232,7 @@ public class Parser extends AbstractParser {
       Element resource=findResource(the_item.getAttributeValue(CC_ITEM_IDREF), the_resources);
       the_handler.startCCItem(the_item.getAttributeValue(CC_ITEM_ID),
                               the_item.getChildText(CC_ITEM_TITLE, CC_NS));
-      the_handler.setCCItemXml(the_item);
+      the_handler.setCCItemXml(the_item, resource);
       ContentParser parser=parsers.get(resource.getAttributeValue(CC_RES_TYPE));
       if (parser==null) {
         throw new ParseException("content type not recongised");

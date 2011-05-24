@@ -97,7 +97,7 @@ public class DefaultHandler implements AssessmentHandler, DiscussionHandler, Aut
 
   public void endResource() {}
 
-  public void setCCItemXml(Element the_xml) {}
+  public void setCCItemXml(Element the_xml, Element resource) {}
 
   public void setManifestXml(Element the_xml) {}
 
