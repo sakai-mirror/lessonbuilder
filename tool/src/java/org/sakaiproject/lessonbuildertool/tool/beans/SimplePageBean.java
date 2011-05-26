@@ -198,6 +198,7 @@ public class SimplePageBean {
 	private boolean required;
 	private boolean subrequirement;
 	private boolean prerequisite;
+	private boolean newWindow;
 	private String dropDown;
 	private String points;
         private String mimetype;
@@ -395,6 +396,10 @@ public class SimplePageBean {
 
 	public void setPrerequisite(boolean prerequisite) {
 		this.prerequisite = prerequisite;
+	}
+
+	public void setNewWindow(boolean newWindow) {
+		this.newWindow = newWindow;
 	}
 
 	public void setDropDown(String dropDown) {
@@ -693,7 +698,7 @@ public class SimplePageBean {
 		    SimplePageItem i;
 		    i = findItem(itemId);
 		    i.setSakaiId(id);
-		    if (type == SimplePageItem.MULTIMEDIA && mimeType != null)
+		    if (mimeType != null)
 			i.setHtml(mimeType);
 		    i.setName(name != null ? name : split[split.length - 1]);
 		    clearImageSize(i);
@@ -701,7 +706,7 @@ public class SimplePageBean {
 		} else {
 		    SimplePageItem i;
  	            i = appendItem(id, (name != null ? name : split[split.length - 1]), type);
-		    if (type == SimplePageItem.MULTIMEDIA && mimeType != null) {
+		    if (mimeType != null) {
 			i.setHtml(mimeType);
 			update(i);
 		    }
@@ -1561,6 +1566,12 @@ public class SimplePageBean {
 			} else {
 				i.setRequirementText(dropDown);
 			}
+
+			// currently we only display HTML in the same page
+			if (i.getType == SimplePageItem.RESOURCE && isHtml(i))
+			    i.setSameWindow(!newWindow);
+			else
+			    i.setSameWindow = false;
 
 			update(i);
 
@@ -2870,6 +2881,28 @@ public class SimplePageBean {
 	    return collectionId;
 	}
 
+	public boolean isHtml(SimplePageItem i) {
+	    StringTokenizer token = new StringTokenizer(i.getSakaiId(), ".");
+
+	    String extension = "";
+					    
+	    while (token.hasMoreTokens()) {
+		extension = token.nextToken().toLowerCase();
+	    }
+					    
+	    // we are just starting to store the MIME type for resources now. So existing content
+	    // won't have them.
+	    String mimeType = i.getHtml();
+	    if (mimeType != null && (mimeType.startsWith("http") || mimeType.equals("")))
+		mimeType = null;
+	    
+	    if (mimeType != null && (mimeType.equals("text/html") || mimeType.equals("application/xhtml+xml"))
+		|| mimeType == null && (extension.equals("html") || extension.equals("htm"))) {
+		return true;
+	    }
+	    return false;
+	}
+
         public static final int MAXIMUM_ATTEMPTS_FOR_UNIQUENESS = 100;
 
     // called by dialog to add inline multimedia item, or update existing
@@ -2985,6 +3018,13 @@ public class SimplePageBean {
 		// nothing to do
 		return;
 		
+	    // itemId tells us whether it's an existing item
+	    // isMultimedia tells us whether resource or multimedia
+	    // sameWindow is only passed for existing items of type HTML/XHTML
+	    //   for new items it should be set true for HTML/XTML, false otherwise
+	    //   for existing items it should be set to the passed value for HTML/XMTL, false otherwise
+	    //   it is ignored for isMultimedia, as those are always displayed inline in the current page
+
 	    SimplePageItem item = null;
 	    if (itemId == -1 && isMultimedia) {
 		int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
@@ -2992,7 +3032,6 @@ public class SimplePageBean {
 	    } else if (itemId == -1) {
 		int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
 		item = simplePageToolDao.makeItem(getCurrentPageId(), seq, SimplePageItem.RESOURCE, sakaiId, name);
-
 	    } else {
 		item = findItem(itemId);
 		if (item == null)
@@ -3001,11 +3040,22 @@ public class SimplePageBean {
 		item.setName(name);
 	    }
 
-	    if (item.getType() == SimplePageItem.MULTIMEDIA && mimeType != null) {
+	    if (mimeType != null) {
 		item.setHtml(mimeType);
 	    } else {
 		item.setHtml(null);
 	    }
+
+	    // we want resources to default to same window for HTML
+	    // if this is an existing item we could be changing the
+	    // user's previous choice, but since they're changing the
+	    // resource it could be of a differnt type, and so we typically
+	    // reset things to the default.
+	    if (!isMultimedia && isHtml(item))
+		item.setSameWindow(true);
+	    else
+		item.setSameWindow(false);
+
 	    clearImageSize(item);
 	    try {
 		if (itemId == -1)

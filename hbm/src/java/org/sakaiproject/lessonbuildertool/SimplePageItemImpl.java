@@ -72,6 +72,7 @@ public class SimplePageItemImpl implements SimplePageItem  {
 	private String requirementText;
 	private boolean prerequisite; // Whether or not the item is unavailable until all previous
 									// required items are fulfilled.
+	private boolean sameWindow; // Display resource inline rather than new window
 
 	public SimplePageItemImpl() {
 
@@ -97,6 +98,7 @@ public class SimplePageItemImpl implements SimplePageItem  {
 		prerequisite = false;
 		required = false;
 		requirementText = "";
+		sameWindow = false;  // old entries have to default to off
 	}
 
 	public SimplePageItemImpl(long pageId, int sequence, int type, String sakaiId, String name) {
@@ -118,6 +120,7 @@ public class SimplePageItemImpl implements SimplePageItem  {
 		prerequisite = false;
 		required = false;
 		requirementText = "";
+		sameWindow = false;  // old entries have to default to off
 	}
 
 	private String maxlength(String s, int maxlen) {
@@ -328,4 +331,15 @@ public class SimplePageItemImpl implements SimplePageItem  {
 			return "";
 		}
 	}
+
+	public void setNewwindow(String s) {
+		this.newwindow = s;
+	}
+
+	public String getNewwindow() {
+		return newwindow;
+	}
+
+
+
 }

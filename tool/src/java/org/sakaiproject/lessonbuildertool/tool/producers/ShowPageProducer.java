@@ -674,6 +674,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						UIOutput.make(tableRow, "type", "page"); 
 						UIOutput.make(tableRow, "page-next", Boolean.toString(i.getNextPage()));
 						UIOutput.make(tableRow, "page-button", Boolean.toString("button".equals(i.getFormat())));
+					} else if (i.getType() == SimplePageItem.RESOURCE) {
+					    // only give the user the option of choosing samewindow for HTML content
+					    if (simplePageBean.isHtml(i)) {
+						UIOutput.make(tableRow, "item-samewindow", Boolean.toString(i.isSameWindow()));
+					    }
 					}
 
 				}
@@ -1400,6 +1405,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		UIBoundBoolean.make(form, "item-required", "#{simplePageBean.required}", false);
 		UIBoundBoolean.make(form, "item-prerequisites", "#{simplePageBean.prerequisite}", false);
+
+		UIBoundBoolean.make(form, "item-newwindow", "#{simplePageBean.newWindow}", false);
 
 		UISelect.make(form, "assignment-dropdown", SimplePageBean.GRADES, "#{simplePageBean.dropDown}", SimplePageBean.GRADES[0]);
 		UIInput.make(form, "assignment-points", "#{simplePageBean.points}");

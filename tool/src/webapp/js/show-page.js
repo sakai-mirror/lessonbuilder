@@ -254,6 +254,7 @@ $(function() {
 		$("#edit-item-object-p").hide();	
 		$("#edit-item-settings-p").hide();	
 		$("#pagestuff").hide();
+		$("#newwindowstuff").hide();
 		
 		var row = $(this).parent().parent().parent();
 		var itemid = row.find(".current-item-id2").text();
@@ -270,6 +271,15 @@ $(function() {
 			$("#item-prerequisites").attr("checked", false);
 		}
 		
+		var samewindow = row.find("#item-samewindow").text();
+		if (samewindow != null) {
+		    if (samewindow == "true")
+			$("#item-newwindow").attr("checked", false);
+		    else
+			$("#item-newwindow").attr("checked", true);
+		    $("#newwindowstuff").show();
+		}
+
 		var req = row.find(".requirement-text").text();
 		var type = row.find(".type").text();
 		var editurl = row.find(".edit-url").text();
