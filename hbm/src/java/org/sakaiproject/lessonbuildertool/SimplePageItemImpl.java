@@ -332,12 +332,15 @@ public class SimplePageItemImpl implements SimplePageItem  {
 		}
 	}
 
-	public void setNewwindow(String s) {
-		this.newwindow = s;
+	public void setSameWindow(Boolean b) {
+		if (b == null)
+		    this.sameWindow = false;
+		else
+		    this.sameWindow = b;
 	}
 
-	public String getNewwindow() {
-		return newwindow;
+	public Boolean isSameWindow() {
+		return sameWindow;
 	}
 
 

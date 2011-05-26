@@ -271,14 +271,14 @@ $(function() {
 			$("#item-prerequisites").attr("checked", false);
 		}
 		
-		var samewindow = row.find("#item-samewindow").text();
-		if (samewindow != null) {
-		    if (samewindow == "true")
-			$("#item-newwindow").attr("checked", false);
-		    else
-			$("#item-newwindow").attr("checked", true);
-		    $("#newwindowstuff").show();
-		}
+                var samewindow = row.find(".item-samewindow").text();
+                if (samewindow != '') {
+                    if (samewindow == "true")
+                        $("#item-newwindow").attr("checked", false);
+                    else
+                        $("#item-newwindow").attr("checked", true);
+                    $("#newwindowstuff").show();
+                }
 
 		var req = row.find(".requirement-text").text();
 		var type = row.find(".type").text();

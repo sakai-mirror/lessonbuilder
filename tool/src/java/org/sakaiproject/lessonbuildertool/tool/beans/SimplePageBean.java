@@ -1568,10 +1568,10 @@ public class SimplePageBean {
 			}
 
 			// currently we only display HTML in the same page
-			if (i.getType == SimplePageItem.RESOURCE && isHtml(i))
+			if (i.getType() == SimplePageItem.RESOURCE && isHtml(i))
 			    i.setSameWindow(!newWindow);
 			else
-			    i.setSameWindow = false;
+			    i.setSameWindow(false);
 
 			update(i);
 

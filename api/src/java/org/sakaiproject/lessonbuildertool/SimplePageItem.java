@@ -125,9 +125,9 @@ public interface SimplePageItem {
 
     public String getRequirementText();
 
-    public void setSameWindow(boolean b);
+    public void setSameWindow(Boolean b);
 
-    public boolean isSameWindow();
+    public Boolean isSameWindow();
 
     public String getURL();
 
