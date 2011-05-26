@@ -1076,6 +1076,19 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		boolean available = simplePageBean.isItemAvailable(i);
 
 		if (i.getType() == SimplePageItem.RESOURCE || i.getType() == SimplePageItem.URL) {
+
+		    if (i.getType() == SimplePageItem.RESOURCE && i.isSameWindow()) {
+			if (available) {
+			    GeneralViewParameters params = new GeneralViewParameters(ShowItemProducer.VIEW_ID);
+			    params.setSendingPage(currentPage.getPageId());
+			    params.setSource(i.getURL());
+			    params.setItemId(i.getId());
+			    UIInternalLink.make(container, "link", params);
+			} else {
+			    UIInternalLink link = LinkTrackerProducer.make(container, ID, i.getName(), URL, i.getId(), notDone);
+			    disableLink(link, messageLocator);
+			}
+		    } else {
 			if (available) {
 				URL = i.getURL();
 			}
@@ -1087,6 +1100,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			} else {
 				disableLink(link, messageLocator);
 			}
+		    }
 		} else if (i.getType() == SimplePageItem.PAGE) {
 			SimplePage p = simplePageToolDao.getPage(Long.valueOf(i.getSakaiId()));
 
