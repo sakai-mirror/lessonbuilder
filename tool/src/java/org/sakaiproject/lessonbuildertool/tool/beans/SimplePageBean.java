@@ -694,23 +694,25 @@ public class SimplePageBean {
 
 		String[] split = id.split("/");
 
+		SimplePageItem i;
 		if (itemId != null && itemId != -1) {
-		    SimplePageItem i;
 		    i = findItem(itemId);
 		    i.setSakaiId(id);
 		    if (mimeType != null)
 			i.setHtml(mimeType);
 		    i.setName(name != null ? name : split[split.length - 1]);
 		    clearImageSize(i);
-		    update(i);
 		} else {
-		    SimplePageItem i;
  	            i = appendItem(id, (name != null ? name : split[split.length - 1]), type);
 		    if (mimeType != null) {
 			i.setHtml(mimeType);
-			update(i);
 		    }
 		}
+		if (type == SimplePageItem.RESOURCE && isHtml(i))
+		    i.setSameWindow(true);
+		else
+		    i.setSameWindow(false);
+		update(i);
 
 		return "importing";
 	}
@@ -919,7 +921,8 @@ public class SimplePageBean {
 		if (itemType == SimplePageItem.ASSIGNMENT ||
 		    itemType == SimplePageItem.ASSESSMENT ||
 		    itemType == SimplePageItem.FORUM ||
-		    itemType == SimplePageItem.PAGE) {
+		    itemType == SimplePageItem.PAGE ||
+		    itemType == SimplePageItem.RESOURCE && nextItem.isSameWindow()) {
 		    // it's easy if the next item is available. If it's not, then
 		    // we need to see if everything other than this item is done and
 		    // this one is required. In that case the issue must be that this
@@ -973,6 +976,14 @@ public class SimplePageBean {
 			view.setPath("next");  // page to page, just a next
 		    else
 			view.setPath("push");  // item to page, have to push the page
+		} else if (itemType == SimplePageItem.RESOURCE) { /// must be a same page resource
+		    view.setSendingPage(Long.valueOf(item.getPageId()));
+		    // to the check. We need the check to set access control appropriately
+		    // if the user has passed.
+		    if (!isItemAvailable(nextItem, nextItem.getPageId()))
+			view.setRecheck("true");
+		    view.setSource(nextItem.getURL());
+		    view.viewID = ShowItemProducer.VIEW_ID;
 		} else {
 		    view.setSendingPage(Long.valueOf(item.getPageId()));
 		    LessonEntity lessonEntity = null;
@@ -1039,6 +1050,10 @@ public class SimplePageBean {
 		    view.setPath("next");  // page to page, just a next
 		else
 		    view.setPath("push");  // item to page, have to push the page
+	    } else if (itemType == SimplePageItem.RESOURCE) { // must be a samepage resource
+		view.setSendingPage(Long.valueOf(item.getPageId()));
+		view.setSource(prevItem.getURL());
+		view.viewID = ShowItemProducer.VIEW_ID;
 	    } else {
 		view.setSendingPage(Long.valueOf(item.getPageId()));
 		LessonEntity lessonEntity = null;
