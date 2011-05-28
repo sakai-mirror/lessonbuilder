@@ -708,10 +708,7 @@ public class SimplePageBean {
 			i.setHtml(mimeType);
 		    }
 		}
-		if (type == SimplePageItem.RESOURCE && isHtml(i))
-		    i.setSameWindow(true);
-		else
-		    i.setSameWindow(false);
+		i.setSameWindow(false);
 		update(i);
 
 		return "importing";
@@ -1583,7 +1580,7 @@ public class SimplePageBean {
 			}
 
 			// currently we only display HTML in the same page
-			if (i.getType() == SimplePageItem.RESOURCE && isHtml(i))
+			if (i.getType() == SimplePageItem.RESOURCE)
 			    i.setSameWindow(!newWindow);
 			else
 			    i.setSameWindow(false);
@@ -3061,14 +3058,9 @@ public class SimplePageBean {
 		item.setHtml(null);
 	    }
 
-	    // we want resources to default to same window for HTML
-	    // if this is an existing item we could be changing the
-	    // user's previous choice, but since they're changing the
-	    // resource it could be of a differnt type, and so we typically
-	    // reset things to the default.
-	    if (!isMultimedia && isHtml(item))
-		item.setSameWindow(true);
-	    else
+	    // if this is an existing item and a resource, leave it alone
+	    // otherwise initialize to false
+	    if (isMultimedia || itemId == -1)
 		item.setSameWindow(false);
 
 	    clearImageSize(item);

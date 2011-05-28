@@ -675,10 +675,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						UIOutput.make(tableRow, "page-next", Boolean.toString(i.getNextPage()));
 						UIOutput.make(tableRow, "page-button", Boolean.toString("button".equals(i.getFormat())));
 					} else if (i.getType() == SimplePageItem.RESOURCE) {
-					    // only give the user the option of choosing samewindow for HTML content
-					    if (simplePageBean.isHtml(i)) {
-						UIOutput.make(tableRow, "item-samewindow", Boolean.toString(i.isSameWindow()));
-					    }
+					    UIOutput.make(tableRow, "item-samewindow", Boolean.toString(i.isSameWindow()));
 					}
 
 				}
