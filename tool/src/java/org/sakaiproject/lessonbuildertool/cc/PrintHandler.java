@@ -52,7 +52,10 @@ import org.sakaiproject.util.Validator;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.content.cover.ContentHostingService;
 import org.sakaiproject.content.cover.ContentTypeImageService;
+import org.sakaiproject.lessonbuildertool.SimplePage;
+import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
+import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.content.api.ContentCollectionEdit;
 import org.sakaiproject.content.api.ContentResourceEdit;
 import org.sakaiproject.entity.api.ResourceProperties;
@@ -98,18 +101,23 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private static final boolean all = false;
   private static final int MAX_ATTEMPTS = 100;
 
-  private List<String> pages = new ArrayList<String>();
+  private List<SimplePage> pages = new ArrayList<SimplePage>();
   CartridgeLoader utils = null;
   SimplePageBean simplePageBean = null;
+  SimplePageToolDao simplePageToolDao = null;
+
   private String title = null;
   private String description = null;
   private String baseName = null;
+  private String siteId = null;
   private Set<String> filesAdded = new HashSet<String>();
 
-  public PrintHandler(SimplePageBean bean, CartridgeLoader utils) {
+  public PrintHandler(SimplePageBean bean, CartridgeLoader utils, SimplePageToolDao dao) {
       super();
       this.utils = utils;
       this.simplePageBean = bean;
+      this.simplePageToolDao = dao;
+      this.siteId = bean.getCurrentSiteId();
   }
 
   public void setAssessmentDetails(String the_ident, String the_title) {
@@ -131,7 +139,21 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   public void startCCFolder(Element folder) {
       String title = folder.getChildText(TITLE, CC_NS);
       System.err.println("create page " + title);
-      pages.add(title);
+
+      // add top level pages to left margin
+      SimplePage page = null;
+      if (pages.size() == 0)
+	  page = simplePageBean.addPage(title, false);  // add new top level page
+      else {
+	  page = simplePageToolDao.makePage("0", siteId, title, 0L, 0L);
+	  simplePageBean.saveItem(page);
+	  SimplePage parent = pages.get(pages.size()-1);
+	  int seq = simplePageBean.getItemsOnPage(parent.getPageId()).size() + 1;
+
+	  SimplePageItem item = simplePageToolDao.makeItem(parent.getPageId(), seq, SimplePageItem.PAGE, Long.toString(page.getPageId()), title);
+	  simplePageBean.saveItem(item);
+      }
+      pages.add(page);
   }
 
   public void startCCItem(String the_id, String the_title) {
@@ -143,7 +165,6 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
   private String makeBaseFolder(String name) {
 
-      String siteId = simplePageBean.getCurrentSiteId();
       if (siteId == null) {
 	  simplePageBean.setErrKey("simplepage.nosite");
 	  return null;
@@ -213,7 +234,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   }
 
   public void setCCItemXml(Element the_xml, Element resource, AbstractParser parser, CartridgeLoader loader) {
-      System.err.println("\nadd item to page " + pages.get(pages.size()-1) +
+      System.err.println("\nadd item to page " + pages.get(pages.size()-1).getTitle() +
 			 " xml: "+the_xml + 
 			 " title " + the_xml.getChildText(CC_ITEM_TITLE, CC_NS) +
 			 " type " + resource.getAttributeValue(TYPE) +

@@ -466,7 +466,7 @@ public class SimplePageBean {
     // return. Hence we pass saveItem a list to which it adds the error message. If
     // there is a mesasge from saveItem take precedence over the message we detect here,
     // since it's the root cause.
-	boolean saveItem(Object i) {       
+	public boolean saveItem(Object i) {       
 	    String err = null;
 	    List<String>elist = new ArrayList<String>();
 	    try {
@@ -2091,7 +2091,7 @@ public class SimplePageBean {
 	    return "success";
 	}
 
-        private void addPage(String title, boolean copyCurrent) {
+        public SimplePage addPage(String title, boolean copyCurrent) {
 
 	    Site site = getCurrentSite();
 	    SitePage sitePage = site.addPage();
@@ -2124,6 +2124,8 @@ public class SimplePageBean {
 		    saveItem(newItem);
 		}
 	    }
+
+	    return page;
 
 	}
 
@@ -3113,7 +3115,7 @@ public class SimplePageBean {
 
 		    CartridgeLoader cartridgeLoader = ZipLoader.getUtilities(cc, root.getCanonicalPath());
 		    Parser parser = Parser.createCartridgeParser(cartridgeLoader);
-		    parser.parse(new PrintHandler(this, cartridgeLoader));
+		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao));
 
 		    System.out.println("have a file");
 		    System.out.println("name: " + file.getOriginalFilename());
