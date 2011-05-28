@@ -3108,7 +3108,7 @@ public class SimplePageBean {
 
 		    CartridgeLoader cartridgeLoader = ZipLoader.getUtilities(cc, root.getCanonicalPath());
 		    Parser parser = Parser.createCartridgeParser(cartridgeLoader);
-		    parser.parse(new PrintHandler());
+		    parser.parse(new PrintHandler(this, cartridgeLoader));
 
 		    System.out.println("have a file");
 		    System.out.println("name: " + file.getOriginalFilename());

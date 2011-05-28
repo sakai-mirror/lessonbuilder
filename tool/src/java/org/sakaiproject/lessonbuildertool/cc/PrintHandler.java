@@ -45,6 +45,14 @@ import org.jdom.Element;
 import org.jdom.Namespace;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.InputStream;
+import org.sakaiproject.util.Validator;
+import org.sakaiproject.tool.api.ToolManager;
+import org.sakaiproject.content.cover.ContentHostingService;
+import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
+import org.sakaiproject.content.api.ContentCollectionEdit;
+import org.sakaiproject.exception.IdUsedException;
+
 
 /* PJN NOTE:
  * This class is an example of what an implementer might want to do as regards overloading DefaultHandler.
@@ -63,7 +71,11 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private static final String FILE="file";
   private static final String XML=".xml";
   private static final String TITLE="title";
+  private static final String DESCRIPTION="description";
+  private static final String GENERAL="general";
+  private static final String STRING="string";
   private static final Namespace CC_NS = Namespace.getNamespace("ims", "http://www.imsglobal.org/xsd/imscc/imscp_v1p1");
+  private static final Namespace MD_NS= Namespace.getNamespace("lom", "http://ltsc.ieee.org/xsd/imscc/LOM");
   private static final String CC_ITEM_TITLE="title";
   private static final String CC_WEBCONTENT="webcontent";
   private static final String CC_WEBLINK0="imswl_xmlv1p0";
@@ -77,7 +89,20 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private static final String CC_BLTI0="imsbasiclti_xmlv1p0";
   private static final String CC_BLTI1="imsbasiclti_xmlv1p1";
   private static final boolean all = false;
+  private static final int MAX_ATTEMPTS = 100;
+
   private List<String> pages = new ArrayList<String>();
+  CartridgeLoader utils = null;
+  SimplePageBean simplePageBean = null;
+  private String title = null;
+  private String description = null;
+  private String baseName = null;
+
+  public PrintHandler(SimplePageBean bean, CartridgeLoader utils) {
+      super();
+      this.utils = utils;
+      this.simplePageBean = bean;
+  }
 
   public void setAssessmentDetails(String the_ident, String the_title) {
       if (all)
@@ -106,6 +131,58 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  System.err.println("cc item "+the_id+" begins");
 	  System.err.println("title: "+the_title);
       }
+  }
+
+  private String makeBaseFolder(String name) {
+
+      String siteId = simplePageBean.getCurrentSiteId();
+      if (siteId == null)
+	  return null;
+
+      if (name == null) 
+	  name = "Common Cartridge";
+      if (name.trim().length() == 0) 
+	  name = "Common Cartridge";
+
+      // we must reject certain characters that we cannot even escape and get into Tomcat via a URL                               
+
+      StringBuffer newname = new StringBuffer(ContentHostingService.getSiteCollection(siteId));
+
+      int length = name.length();
+      for (int i = 0; i < length; i++) {
+	  if (Validator.INVALID_CHARS_IN_RESOURCE_ID.indexOf(name.charAt(i)) != -1)
+	      newname.append("_");
+	  else
+	      newname.append(name.charAt(i));
+      }
+
+      length = newname.length();
+      if (length > (ContentHostingService.MAXIMUM_RESOURCE_ID_LENGTH - 5))
+	  length = ContentHostingService.MAXIMUM_RESOURCE_ID_LENGTH - 5; // for trailing / and possible count
+      newname.setLength(length);
+
+      name = newname.toString();
+
+      ContentCollectionEdit collection = null;
+      int tries = 1;
+      int olength = name.length();
+      for (; tries <= MAX_ATTEMPTS; tries++) {
+	  try {
+	      collection = ContentHostingService.addCollection(name + "/");  // append / here because we may hack on the name
+	      ContentHostingService.commitCollection(collection);
+	      break;   // got it
+	  } catch (IdUsedException e) {
+	      name = name.substring(0, olength) + "-" + tries;
+	  } catch (Exception e) {
+	      System.out.println("CC loader: Unable to create resource " + name + " " + e);
+	      return null;
+	  }
+      }
+      if (collection == null) {
+	  System.out.println("CC loader: failed after 100 attempts to create resource " + name);
+	  return null;
+      }
+      return collection.getId();
   }
 
   private String getFileName(Element resource) {
@@ -206,6 +283,14 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
   public void addFile(String the_file_id) {
       System.err.println("adding file: "+the_file_id);
+      InputStream infile = null;
+      try {
+	  infile = utils.getFile(the_file_id);
+	  System.err.println("Got file " + the_file_id);
+	  infile.close();
+      } catch (Exception e) {
+	  System.out.println("CC loader: unable to get file " + the_file_id);
+      }
   }
 
   public void endWebContent() {
@@ -339,6 +424,32 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   public void setManifestMetadataXml(Element the_md) {
       if (all)
 	  System.err.println("manifest md xml: "+the_md);    
+      // NOTE: need to handle languages
+      Element general = the_md.getChild(GENERAL, MD_NS);
+      if (general != null) {
+	  System.err.println("got general");
+	  Element tnode = general.getChild(TITLE, MD_NS);
+	  System.err.println("got title " + tnode);
+	  if (tnode != null) {
+	      title = tnode.getChildTextTrim(STRING, MD_NS);
+	      System.err.println("got title " + title);
+	  }
+	  Element tdescription=general.getChild(DESCRIPTION, MD_NS);
+	  System.err.println("got description " + tdescription);
+	  if (tdescription != null) {
+	      description = tdescription.getChildTextTrim(STRING, MD_NS);
+	      System.err.println("got description " + description);
+	  }
+
+      }
+      if (title == null || title.equals(""))
+	  title = "Cartridge";
+      if (description.equals(""))
+	  description = null;
+      System.err.println("cartridge metadata title:" + title + " description: " + description);
+      baseName = makeBaseFolder(title);
+      System.err.println("basename " + baseName);
+
   }
 
   public void setResourceMetadataXml(Element the_md) {
