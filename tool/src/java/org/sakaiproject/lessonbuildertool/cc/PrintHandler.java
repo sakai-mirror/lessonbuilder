@@ -58,6 +58,7 @@ import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.content.api.ContentCollectionEdit;
 import org.sakaiproject.content.api.ContentResourceEdit;
+import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.exception.IdUsedException;
@@ -102,6 +103,8 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private static final int MAX_ATTEMPTS = 100;
 
   private List<SimplePage> pages = new ArrayList<SimplePage>();
+    // list parallel to pages containing sequence of last item on the page
+  private List<Integer> sequences= new ArrayList<Integer>();
   CartridgeLoader utils = null;
   SimplePageBean simplePageBean = null;
   SimplePageToolDao simplePageToolDao = null;
@@ -128,7 +131,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   public void endCCFolder() {
       if (all)
 	  System.err.println("cc folder ends");
-      pages.remove(pages.size()-1);
+      int top = pages.size()-1;
+      sequences.remove(top);
+      pages.remove(top);
   }
 
   public void endCCItem() {
@@ -142,9 +147,13 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
       // add top level pages to left margin
       SimplePage page = null;
-      if (pages.size() == 0)
+      if (pages.size() == 0) {
 	  page = simplePageBean.addPage(title, false);  // add new top level page
-      else {
+	  SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), 1, SimplePageItem.TEXT, "", "");
+	  item.setHtml(Validator.escapeHtml(description));
+	  simplePageBean.saveItem(item);
+	  sequences.add(1);
+      } else {
 	  page = simplePageToolDao.makePage("0", siteId, title, 0L, 0L);
 	  simplePageBean.saveItem(page);
 	  SimplePage parent = pages.get(pages.size()-1);
@@ -152,6 +161,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
 	  SimplePageItem item = simplePageToolDao.makeItem(parent.getPageId(), seq, SimplePageItem.PAGE, Long.toString(page.getPageId()), title);
 	  simplePageBean.saveItem(item);
+	  sequences.add(0);
       }
       pages.add(page);
   }
@@ -240,10 +250,24 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 			 " type " + resource.getAttributeValue(TYPE) +
 			 " href " + resource.getAttributeValue(HREF));
       String type = resource.getAttributeValue(TYPE);
+      int top = pages.size()-1;
+      SimplePage page = pages.get(top);
+      Integer seq = sequences.get(top);
+      String title = the_xml.getChildText(CC_ITEM_TITLE, CC_NS);
 
       try {
-      if (type.equals(CC_WEBCONTENT))
-	  System.err.println("web content " + resource.getAttributeValue(HREF));
+	  if (type.equals(CC_WEBCONTENT)) {
+	      // note: when this code is called the actual sakai resource hasn't been created yet
+	      String sakaiId = baseName + resource.getAttributeValue(HREF);
+	      String extension = Validator.getFileExtension(sakaiId);
+	      String mime = ContentTypeImageService.getContentType(extension);
+
+	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.RESOURCE, sakaiId, title);
+	      item.setHtml(mime);
+	      item.setSameWindow(true);
+	      simplePageBean.saveItem(item);
+	      sequences.set(top, seq+1);
+	  }
       else if (type.equals(CC_WEBLINK0) || type.equals(CC_WEBLINK1))
 	  System.err.println("weblink " + getFileName(resource));
       else if (type.equals(CC_TOPIC0) || type.equals(CC_TOPIC1)) {

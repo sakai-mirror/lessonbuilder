@@ -174,6 +174,8 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 	    if (item != null)
 		simplePageBean.adjustBackPath(params.getBackPath(), params.getSendingPage(), item.getId(), item.getName());
 
+	    // return to lesson doesn't make sense for resources, since they aren't separate applications in
+	    // the same sense
 	    if (sendingPage != -1 && breadcrumbs != null && breadcrumbs.size() > 0) {
 		SimplePageBean.PathEntry entry = breadcrumbs.get(breadcrumbs.size()-1);
 
@@ -183,12 +185,22 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		    view.setSendingPage(entry.pageId);
 		    view.setItemId(entry.pageItemId);
 		    // path defaults to null, which is next
-		    UIInternalLink.make(tofill, "return", messageLocator.getMessage("simplepage.return"), view);
+		    if (item.getType() == SimplePageItem.RESOURCE) {
+			UIInternalLink.make(tofill, "return", entry.title, view);
+		    } else {
+			UIInternalLink.make(tofill, "return", messageLocator.getMessage("simplepage.return"), view);
+			UIOutput.make(tofill, "returnwarning", messageLocator.getMessage("simplepage.return.warning"));
+		    }
 		} else {
 		    GeneralViewParameters view = new GeneralViewParameters(returnView);
 		    view.setSendingPage(sendingPage);;
 		    view.setItemId(((GeneralViewParameters) params).getItemId());
-		    UIInternalLink.make(tofill, "return", ((GeneralViewParameters) params).getTitle() , view);
+		    if (item.getType() == SimplePageItem.RESOURCE) {
+			UIInternalLink.make(tofill, "return", entry.title, view);
+		    } else {
+			UIInternalLink.make(tofill, "return", ((GeneralViewParameters) params).getTitle() , view);
+			UIOutput.make(tofill, "returnwarning", messageLocator.getMessage("simplepage.return.warning"));
+		    }
 		}
 	    }
 
