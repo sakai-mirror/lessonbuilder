@@ -45,13 +45,20 @@ import org.jdom.Element;
 import org.jdom.Namespace;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 import java.io.InputStream;
 import org.sakaiproject.util.Validator;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.content.cover.ContentHostingService;
+import org.sakaiproject.content.cover.ContentTypeImageService;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.content.api.ContentCollectionEdit;
+import org.sakaiproject.content.api.ContentResourceEdit;
+import org.sakaiproject.entity.api.ResourceProperties;
+import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.exception.IdUsedException;
+import org.sakaiproject.event.api.NotificationService;
 
 
 /* PJN NOTE:
@@ -97,6 +104,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private String title = null;
   private String description = null;
   private String baseName = null;
+  private Set<String> filesAdded = new HashSet<String>();
 
   public PrintHandler(SimplePageBean bean, CartridgeLoader utils) {
       super();
@@ -136,8 +144,10 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private String makeBaseFolder(String name) {
 
       String siteId = simplePageBean.getCurrentSiteId();
-      if (siteId == null)
+      if (siteId == null) {
+	  simplePageBean.setErrKey("simplepage.nosite");
 	  return null;
+      }
 
       if (name == null) 
 	  name = "Common Cartridge";
@@ -169,16 +179,25 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       for (; tries <= MAX_ATTEMPTS; tries++) {
 	  try {
 	      collection = ContentHostingService.addCollection(name + "/");  // append / here because we may hack on the name
+
+	      String display = name;
+	      int main = name.lastIndexOf("/");
+	      if (main >= 0)
+		  display = display.substring(main+1);
+	      collection.getPropertiesEdit().addProperty(ResourceProperties.PROP_DISPLAY_NAME, display);
+
 	      ContentHostingService.commitCollection(collection);
 	      break;   // got it
 	  } catch (IdUsedException e) {
 	      name = name.substring(0, olength) + "-" + tries;
 	  } catch (Exception e) {
 	      System.out.println("CC loader: Unable to create resource " + name + " " + e);
+	      simplePageBean.setErrKey("simplepage.create.resource.failed" + name + " " +e);
 	      return null;
 	  }
       }
       if (collection == null) {
+	  simplePageBean.setErrKey("simplepage.resource100: " + name);
 	  System.out.println("CC loader: failed after 100 attempts to create resource " + name);
 	  return null;
       }
@@ -282,13 +301,32 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   }
 
   public void addFile(String the_file_id) {
+      if (filesAdded.contains(the_file_id))
+	  return;
+
       System.err.println("adding file: "+the_file_id);
       InputStream infile = null;
       try {
 	  infile = utils.getFile(the_file_id);
 	  System.err.println("Got file " + the_file_id);
-	  infile.close();
+	  String name = the_file_id;
+	  int slash = the_file_id.lastIndexOf("/");
+	  if (slash >=0 )
+	      name = name.substring(slash+1);
+	  String extension = Validator.getFileExtension(name);
+	  String type = ContentTypeImageService.getContentType(extension);
+
+	  ContentResourceEdit edit = ContentHostingService.addResource(baseName + the_file_id);
+
+	  edit.setContentType(type);
+	  edit.setContent(infile);
+	  edit.getPropertiesEdit().addProperty(ResourceProperties.PROP_DISPLAY_NAME, name);
+
+	  ContentHostingService.commitResource(edit, NotificationService.NOTI_NONE);
+	  filesAdded.add(the_file_id);
+
       } catch (Exception e) {
+	  simplePageBean.setErrKey("simplepage.create.resource.failed " + e + ": " + the_file_id);
 	  System.out.println("CC loader: unable to get file " + the_file_id);
       }
   }

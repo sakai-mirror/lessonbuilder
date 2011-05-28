@@ -338,6 +338,11 @@ public class SimplePageBean {
 	   toolSession.setAttribute("lessonbuilder.error", s);
        }
 
+       public void setErrKey(String s) {
+	   ToolSession toolSession = sessionManager.getCurrentToolSession();
+	   toolSession.setAttribute("lessonbuilder.error", messageLocator.getMessage(s));
+       }
+
     // a lot of these are setters and getters used for the form process, as 
     // described above
 
