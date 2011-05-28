@@ -124,6 +124,7 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		}
 	    }
 
+
 	    String pathOp = params.getPath();
 	    // only pop is valid; we don't have the data for the other options
 	    if (pathOp != null && !pathOp.equals(""))
@@ -132,17 +133,17 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 	    List<SimplePageBean.PathEntry> breadcrumbs = simplePageBean.getHierarchy();
 	    SimplePageItem item = simplePageBean.findItem (params.getItemId());
 
-	    if (item != null)
-		simplePageBean.adjustBackPath(params.getBackPath(), params.getSendingPage(), item.getId(), item.getName());
-
 	    // this is a "next" page where we couldn't tell if the item is
 	    // available. Need to check here in order to set ACLs. If not available,
 	    // return to calling page
 	    if (item != null && "true".equals(params.getRecheck())) {
 		if (simplePageBean.isItemAvailable(item, item.getPageId())) {
-		    if (item.isPrerequisite()) {
+		    // for resources we do our own tracking, for the other types handled by this
+		    // class we depend upon the tool
+		    if (item.getType() == SimplePageItem.RESOURCE)
+			simplePageBean.track(params.getItemId(), null);
+		    else if (item.isPrerequisite())
 			simplePageBean.checkItemPermissions(item, true); // set acl, etc
-		    }
 		} else {
 		    SimplePageBean.PathEntry containingPage = null;
 		    if (breadcrumbs.size() > 0)  // shouldn't ever fail
@@ -157,7 +158,22 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		    }
 		    return;
 		}
+	    } else if (item != null && item.getType() == SimplePageItem.RESOURCE) {
+		// since recheck isn't set, permission checking should have been done.
+		// for most item types handled here, we depend upon the tool for final access
+		// checking and for tracking. But for resources we have to do it.
+		if (simplePageBean.isItemAvailable(item, item.getPageId()))
+		    simplePageBean.track(params.getItemId(), null);
+		else {
+		    UIOutput.make(tofill, "hiddenAlert");
+		    UIOutput.make(tofill, "hidden-text", messageLocator.getMessage("simplepage.complete_required"));
+		    return;
+		}
 	    }
+
+	    if (item != null)
+		simplePageBean.adjustBackPath(params.getBackPath(), params.getSendingPage(), item.getId(), item.getName());
+
 	    if (sendingPage != -1 && breadcrumbs != null && breadcrumbs.size() > 0) {
 		SimplePageBean.PathEntry entry = breadcrumbs.get(breadcrumbs.size()-1);
 
