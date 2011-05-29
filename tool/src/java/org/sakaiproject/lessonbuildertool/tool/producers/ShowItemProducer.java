@@ -175,29 +175,43 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		simplePageBean.adjustBackPath(params.getBackPath(), params.getSendingPage(), item.getId(), item.getName());
 
 	    // return to lesson doesn't make sense for resources, since they aren't separate applications in
-	    // the same sense
+	    // the same sense. But we do want breadcrumbs.
 	    if (sendingPage != -1 && breadcrumbs != null && breadcrumbs.size() > 0) {
 		SimplePageBean.PathEntry entry = breadcrumbs.get(breadcrumbs.size()-1);
 
-		String returnView = params.getReturnView();
-		if (returnView == null || returnView.equals("")) {
-		    GeneralViewParameters view = new GeneralViewParameters(ShowPageProducer.VIEW_ID);
-		    view.setSendingPage(entry.pageId);
-		    view.setItemId(entry.pageItemId);
-		    // path defaults to null, which is next
-		    if (item.getType() == SimplePageItem.RESOURCE) {
-			UIInternalLink.make(tofill, "return", entry.title, view);
-		    } else {
-			UIInternalLink.make(tofill, "return", messageLocator.getMessage("simplepage.return"), view);
-			UIOutput.make(tofill, "returnwarning", messageLocator.getMessage("simplepage.return.warning"));
+
+		if (item.getType() == SimplePageItem.RESOURCE) {
+		    int index = 0;
+		    for (SimplePageBean.PathEntry e : breadcrumbs) {
+			// don't show current page. We already have a title. This was too much
+			UIBranchContainer crumb = UIBranchContainer.make(tofill, "crumb:");
+			GeneralViewParameters view = new GeneralViewParameters(ShowPageProducer.VIEW_ID);
+			view.setSendingPage(e.pageId);
+			view.setItemId(e.pageItemId);
+			view.setPath(Integer.toString(index));
+			UIInternalLink.make(crumb, "crumb-link", e.title, view);
+			UIOutput.make(crumb, "crumb-follow", " > ");
+			if (index == breadcrumbs.size() - 1) {
+			    UIBranchContainer finalcrumb = UIBranchContainer.make(tofill, "crumb:");
+
+			    UIOutput.make(finalcrumb, "crumb-follow", item.getName()).decorate(new UIStyleDecorator("bold"));
+			}
+			index++;
 		    }
 		} else {
-		    GeneralViewParameters view = new GeneralViewParameters(returnView);
-		    view.setSendingPage(sendingPage);;
-		    view.setItemId(((GeneralViewParameters) params).getItemId());
-		    if (item.getType() == SimplePageItem.RESOURCE) {
-			UIInternalLink.make(tofill, "return", entry.title, view);
+
+		    String returnView = params.getReturnView();
+		    if (returnView == null || returnView.equals("")) {
+			GeneralViewParameters view = new GeneralViewParameters(ShowPageProducer.VIEW_ID);
+			view.setSendingPage(entry.pageId);
+			view.setItemId(entry.pageItemId);
+			// path defaults to null, which is next
+			UIInternalLink.make(tofill, "return", messageLocator.getMessage("simplepage.return"), view);
+			UIOutput.make(tofill, "returnwarning", messageLocator.getMessage("simplepage.return.warning"));
 		    } else {
+			GeneralViewParameters view = new GeneralViewParameters(returnView);
+			view.setSendingPage(sendingPage);;
+			view.setItemId(((GeneralViewParameters) params).getItemId());
 			UIInternalLink.make(tofill, "return", ((GeneralViewParameters) params).getTitle() , view);
 			UIOutput.make(tofill, "returnwarning", messageLocator.getMessage("simplepage.return.warning"));
 		    }

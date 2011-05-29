@@ -81,6 +81,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private static final String TYPE="type";
   private static final String FILE="file";
   private static final String XML=".xml";
+  private static final String URL="url";
   private static final String TITLE="title";
   private static final String DESCRIPTION="description";
   private static final String GENERAL="general";
@@ -268,23 +269,57 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      simplePageBean.saveItem(item);
 	      sequences.set(top, seq+1);
 	  }
-      else if (type.equals(CC_WEBLINK0) || type.equals(CC_WEBLINK1))
-	  System.err.println("weblink " + getFileName(resource));
-      else if (type.equals(CC_TOPIC0) || type.equals(CC_TOPIC1)) {
-	  System.err.println("topic " + getFileName(resource) +
+	  else if (type.equals(CC_WEBLINK0) || type.equals(CC_WEBLINK1)) {
+	      String filename = getFileName(resource);
+	      Element linkXml =  parser.getXML(loader, filename);
+	      Element urlElement = linkXml.getChild(URL);
+	      String url = urlElement.getAttributeValue(HREF);
+
+	      // the name must end in XML, so we can just turn it into URL
+	      filename = filename.substring(0, filename.length()-3) + "url";
+	      String sakaiId = baseName + filename;
+
+	      if (! filesAdded.contains(filename)) {
+		  // we store the URL as a text/url resource
+		  ContentResourceEdit edit = ContentHostingService.addResource(sakaiId);
+		  edit.setContentType("text/url");
+		  edit.setResourceType("org.sakaiproject.content.types.urlResource");
+		  edit.setContent(url.getBytes());
+		  edit.getPropertiesEdit().addProperty(ResourceProperties.PROP_DISPLAY_NAME, 
+						       Validator.escapeResourceName(filename));
+		  ContentHostingService.commitResource(edit, NotificationService.NOTI_NONE);
+		  filesAdded.add(filename);
+	      }
+
+	      // now create the Sakai item
+	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.RESOURCE, sakaiId, title);
+	      item.setHtml(simplePageBean.getTypeOfUrl(url));  // checks the web site to see what it actually is
+	      item.setSameWindow(true);
+	      simplePageBean.saveItem(item);
+	      sequences.set(top, seq+1);
+	      
+	  } else if (type.equals(CC_TOPIC0) || type.equals(CC_TOPIC1)) {
+	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.FORUM, SimplePageItem.DUMMY, title);
+	      simplePageBean.saveItem(item);
+	      sequences.set(top, seq+1);
+
+	      System.err.println("topic " + getFileName(resource) +
 			     " " + parser.getXML(loader, getFileName(resource)));
-      }
-      else if (type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1))
-	  System.err.println("assessment " + getFileName(resource) + 
-			     " " + parser.getXML(loader, getFileName(resource)));
-      else if (type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1))
-	  System.err.println("question bank " + getFileName(resource) +
-			     " " + parser.getXML(loader, getFileName(resource)));
-      else if (type.equals(CC_BLTI0) || type.equals(CC_BLTI1))
-	  System.err.println("blti " + getFileName(resource) + 
-			     " " + parser.getXML(loader, getFileName(resource)));
-      else
-	  System.err.println("implemented type: " + resource.getAttributeValue(TYPE));
+	  } else if (type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1)) {
+	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.ASSESSMENT, SimplePageItem.DUMMY, title);
+	      simplePageBean.saveItem(item);
+	      sequences.set(top, seq+1);
+
+	      System.err.println("assessment " + getFileName(resource) + 
+				 " " + parser.getXML(loader, getFileName(resource)));
+	  } else if (type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1))
+	      System.err.println("question bank " + getFileName(resource) +
+				 " " + parser.getXML(loader, getFileName(resource)));
+	  else if (type.equals(CC_BLTI0) || type.equals(CC_BLTI1))
+	      System.err.println("blti " + getFileName(resource) + 
+				 " " + parser.getXML(loader, getFileName(resource)));
+	  else
+	      System.err.println("implemented type: " + resource.getAttributeValue(TYPE));
       } catch (Exception e) {
 	  System.err.println(">>>Exception " + e);
       }
