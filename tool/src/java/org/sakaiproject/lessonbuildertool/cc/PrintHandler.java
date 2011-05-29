@@ -48,6 +48,13 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.io.InputStream;
+import java.io.FileInputStream;
+import java.io.PrintWriter;
+import java.io.FileOutputStream;
+import java.io.CharArrayWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+
 import org.sakaiproject.util.Validator;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.content.cover.ContentHostingService;
@@ -63,7 +70,13 @@ import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.event.api.NotificationService;
+import org.sakaiproject.lessonbuildertool.cc.QtiImport;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Document;
+import org.sakaiproject.tool.assessment.services.qti.QTIService;
+import org.sakaiproject.tool.assessment.qti.constants.QTIVersion;
 
 /* PJN NOTE:
  * This class is an example of what an implementer might want to do as regards overloading DefaultHandler.
@@ -143,7 +156,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   }
 
   public void startCCFolder(Element folder) {
-      String title = folder.getChildText(TITLE, CC_NS);
+      String title = this.title;
+      if (folder != null)
+	  title = folder.getChildText(TITLE, CC_NS);
       System.err.println("create page " + title);
 
       // add top level pages to left margin
@@ -245,16 +260,23 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   }
 
   public void setCCItemXml(Element the_xml, Element resource, AbstractParser parser, CartridgeLoader loader) {
+      if (pages.size() == 0)
+	  startCCFolder(null);
+
       System.err.println("\nadd item to page " + pages.get(pages.size()-1).getTitle() +
 			 " xml: "+the_xml + 
-			 " title " + the_xml.getChildText(CC_ITEM_TITLE, CC_NS) +
+			 " title " + (the_xml==null?"Question Pool" : the_xml.getChildText(CC_ITEM_TITLE, CC_NS)) +
 			 " type " + resource.getAttributeValue(TYPE) +
 			 " href " + resource.getAttributeValue(HREF));
       String type = resource.getAttributeValue(TYPE);
       int top = pages.size()-1;
       SimplePage page = pages.get(top);
       Integer seq = sequences.get(top);
-      String title = the_xml.getChildText(CC_ITEM_TITLE, CC_NS);
+      String title = null;
+      if (the_xml == null)
+	  title = "Question Pool";
+      else
+	  title = the_xml.getChildText(CC_ITEM_TITLE, CC_NS);
 
       try {
 	  if (type.equals(CC_WEBCONTENT)) {
@@ -305,7 +327,49 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
 	      System.err.println("topic " + getFileName(resource) +
 			     " " + parser.getXML(loader, getFileName(resource)));
-	  } else if (type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1)) {
+	  } else if (type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1) ||
+		     type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1)) {
+
+	      boolean isBank = type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1);
+
+	      System.out.println("processing test " + isBank);
+
+	      InputStream instream = utils.getFile(getFileName(resource));
+	      ByteArrayOutputStream baos = new ByteArrayOutputStream();
+	      PrintWriter outwriter = new PrintWriter(baos);
+	      
+	      QtiImport imp = new QtiImport();
+	      try {
+		  imp.mainproc(instream, outwriter, isBank);
+	      } catch (Exception e) {
+		  e.printStackTrace();
+		  System.out.println("qti failed" + e);
+	      }
+
+	      
+	      try {
+
+		  InputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
+
+		  DocumentBuilderFactory builderFactory =
+		      DocumentBuilderFactory.newInstance();
+		  builderFactory.setNamespaceAware(true);
+		  DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
+		  Document document = documentBuilder.parse(inputStream);
+
+		  QTIService qtiService = new QTIService();
+		  System.out.println("about to load into samigo");
+		  if (isBank)
+		      qtiService.createImportedQuestionPool(document, QTIVersion.VERSION_1_2);
+		  else
+		      qtiService.createImportedAssessment(document, QTIVersion.VERSION_1_2);
+		  System.out.println("loaded into samigo");
+
+	      } catch (Exception e) {
+		  System.out.println(e);
+		  simplePageBean.setErrKey("simplepage.resource100: " + e);
+	      }
+
 	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.ASSESSMENT, SimplePageItem.DUMMY, title);
 	      simplePageBean.saveItem(item);
 	      sequences.set(top, seq+1);

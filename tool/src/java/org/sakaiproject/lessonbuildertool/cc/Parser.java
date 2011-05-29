@@ -141,7 +141,10 @@ public class Parser extends AbstractParser {
       Element manifest=this.getXML(utils, IMS_MANIFEST);
       processManifest(manifest, the_handler);
     } catch (Exception e) {
-      throw new ParseException(e.getMessage(),e);
+	System.out.println("before stack trace");
+	e.printStackTrace();
+	System.out.println("parse error " + e);
+	//      throw new ParseException(e.getMessage(),e);
     }
   }
   
@@ -169,6 +172,8 @@ public class Parser extends AbstractParser {
       for (Iterator iter=the_manifest.getChild(CC_RESOURCES, CC_NS).getChildren(CC_RESOURCE, CC_NS).iterator(); iter.hasNext(); ) {
         Element resource=(Element)iter.next();
         if (resource.getAttributeValue(CC_RES_TYPE).equals(QUESTION_BANK)) {
+	    // I know it's not really an item, but it uses the same code as an assessment
+	    the_handler.setCCItemXml(null, resource, this, utils);
           processResource(resource, the_handler);
           qbp.parseContent(the_handler, utils, resource, isProtected(resource));
         }
@@ -230,9 +235,12 @@ public class Parser extends AbstractParser {
               DefaultHandler the_handler) throws ParseException {
     if (the_item.getAttributeValue(CC_ITEM_IDREF)!=null) {
       Element resource=findResource(the_item.getAttributeValue(CC_ITEM_IDREF), the_resources);
+      System.out.println("item proce 1");
       the_handler.startCCItem(the_item.getAttributeValue(CC_ITEM_ID),
                               the_item.getChildText(CC_ITEM_TITLE, CC_NS));
+      System.out.println("item proce 2");
       the_handler.setCCItemXml(the_item, resource, this, utils);
+      System.out.println("item proce 3");
       ContentParser parser=parsers.get(resource.getAttributeValue(CC_RES_TYPE));
       if (parser==null) {
         throw new ParseException("content type not recongised");

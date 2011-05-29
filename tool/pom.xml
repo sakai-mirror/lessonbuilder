@@ -152,6 +152,11 @@
 		<groupId>org.sakaiproject.samigo</groupId>
 		<artifactId>samigo-api</artifactId>
 	</dependency>
+	<dependency>
+	  <groupId>org.sakaiproject.samigo</groupId>
+          <artifactId>samigo-qti</artifactId>
+	  <version>${sakai.samigo.version}</version>
+	</dependency>
 
 <!--
 	<dependency>
