@@ -326,38 +326,65 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 	DiscussionForumManager manager = (DiscussionForumManager)
 	    ComponentManager.get("org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager");
 
-	SortedSet<DiscussionForum> forums = new TreeSet<DiscussionForum>(new ForumBySortIndexAscAndCreatedDateDesc());
-	for (DiscussionForum forum: manager.getForumsForMainPage())
-	    forums.add(forum);
-
-	List<LessonEntity> ret = new ArrayList<LessonEntity>();
-	// security. assume this is only used in places where it's OK, so skip security checks
 	DiscussionForum ourForum = null;
-
-	for (DiscussionForum forum: forums) {
-	    if (forum.getTitle().equals(title)) {
-		ourForum = forum;
-		break;
-	    }
-	}
-	
-	if (ourForum == null) {
-	    ourForum = manager.createForum();
-	    ourForum.setTitle(title);
-	    manager.saveForum(ourForum);
-	}
-
 	DiscussionTopic ourTopic = null;
 
-	for (Object o: ourForum.getTopicsSet()) {
-	    DiscussionTopic topic = (DiscussionTopic)o;
-	    if (topic.getTitle().equals(topicTitle)) {
-		ourTopic = topic;
-		break;
-	    }
-	}
+	int forumtry = 0;
+	int topictry = 0;
 
-	if (ourTopic == null) {
+	for (;;) {
+
+	    ourForum = null;
+
+	    SortedSet<DiscussionForum> forums = new TreeSet<DiscussionForum>(new ForumBySortIndexAscAndCreatedDateDesc());
+	    for (DiscussionForum forum: manager.getForumsForMainPage())
+		forums.add(forum);
+
+	    for (DiscussionForum forum: forums) {
+		if (forum.getTitle().equals(title)) {
+		    ourForum = forum;
+		    break;
+		}
+	    }
+	
+	    if (ourForum == null) {
+		if (forumtry > 0) {
+		    System.out.println("oops, forum still not there the second time");
+		    return null;
+		}
+		forumtry ++;
+
+		ourForum = manager.createForum();
+		ourForum.setTitle(title);
+		manager.saveForum(ourForum);
+		
+		continue;  // reread, better be there this time
+
+	    }
+
+	    // forum now exists, and was just reread
+
+	    ourTopic = null;
+
+	    for (Object o: ourForum.getTopicsSet()) {
+		DiscussionTopic topic = (DiscussionTopic)o;
+		if (topic.getTitle().equals(topicTitle)) {
+		    ourTopic = topic;
+		    break;
+		}
+	    }
+
+	    if (ourTopic != null) // ok, forum and topic exist
+		break;
+
+	    if (topictry > 0) {
+		System.out.println("oops, topic still not there the second time");
+		return null;
+	    }
+	    topictry ++;
+
+	    // create it
+
 	    ourTopic = manager.createTopic(ourForum);
 	    ourTopic.setTitle(topicTitle);
 	    String attachHtml = "";
@@ -372,6 +399,7 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 		    attachHtml = attachHtml + "<p><a target='_blank' href='" + "/access/content" + base + href + "'>" + label + "</a>";
 		}
 	    }
+
 	    if (texthtml) {
 		ourTopic.setExtendedDescription(text.replaceAll("\\$IMS-CC-FILEBASE\\$","/access/content" + base) + attachHtml);
 		ourTopic.setShortDescription(FormattedText.convertFormattedTextToPlaintext(text));
@@ -382,9 +410,11 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 	    // there's a better way to do attachments, but it's too complex for now
 
 	    manager.saveTopic(ourTopic);
+
+	    // now go back and mmake sure everything is there
+
 	}
 
-	//	    entity = new ForumEntity(TYPE_FORUM_TOPIC, topic.getId(), 2);
 	return "/" + FORUM_TOPIC + "/" + ourTopic.getId();
     }
 
