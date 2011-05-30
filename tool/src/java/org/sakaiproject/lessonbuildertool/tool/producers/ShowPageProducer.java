@@ -1070,10 +1070,17 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	 * @return Whether or not this item is available.
 	 */
 	protected static boolean makeLink(UIContainer container, String ID, SimplePageItem i, SimplePageBean simplePageBean, SimplePageToolDao simplePageToolDao, MessageLocator messageLocator, boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {
+
 		String URL = "";
 		boolean available = simplePageBean.isItemAvailable(i);
 
-		if (i.getType() == SimplePageItem.RESOURCE || i.getType() == SimplePageItem.URL) {
+	        if (i.getSakaiId().equals(SimplePageItem.DUMMY)) {
+		    UILink link = UILink.make(container, ID);
+		    // disablelink adds a tooltip telling the user to complete prereq's. That's not appropriate here
+		    link.decorate(new UIFreeAttributeDecorator("onclick", "return false"));
+		    link.decorate(new UIDisabledDecorator());
+		    link.decorate(new UIStyleDecorator("disabled"));
+		} else if (i.getType() == SimplePageItem.RESOURCE || i.getType() == SimplePageItem.URL) {
 
 		    if (i.getType() == SimplePageItem.RESOURCE && i.isSameWindow()) {
 			if (available) {

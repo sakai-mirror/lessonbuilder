@@ -68,7 +68,7 @@ import uk.org.ponder.messageutil.MessageLocator;
 // injected class to handle tests and quizes as well. That will eventually
 // be converted to be a LessonEntity.
 
-public class JForumEntity implements LessonEntity {
+public class JForumEntity implements LessonEntity, ForumInterface {
 
     static boolean initdone = false;
 
@@ -451,5 +451,9 @@ public class JForumEntity implements LessonEntity {
     public String editItemSettingsUrl(SimplePageBean bean) {
 	return null;
     }
+
+    public void importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmenthrefs) {
+    }
+
 
 }

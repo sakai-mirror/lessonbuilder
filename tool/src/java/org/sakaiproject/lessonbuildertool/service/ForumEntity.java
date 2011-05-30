@@ -41,8 +41,12 @@ import org.sakaiproject.api.app.messageforums.DiscussionForum;
 import org.sakaiproject.api.app.messageforums.DiscussionTopic;
 import org.sakaiproject.api.app.messageforums.Topic;
 import org.sakaiproject.api.app.messageforums.MessageForumsForumManager;
+import org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager;
 import org.sakaiproject.api.app.messageforums.MessageForumsMessageManager;
+import org.sakaiproject.api.app.messageforums.Attachment;
 import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.util.FormattedText;
+import java.net.URLEncoder;
 
 import uk.org.ponder.messageutil.MessageLocator;
 
@@ -63,7 +67,7 @@ import uk.org.ponder.messageutil.MessageLocator;
 // injected class to handle tests and quizes as well. That will eventually
 // be converted to be a LessonEntity.
 
-public class ForumEntity implements LessonEntity {
+public class ForumEntity implements LessonEntity, ForumInterface {
 
     static MessageForumsForumManager forumManager = (MessageForumsForumManager)
 	ComponentManager.get("org.sakaiproject.api.app.messageforums.MessageForumsForumManager");
@@ -300,6 +304,80 @@ public class ForumEntity implements LessonEntity {
     // contents and settings. This will be null except in that situation                                                                     
     public String editItemSettingsUrl(SimplePageBean bean) {
 	return null;
+    }
+
+    public void importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmentHrefs) {
+
+	DiscussionForumManager manager = (DiscussionForumManager)
+	    ComponentManager.get("org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager");
+
+	SortedSet<DiscussionForum> forums = new TreeSet<DiscussionForum>(new ForumBySortIndexAscAndCreatedDateDesc());
+	for (DiscussionForum forum: manager.getForumsForMainPage())
+	    forums.add(forum);
+
+	List<LessonEntity> ret = new ArrayList<LessonEntity>();
+	// security. assume this is only used in places where it's OK, so skip security checks
+	DiscussionForum ourForum = null;
+
+	for (DiscussionForum forum: forums) {
+	    if (forum.getTitle().equals(title)) {
+		ourForum = forum;
+		break;
+	    }
+	}
+	
+	if (ourForum == null) {
+	    ourForum = manager.createForum();
+	    ourForum.setTitle(title);
+	    manager.saveForum(ourForum);
+	}
+
+	System.out.println("ourforum " + ourForum);
+
+	DiscussionTopic ourTopic = null;
+
+	for (Object o: ourForum.getTopicsSet()) {
+	    DiscussionTopic topic = (DiscussionTopic)o;
+	    if (topic.getTitle().equals(topicTitle)) {
+		ourTopic = topic;
+		break;
+	    }
+	}
+
+	if (ourTopic == null) {
+	    System.out.println("point 1");
+	    ourTopic = manager.createTopic(ourForum);
+	    ourTopic.setTitle(topicTitle);
+	    String attachHtml = "";
+	    System.out.println("point 2");
+	    if (attachmentHrefs != null && attachmentHrefs.size() > 0) {
+		for (String href: attachmentHrefs) {
+		    String label = href;
+		    int slash = label.lastIndexOf("/");
+		    if (slash >= 0)
+			label = label.substring(slash+1);
+		    if (label.equals(""))
+			label = "Attachment";
+		    attachHtml = attachHtml + "<p><a target='_blank' href='" + "/access/content" + base + href + "'>" + label + "</a>";
+		}
+	    }
+	    System.out.println("point 3");
+	    if (texthtml) {
+		ourTopic.setExtendedDescription(text.replaceAll("\\$IMS-CC-FILEBASE\\$","/access/content" + base) + attachHtml);
+		ourTopic.setShortDescription(FormattedText.convertFormattedTextToPlaintext(text));
+	    } else {
+		ourTopic.setExtendedDescription(FormattedText.convertPlaintextToFormattedText(text) + attachHtml);
+		ourTopic.setShortDescription(text);
+	    }
+	    System.out.println("point 4");
+	    // there's a better way to do attachments, but it's too complex for now
+
+	    manager.saveTopic(ourTopic);
+	    System.out.println("point 5");
+	}
+
+	//	    entity = new ForumEntity(TYPE_FORUM_TOPIC, topic.getId(), 2);
+	System.out.println("forum import " + title);
     }
 
 }

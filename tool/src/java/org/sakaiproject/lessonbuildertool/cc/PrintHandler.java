@@ -73,6 +73,7 @@ import org.sakaiproject.event.api.NotificationService;
 import org.sakaiproject.lessonbuildertool.cc.QtiImport;
 import org.sakaiproject.lessonbuildertool.service.LessonEntity;
 import org.sakaiproject.lessonbuildertool.service.QuizEntity;
+import org.sakaiproject.lessonbuildertool.service.ForumInterface;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -98,9 +99,15 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private static final String XML=".xml";
   private static final String URL="url";
   private static final String TITLE="title";
+  private static final String TEXT="text";
+  private static final String TEXTTYPE="texttype";
+  private static final String TEXTHTML="text/html";
   private static final String DESCRIPTION="description";
   private static final String GENERAL="general";
   private static final String STRING="string";
+  private static final String ATTACHMENT="attachment";
+  private static final String ATTACHMENTS="attachments";
+    
   private static final Namespace CC_NS = Namespace.getNamespace("ims", "http://www.imsglobal.org/xsd/imscc/imscp_v1p1");
   private static final Namespace MD_NS= Namespace.getNamespace("lom", "http://ltsc.ieee.org/xsd/imscc/LOM");
   private static final String CC_ITEM_TITLE="title";
@@ -328,6 +335,40 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      sequences.set(top, seq+1);
 	      
 	  } else if (type.equals(CC_TOPIC0) || type.equals(CC_TOPIC1)) {
+	      String filename = getFileName(resource);
+	      Element topicXml =  parser.getXML(loader, filename);
+	      String topicTitle = topicXml.getChildText(TITLE);
+	      String text = topicXml.getChildText(TEXT);
+	      boolean texthtml = false;
+	      if (text != null) {
+		  Element textNode = topicXml.getChild(TEXT);
+		  String textformat = textNode.getAttributeValue(TEXTTYPE);
+		  if (TEXTHTML.equalsIgnoreCase(textformat))
+		      texthtml = true;
+	      }
+
+	      String base = baseName + filename;
+	      int slash = base.lastIndexOf("/");
+	      if (slash >= 0)
+		  base = base.substring(0, slash+1); // include trailing slash
+
+	      Element attachmentlist = topicXml.getChild(ATTACHMENTS);
+	      List<Element>attachments = new ArrayList<Element>();
+	      if (attachmentlist != null)
+		  attachments = attachmentlist.getChildren();
+	      List<String>attachmentHrefs = new ArrayList<String>();
+	      for (Element a: attachments) 
+		  attachmentHrefs.add(a.getAttributeValue(HREF));
+
+	      System.out.println("topic " + topicTitle + " " + texthtml);
+	      System.out.println("text " + text);
+	      System.out.println("attachments " + attachmentHrefs);
+
+	      ForumInterface f = (ForumInterface)topictool;
+
+	      // title is for the cartridge. That will be used as the forum
+	      f.importObject(title, topicTitle, text, texthtml, base, attachmentHrefs);
+
 	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.FORUM, SimplePageItem.DUMMY, title);
 	      simplePageBean.saveItem(item);
 	      sequences.set(top, seq+1);

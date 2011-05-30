@@ -150,10 +150,12 @@ public class Parser extends AbstractParser {
   
   private void
   processManifest(Element the_manifest, DefaultHandler the_handler) throws ParseException {
+      System.out.println("start manifest");
     the_handler.startManifest();
     the_handler.setManifestXml(the_manifest);
     processAuthorization(the_manifest, the_handler); 
     processManifestMetadata(the_manifest, the_handler);
+      System.out.println("start manifest 2");
     try {
       XPath path=XPath.newInstance(ITEM_QUERY);
       path.addNamespace(CC_NS);
