@@ -45,6 +45,11 @@ import org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager;
 import org.sakaiproject.api.app.messageforums.MessageForumsMessageManager;
 import org.sakaiproject.api.app.messageforums.Attachment;
 import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.tool.cover.ToolManager;
+import org.sakaiproject.site.api.ToolConfiguration;
+import org.sakaiproject.site.api.Site;
+import org.sakaiproject.site.cover.SiteService;
+
 import org.sakaiproject.util.FormattedText;
 import java.net.URLEncoder;
 
@@ -235,8 +240,17 @@ public class ForumEntity implements LessonEntity, ForumInterface {
     }
 
     public String getUrl() {
+	Site site = null;
+	try {
+	    site = SiteService.getSite(ToolManager.getCurrentPlacement().getContext());
+	} catch (Exception impossible) {
+	    return null;
+	}
+	ToolConfiguration tool = site.getToolForCommonId("sakai.forums");
+	String placement = tool.getId();
+
 	if (type == TYPE_FORUM_TOPIC)
-	    return "/direct/forum_topic/" + id;
+	    return "/messageforums-tool/jsp/discussionForum/message/dfAllMessagesDirect.jsf?topicId=" + id + "&placementId=" + placement;
 	else
 	    return "/direct/forum/" + id;
     }
@@ -306,7 +320,8 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 	return null;
     }
 
-    public void importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmentHrefs) {
+    // returns SakaiId of thing just created
+    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmentHrefs) {
 
 	DiscussionForumManager manager = (DiscussionForumManager)
 	    ComponentManager.get("org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager");
@@ -378,6 +393,7 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 
 	//	    entity = new ForumEntity(TYPE_FORUM_TOPIC, topic.getId(), 2);
 	System.out.println("forum import " + title);
+	return "/" + FORUM_TOPIC + "/" + ourTopic.getId();
     }
 
 }

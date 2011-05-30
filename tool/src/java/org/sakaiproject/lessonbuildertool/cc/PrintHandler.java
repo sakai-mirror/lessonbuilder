@@ -367,9 +367,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      ForumInterface f = (ForumInterface)topictool;
 
 	      // title is for the cartridge. That will be used as the forum
-	      f.importObject(title, topicTitle, text, texthtml, base, attachmentHrefs);
+	      String sakaiId = f.importObject(title, topicTitle, text, texthtml, base, attachmentHrefs);
 
-	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.FORUM, SimplePageItem.DUMMY, title);
+	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.FORUM, sakaiId, title);
 	      simplePageBean.saveItem(item);
 	      sequences.set(top, seq+1);
 

@@ -37,6 +37,7 @@ import javax.servlet.ServletContext;
 
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.UrlItem;
+import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.ToolConfiguration;
 import org.sakaiproject.tool.api.ActiveTool;
@@ -452,7 +453,8 @@ public class JForumEntity implements LessonEntity, ForumInterface {
 	return null;
     }
 
-    public void importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmenthrefs) {
+    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmenthrefs) {
+	return SimplePageItem.DUMMY;
     }
 
 

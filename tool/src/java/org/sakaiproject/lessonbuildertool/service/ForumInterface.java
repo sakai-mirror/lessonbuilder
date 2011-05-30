@@ -34,6 +34,6 @@ import java.util.List;
  */
 public interface ForumInterface {
 
-    public void importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>arrachmenthrefs);
+    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>arrachmenthrefs);
 
 }
