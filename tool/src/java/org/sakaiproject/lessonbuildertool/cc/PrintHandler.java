@@ -148,7 +148,6 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       this.siteId = bean.getCurrentSiteId();
       this.quiztool = q;
       this.topictool = l;
-      System.out.println("setting up quiztool " + q + " topictool " + l);
   }
 
   public void setAssessmentDetails(String the_ident, String the_title) {
@@ -173,7 +172,6 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       String title = this.title;
       if (folder != null)
 	  title = folder.getChildText(TITLE, CC_NS);
-      System.err.println("create page " + title);
 
       // add top level pages to left margin
       SimplePage page = null;
@@ -252,14 +250,12 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  } catch (IdUsedException e) {
 	      name = name.substring(0, olength) + "-" + tries;
 	  } catch (Exception e) {
-	      System.out.println("CC loader: Unable to create resource " + name + " " + e);
 	      simplePageBean.setErrKey("simplepage.create.resource.failed" + name + " " +e);
 	      return null;
 	  }
       }
       if (collection == null) {
 	  simplePageBean.setErrKey("simplepage.resource100: " + name);
-	  System.out.println("CC loader: failed after 100 attempts to create resource " + name);
 	  return null;
       }
       return collection.getId();
@@ -277,7 +273,8 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       if (pages.size() == 0)
 	  startCCFolder(null);
 
-      System.err.println("\nadd item to page " + pages.get(pages.size()-1).getTitle() +
+      if (all)
+	  System.err.println("\nadd item to page " + pages.get(pages.size()-1).getTitle() +
 			 " xml: "+the_xml + 
 			 " title " + (the_xml==null?"Question Pool" : the_xml.getChildText(CC_ITEM_TITLE, CC_NS)) +
 			 " type " + resource.getAttributeValue(TYPE) +
@@ -360,10 +357,6 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      for (Element a: attachments) 
 		  attachmentHrefs.add(a.getAttributeValue(HREF));
 
-	      System.out.println("topic " + topicTitle + " " + texthtml);
-	      System.out.println("text " + text);
-	      System.out.println("attachments " + attachmentHrefs);
-
 	      ForumInterface f = (ForumInterface)topictool;
 
 	      // title is for the cartridge. That will be used as the forum
@@ -373,15 +366,11 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      simplePageBean.saveItem(item);
 	      sequences.set(top, seq+1);
 
-	      System.err.println("topic " + getFileName(resource) +
-			     " " + parser.getXML(loader, getFileName(resource)));
 	  } else if (quiztool != null && (
 		     type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1) ||
 		     type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1))) {
 
 	      boolean isBank = type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1);
-
-	      System.out.println("processing test " + isBank);
 
 	      InputStream instream = utils.getFile(getFileName(resource));
 	      ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -392,29 +381,22 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 		  imp.mainproc(instream, outwriter, isBank);
 	      } catch (Exception e) {
 		  e.printStackTrace();
-		  System.out.println("qti failed" + e);
 	      }
 
 	      
 	      try {
 
-		  System.out.println("printhand point 1");
 		  InputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
 
 		  DocumentBuilderFactory builderFactory =
 		      DocumentBuilderFactory.newInstance();
-		  System.out.println("printhand point 2");
 		  builderFactory.setNamespaceAware(true);
 		  DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
 		  Document document = documentBuilder.parse(inputStream);
-		  System.out.println("printhand point 3");
 
 		  QuizEntity q = (QuizEntity)quiztool;
-		  System.out.println(quiztool.getToolId());
 
 		  q.importObject(document, isBank, siteId);
-
-		  System.out.println("loaded into quiztool");
 
 	      } catch (Exception e) {
 		  System.out.println(e);
@@ -429,14 +411,10 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 		  sequences.set(top, seq+1);
 	      }
 
-	      System.err.println("assessment " + getFileName(resource) + 
-				 " " + parser.getXML(loader, getFileName(resource)));
 	  } else if (type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1))
-	      System.err.println("question bank " + getFileName(resource) +
-				 " " + parser.getXML(loader, getFileName(resource)));
+	      ;
 	  else if (type.equals(CC_BLTI0) || type.equals(CC_BLTI1))
-	      System.err.println("blti " + getFileName(resource) + 
-				 " " + parser.getXML(loader, getFileName(resource)));
+	      ;
 	  else
 	      System.err.println("implemented type: " + resource.getAttributeValue(TYPE));
       } catch (Exception e) {
@@ -503,11 +481,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       if (filesAdded.contains(the_file_id))
 	  return;
 
-      System.err.println("adding file: "+the_file_id);
       InputStream infile = null;
       try {
 	  infile = utils.getFile(the_file_id);
-	  System.err.println("Got file " + the_file_id);
 	  String name = the_file_id;
 	  int slash = the_file_id.lastIndexOf("/");
 	  if (slash >=0 )
@@ -664,18 +640,13 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       // NOTE: need to handle languages
       Element general = the_md.getChild(GENERAL, MD_NS);
       if (general != null) {
-	  System.err.println("got general");
 	  Element tnode = general.getChild(TITLE, MD_NS);
-	  System.err.println("got title " + tnode);
 	  if (tnode != null) {
 	      title = tnode.getChildTextTrim(STRING, MD_NS);
-	      System.err.println("got title " + title);
 	  }
 	  Element tdescription=general.getChild(DESCRIPTION, MD_NS);
-	  System.err.println("got description " + tdescription);
 	  if (tdescription != null) {
 	      description = tdescription.getChildTextTrim(STRING, MD_NS);
-	      System.err.println("got description " + description);
 	  }
 
       }
@@ -683,9 +654,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  title = "Cartridge";
       if ("".equals(description))
 	  description = null;
-      System.err.println("cartridge metadata title:" + title + " description: " + description);
       baseName = makeBaseFolder(title);
-      System.err.println("basename " + baseName);
 
   }
 

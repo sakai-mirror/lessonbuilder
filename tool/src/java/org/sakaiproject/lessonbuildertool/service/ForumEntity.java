@@ -347,8 +347,6 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 	    manager.saveForum(ourForum);
 	}
 
-	System.out.println("ourforum " + ourForum);
-
 	DiscussionTopic ourTopic = null;
 
 	for (Object o: ourForum.getTopicsSet()) {
@@ -360,11 +358,9 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 	}
 
 	if (ourTopic == null) {
-	    System.out.println("point 1");
 	    ourTopic = manager.createTopic(ourForum);
 	    ourTopic.setTitle(topicTitle);
 	    String attachHtml = "";
-	    System.out.println("point 2");
 	    if (attachmentHrefs != null && attachmentHrefs.size() > 0) {
 		for (String href: attachmentHrefs) {
 		    String label = href;
@@ -376,7 +372,6 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 		    attachHtml = attachHtml + "<p><a target='_blank' href='" + "/access/content" + base + href + "'>" + label + "</a>";
 		}
 	    }
-	    System.out.println("point 3");
 	    if (texthtml) {
 		ourTopic.setExtendedDescription(text.replaceAll("\\$IMS-CC-FILEBASE\\$","/access/content" + base) + attachHtml);
 		ourTopic.setShortDescription(FormattedText.convertFormattedTextToPlaintext(text));
@@ -384,15 +379,12 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 		ourTopic.setExtendedDescription(FormattedText.convertPlaintextToFormattedText(text) + attachHtml);
 		ourTopic.setShortDescription(text);
 	    }
-	    System.out.println("point 4");
 	    // there's a better way to do attachments, but it's too complex for now
 
 	    manager.saveTopic(ourTopic);
-	    System.out.println("point 5");
 	}
 
 	//	    entity = new ForumEntity(TYPE_FORUM_TOPIC, topic.getId(), 2);
-	System.out.println("forum import " + title);
 	return "/" + FORUM_TOPIC + "/" + ourTopic.getId();
     }
 

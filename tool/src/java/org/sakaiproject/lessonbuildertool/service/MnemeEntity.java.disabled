@@ -358,14 +358,11 @@ public class MnemeEntity implements LessonEntity, QuizEntity {
 	// ignore isbank because everything has to go into pool.
 	// they have no way to import an assessment
 
-	System.out.println("about to load into mneme");
-
 	try {
 	    importQtiService.importPool(document, siteId);
 	} catch (Exception e) {
 	    simplePageBean.setErrMessage("" + e);
 	}
 
-	System.out.println("loaded into mneme");
     }
 }

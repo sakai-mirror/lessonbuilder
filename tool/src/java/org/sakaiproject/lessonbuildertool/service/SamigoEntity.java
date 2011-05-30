@@ -498,12 +498,10 @@ public class SamigoEntity implements LessonEntity, QuizEntity {
     public void importObject(Document document, boolean isBank, String siteId) {
 
 	QTIService qtiService = new QTIService();
-	System.out.println("about to load into samigo");
 	if (isBank)
 	    qtiService.createImportedQuestionPool(document, QTIVersion.VERSION_1_2);
 	else
 	    qtiService.createImportedAssessment(document, QTIVersion.VERSION_1_2);
-	System.out.println("loaded into samigo");
     }
 
 
