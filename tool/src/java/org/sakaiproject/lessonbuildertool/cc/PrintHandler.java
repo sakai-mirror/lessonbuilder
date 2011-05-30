@@ -204,7 +204,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private String makeBaseFolder(String name) {
 
       if (siteId == null) {
-	  simplePageBean.setErrKey("simplepage.nosite");
+	  simplePageBean.setErrKey("simplepage.nosite", "");
 	  return null;
       }
 
@@ -250,12 +250,12 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  } catch (IdUsedException e) {
 	      name = name.substring(0, olength) + "-" + tries;
 	  } catch (Exception e) {
-	      simplePageBean.setErrKey("simplepage.create.resource.failed" + name + " " +e);
+	      simplePageBean.setErrKey("simplepage.create.resource.failed",name + " " +e);
 	      return null;
 	  }
       }
       if (collection == null) {
-	  simplePageBean.setErrKey("simplepage.resource100: " + name);
+	  simplePageBean.setErrKey("simplepage.resource100: ", name);
 	  return null;
       }
       return collection.getId();
@@ -401,7 +401,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      } catch (Exception e) {
 		  System.out.println(e);
 		  e.printStackTrace();
-		  simplePageBean.setErrKey("simplepage.resource100: " + e);
+		  simplePageBean.setErrKey("simplepage.resource100", e.toString());
 	      }
 
 	      // question banks don't appear on the page
@@ -501,7 +501,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  filesAdded.add(the_file_id);
 
       } catch (Exception e) {
-	  simplePageBean.setErrKey("simplepage.create.resource.failed " + e + ": " + the_file_id);
+	  simplePageBean.setErrKey("simplepage.create.resource.failed", e + ": " + the_file_id);
 	  System.out.println("CC loader: unable to get file " + the_file_id);
       }
   }

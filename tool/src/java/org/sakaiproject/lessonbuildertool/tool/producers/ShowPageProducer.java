@@ -1470,9 +1470,26 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UICommand.make(form, "import-cc-submit", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 
+		class ToolData {
+		    String toolId;
+		    String toolName;
+		}
+
 		int numQuizEngines = 0;
-		for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity())
-		    numQuizEngines++;
+		List<ToolData> quizEngines = new ArrayList<ToolData>();
+
+		for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity()){
+		    String toolId = q.getToolId();
+		    String toolName = simplePageBean.getCurrentToolTitle(q.getToolId());
+		    // we only want the ones that are actually in our site
+		    if (toolName != null) {
+			ToolData toolData = new ToolData();
+			toolData.toolId = toolId;
+			toolData.toolName = toolName;
+			numQuizEngines++;
+			quizEngines.add(toolData);
+		    }
+		}
 		
 		if (numQuizEngines == 0)  // warning message saying no quiz will be loaded
 		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.noquizengines"));
@@ -1482,42 +1499,54 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		    // need values array for RSF's select implementation. It sees radio buttons as a kind of select
 		    ArrayList<String> values = new ArrayList<String>();
-		    for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity())
-			values.add(q.getToolId());
+		    for (ToolData toolData: quizEngines)
+			values.add(toolData.toolId);
 
 		    // the message
 		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.choosequizengine"));
 		    // now the list of radio buttons
 		    UISelect quizselect = UISelect.make(form, "quiztools", values.toArray(new String[1]), "#{simplePageBean.quiztool}", null);
 		    int i = 0;
-		    for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity()) {
+		    for (ToolData toolData: quizEngines) {
 			UIBranchContainer toolItem = UIBranchContainer.make(form, "quiztoolitem:", String.valueOf(i));
 			UISelectChoice.make(toolItem, "quiztoolbox", quizselect.getFullID(), i);
-			UIOutput.make(toolItem, "quiztoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
+			UIOutput.make(toolItem, "quiztoollabel", toolData.toolName);
 			i++;
 		    }
 		}
 
 		int numTopicEngines = 0;
-		for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity())
-		    numTopicEngines++;
-		
+		List<ToolData> topicEngines = new ArrayList<ToolData>();
+
+		for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity()){
+		    String toolId = q.getToolId();
+		    String toolName = simplePageBean.getCurrentToolTitle(q.getToolId());
+		    // we only want the ones that are actually in our site
+		    if (toolName != null) {
+			ToolData toolData = new ToolData();
+			toolData.toolId = toolId;
+			toolData.toolName = toolName;
+			numTopicEngines++;
+			topicEngines.add(toolData);
+		    }
+		}
+
 		if (numTopicEngines == 0)
 		    UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.notopicengines"));
 		else if (numTopicEngines == 1)
 		    UIInput.make(form, "topictool", "#{simplePageBean.topictool}" ,forumEntity.getToolId());
 		else {
 		    ArrayList<String> values = new ArrayList<String>();
-		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity())
-			values.add(q.getToolId());
+		    for (ToolData toolData: topicEngines)
+			values.add(toolData.toolId);
 
 		    UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.choosetopicengine"));
 		    UISelect topicselect = UISelect.make(form, "topictools", values.toArray(new String[1]), "#{simplePageBean.topictool}", null);
 		    int i = 0;
-		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity()) {
+		    for (ToolData toolData: topicEngines) {
 			UIBranchContainer toolItem = UIBranchContainer.make(form, "topictoolitem:", String.valueOf(i));
 			UISelectChoice.make(toolItem, "topictoolbox", topicselect.getFullID(), i);
-			UIOutput.make(toolItem, "topictoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
+			UIOutput.make(toolItem, "topictoollabel", toolData.toolName);
 			i++;
 		    }
 		}
