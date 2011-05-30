@@ -53,6 +53,11 @@ import org.sakaiproject.tool.assessment.data.ifc.assessment.AssessmentAccessCont
 import org.sakaiproject.tool.assessment.data.dao.assessment.PublishedAssessmentData;
 import org.sakaiproject.tool.assessment.services.GradingService;
 import org.sakaiproject.tool.assessment.services.PersistenceService;
+
+import org.w3c.dom.Document;
+import org.sakaiproject.tool.assessment.services.qti.QTIService;
+import org.sakaiproject.tool.assessment.qti.constants.QTIVersion;
+
 import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.cover.SiteService;
@@ -110,6 +115,9 @@ public class SamigoEntity implements LessonEntity {
     public void setNextEntity(LessonEntity e) {
 	nextEntity = e;
     }
+    public LessonEntity getNextEntity() {
+	return nextEntity;
+    }
     
     static MemoryService memoryService = null;
     public void setMemoryService(MemoryService m) {
@@ -149,6 +157,10 @@ public class SamigoEntity implements LessonEntity {
 	this.type = type;
 	this.id = id;
 	this.level = level;
+    }
+
+    public String getToolId() {
+	return "sakai.samigo";
     }
 
     // the underlying object, something Sakaiish
@@ -481,6 +493,18 @@ public class SamigoEntity implements LessonEntity {
 	else
 	    return "/portal/tool/" + tool + "/jsf/index/mainIndex";
 
+    }
+
+    public void importObject(Object d, Object i) {
+	Document document = (Document)d;
+	Boolean isBank = (Boolean)i;
+	QTIService qtiService = new QTIService();
+	System.out.println("about to load into samigo");
+	if (isBank)
+	    qtiService.createImportedQuestionPool(document, QTIVersion.VERSION_1_2);
+	else
+	    qtiService.createImportedAssessment(document, QTIVersion.VERSION_1_2);
+	System.out.println("loaded into samigo");
     }
 
 

@@ -219,6 +219,7 @@ public class SimplePageBean {
 
 	private String redirectSendingPage = null;
 	private String redirectViewId = null;
+        private String quiztool = null;
 
         public Map<String, MultipartFile> multipartMap;
 
@@ -378,6 +379,11 @@ public class SimplePageBean {
 		this.hasReleaseDate = hasReleaseDate;
 	}
 
+    // gets called for non-checked boxes also, but q will be null
+	public void setQuiztool(String q) {
+	    if (q != null)
+		quiztool = q;
+	}
 
 	public String getName() {
 		if (itemId != null && itemId != -1) {
@@ -840,6 +846,14 @@ public class SimplePageBean {
 	    if (tool == null)
 		return null;
 	    return tool.getId();
+	}
+
+        public String getCurrentToolTitle(String commonToolId) {
+	    Site site = getCurrentSite();
+	    ToolConfiguration tool = site.getToolForCommonId(commonToolId);
+	    if (tool == null)
+		return null;
+	    return tool.getTitle();
 	}
 
 	private Site getCurrentSite() {
@@ -3115,7 +3129,14 @@ public class SimplePageBean {
 
 		    CartridgeLoader cartridgeLoader = ZipLoader.getUtilities(cc, root.getCanonicalPath());
 		    Parser parser = Parser.createCartridgeParser(cartridgeLoader);
-		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao));
+
+		    LessonEntity quizobject = null;
+		    for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity()) {
+			if (q.getToolId().equals(quiztool))
+			    quizobject = q;
+		    }
+		    
+		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao, quizobject));
 
 		    System.out.println("have a file");
 		    System.out.println("name: " + file.getOriginalFilename());

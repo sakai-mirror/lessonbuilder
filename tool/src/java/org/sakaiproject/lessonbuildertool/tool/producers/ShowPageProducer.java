@@ -1461,6 +1461,27 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		UICommand.make(form, "import-cc-submit", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
+
+		int numQuizEngines = 0;
+		for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity())
+		    numQuizEngines++;
+		
+		if (numQuizEngines == 0)
+		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.noquizengines"));
+		else if (numQuizEngines == 1)
+		    UIInput.make(form, "quiztool", "#{simplePageBean.quiztool}" ,quizEntity.getToolId());
+		else {
+		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.choosequizengine"));
+		    UIOutput.make(form, "quiztools");
+		    for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity()) {
+			UIBranchContainer toolItem = UIBranchContainer.make(form, "quiztoolitem:");
+			UIInput.make(toolItem, "quiztoolbox", "#{simplePageBean.quiztool}", q.getToolId());
+			UIOutput.make(toolItem, "quiztoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
+		    }
+
+		}
+		    
+
 	}
 
 

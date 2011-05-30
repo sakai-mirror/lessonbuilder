@@ -71,6 +71,7 @@ import org.sakaiproject.entity.api.ResourcePropertiesEdit;
 import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.event.api.NotificationService;
 import org.sakaiproject.lessonbuildertool.cc.QtiImport;
+import org.sakaiproject.lessonbuildertool.service.LessonEntity;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -127,14 +128,17 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private String description = null;
   private String baseName = null;
   private String siteId = null;
+  private LessonEntity quiztool = null;
   private Set<String> filesAdded = new HashSet<String>();
 
-  public PrintHandler(SimplePageBean bean, CartridgeLoader utils, SimplePageToolDao dao) {
+  public PrintHandler(SimplePageBean bean, CartridgeLoader utils, SimplePageToolDao dao, LessonEntity q) {
       super();
       this.utils = utils;
       this.simplePageBean = bean;
       this.simplePageToolDao = dao;
       this.siteId = bean.getCurrentSiteId();
+      this.quiztool = q;
+      System.out.println("setting up quiztool " + q);
   }
 
   public void setAssessmentDetails(String the_ident, String the_title) {
@@ -327,8 +331,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
 	      System.err.println("topic " + getFileName(resource) +
 			     " " + parser.getXML(loader, getFileName(resource)));
-	  } else if (type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1) ||
-		     type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1)) {
+	  } else if (quiztool != null && (
+		     type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1) ||
+		     type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1))) {
 
 	      boolean isBank = type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1);
 
@@ -349,30 +354,37 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      
 	      try {
 
+		  System.out.println("printhand point 1");
 		  InputStream inputStream = new ByteArrayInputStream(baos.toByteArray());
 
 		  DocumentBuilderFactory builderFactory =
 		      DocumentBuilderFactory.newInstance();
+		  System.out.println("printhand point 2");
 		  builderFactory.setNamespaceAware(true);
 		  DocumentBuilder documentBuilder = builderFactory.newDocumentBuilder();
 		  Document document = documentBuilder.parse(inputStream);
+		  System.out.println("printhand point 3");
 
-		  QTIService qtiService = new QTIService();
-		  System.out.println("about to load into samigo");
-		  if (isBank)
-		      qtiService.createImportedQuestionPool(document, QTIVersion.VERSION_1_2);
+		  System.out.println(quiztool.getToolId());
+		  if (quiztool.getToolId().equals("sakai.mneme"))
+		      quiztool.importObject(document, siteId);
 		  else
-		      qtiService.createImportedAssessment(document, QTIVersion.VERSION_1_2);
+		      quiztool.importObject(document, (Boolean)isBank);
+
 		  System.out.println("loaded into samigo");
 
 	      } catch (Exception e) {
 		  System.out.println(e);
+		  e.printStackTrace();
 		  simplePageBean.setErrKey("simplepage.resource100: " + e);
 	      }
 
-	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.ASSESSMENT, SimplePageItem.DUMMY, title);
-	      simplePageBean.saveItem(item);
-	      sequences.set(top, seq+1);
+	      // question banks don't appear on the page
+	      if (!isBank) {
+		  SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.ASSESSMENT, SimplePageItem.DUMMY, title);
+		  simplePageBean.saveItem(item);
+		  sequences.set(top, seq+1);
+	      }
 
 	      System.err.println("assessment " + getFileName(resource) + 
 				 " " + parser.getXML(loader, getFileName(resource)));
@@ -626,7 +638,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       }
       if (title == null || title.equals(""))
 	  title = "Cartridge";
-      if (description.equals(""))
+      if ("".equals(description))
 	  description = null;
       System.err.println("cartridge metadata title:" + title + " description: " + description);
       baseName = makeBaseFolder(title);

@@ -681,6 +681,10 @@ public class QtiImport {
 	out.println("        <fieldlabel>TEXT_FORMAT</fieldlabel>");
 	out.println("        <fieldentry>HTML</fieldentry>");
 	out.println("      </qtimetadatafield>");
+	out.println("      <qtimetadatafield>");
+        out.println("            <fieldlabel>hasRationale</fieldlabel>");
+	out.println("            <fieldentry>false</fieldentry>");
+	out.println("      </qtimetadatafield>");
 	out.println("    </qtimetadata>");
 	out.println("  </itemmetadata>");
 	out.println("  <presentation label=\"Model Short Answer\">");
@@ -949,6 +953,10 @@ public class QtiImport {
 	out.println("      <qtimetadatafield>");
 	out.println("        <fieldlabel>CASE_SENSITIVE</fieldlabel>");
 	out.println("        <fieldentry>"+casesens+"</fieldentry>");
+	out.println("      </qtimetadatafield>");
+	out.println("      <qtimetadatafield>");
+        out.println("            <fieldlabel>hasRationale</fieldlabel>");
+	out.println("            <fieldentry>false</fieldentry>");
 	out.println("      </qtimetadatafield>");
 	out.println("    </qtimetadata>");
 	out.println("  </itemmetadata>");
@@ -1249,6 +1257,10 @@ public class QtiImport {
 	else
 	    out.println("        <fieldentry>Multiple Choice</fieldentry>");
 	out.println("      </qtimetadatafield>");
+	out.println("      <qtimetadatafield>");
+        out.println("            <fieldlabel>hasRationale</fieldlabel>");
+	out.println("            <fieldentry>false</fieldentry>");
+	out.println("      </qtimetadatafield>");
 	out.println("    </qtimetadata>");
 	out.println("    <qtimetadata>");
 	out.println("      <qtimetadatafield>");
@@ -1296,7 +1308,10 @@ public class QtiImport {
 	// if we have any answer specific feedback we have to set it for
 	// all, or the input parser blows up
 	for (Mcans ans:answers) {
-	    out.println("    <respcondition continue=\"No\">");
+	    if (ans.correct)
+		out.println("    <respcondition continue=\"No\" title=\"Correct\">");
+	    else
+		out.println("    <respcondition continue=\"No\">");
 	    out.println("      <conditionvar>");
 	    out.println("        <varequal case=\"Yes\" respident=\"MCSC\">"+ans.newident+"</varequal>");
 	    out.println("      </conditionvar>");

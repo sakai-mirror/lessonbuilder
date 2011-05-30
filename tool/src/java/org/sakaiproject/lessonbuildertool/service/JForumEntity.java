@@ -83,6 +83,9 @@ public class JForumEntity implements LessonEntity {
     public void setNextEntity(LessonEntity e) {
 	nextEntity = e;
     }
+    public LessonEntity getNextEntity() {
+	return nextEntity;
+    }
 
     private static ToolManager toolManager = null;
     public void setToolManager(ToolManager t) {
@@ -108,6 +111,10 @@ public class JForumEntity implements LessonEntity {
 	this.id = id;
 	this.level = level;
 	this.name = name;
+    }
+
+    public String getToolId() {
+	return "sakai.jforum.tool";
     }
 
     // standard info about object
@@ -445,5 +452,6 @@ public class JForumEntity implements LessonEntity {
 	return null;
     }
 
-
+    public void importObject(Object d, Object i) {
+    }
 }

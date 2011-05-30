@@ -73,6 +73,9 @@ public class ForumEntity implements LessonEntity {
     public void setNextEntity(LessonEntity e) {
 	nextEntity = e;
     }
+    public LessonEntity getNextEntity() {
+	return nextEntity;
+    }
     
     static MessageLocator messageLocator = null;
     public void setMessageLocator(MessageLocator m) {
@@ -89,6 +92,10 @@ public class ForumEntity implements LessonEntity {
 	this.type = type;
 	this.id = id;
 	this.level = level;
+    }
+
+    public String getToolId() {
+	return "sakai.forums";
     }
 
     // the underlying object, something Sakaiish
@@ -295,4 +302,6 @@ public class ForumEntity implements LessonEntity {
 	return null;
     }
 
+    public void importObject(Object d, Object i) {
+    }
 }
