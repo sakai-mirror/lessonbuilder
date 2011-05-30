@@ -77,6 +77,7 @@ import uk.org.ponder.localeutil.LocaleGetter;
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.rsf.components.UIBoundBoolean;
 import uk.org.ponder.rsf.components.UIBranchContainer;
+import uk.org.ponder.rsf.components.UISelectChoice;
 import uk.org.ponder.rsf.components.UIBoundString;
 import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIComponent;
@@ -1466,20 +1467,30 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity())
 		    numQuizEngines++;
 		
-		if (numQuizEngines == 0)
+		if (numQuizEngines == 0)  // warning message saying no quiz will be loaded
 		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.noquizengines"));
-		else if (numQuizEngines == 1)
+		else if (numQuizEngines == 1)  // just one engine, choose it
 		    UIInput.make(form, "quiztool", "#{simplePageBean.quiztool}" ,quizEntity.getToolId());
-		else {
+		else {  // put up message and then radio buttons for each possibility
+
+		    // need values array for RSF's select implementation. It sees radio buttons as a kind of select
+		    ArrayList<String> values = new ArrayList<String>();
+		    for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity())
+			values.add(q.getToolId());
+
+		    // the message
 		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.choosequizengine"));
-		    UIOutput.make(form, "quiztools");
+		    // now the list of radio buttons
+		    UISelect quizselect = UISelect.make(form, "quiztools", values.toArray(new String[1]), "#{simplePageBean.quiztool}", null);
+		    int i = 0;
 		    for (LessonEntity q = quizEntity; q != null; q = q.getNextEntity()) {
-			UIBranchContainer toolItem = UIBranchContainer.make(form, "quiztoolitem:");
-			UIInput.make(toolItem, "quiztoolbox", "#{simplePageBean.quiztool}", q.getToolId());
+			UIBranchContainer toolItem = UIBranchContainer.make(form, "quiztoolitem:", String.valueOf(i));
+			UISelectChoice.make(toolItem, "quiztoolbox", quizselect.getFullID(), i);
 			UIOutput.make(toolItem, "quiztoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
+			i++;
 		    }
 		}
-		    
+
 		int numTopicEngines = 0;
 		for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity())
 		    numTopicEngines++;
@@ -1489,12 +1500,18 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		else if (numTopicEngines == 1)
 		    UIInput.make(form, "topictool", "#{simplePageBean.topictool}" ,forumEntity.getToolId());
 		else {
+		    ArrayList<String> values = new ArrayList<String>();
+		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity())
+			values.add(q.getToolId());
+
 		    UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.choosetopicengine"));
-		    UIOutput.make(form, "topictools");
+		    UISelect topicselect = UISelect.make(form, "topictools", values.toArray(new String[1]), "#{simplePageBean.topictool}", null);
+		    int i = 0;
 		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity()) {
-			UIBranchContainer toolItem = UIBranchContainer.make(form, "topictoolitem:");
-			UIInput.make(toolItem, "topictoolbox", "#{simplePageBean.topictool}", q.getToolId());
+			UIBranchContainer toolItem = UIBranchContainer.make(form, "topictoolitem:", String.valueOf(i));
+			UISelectChoice.make(toolItem, "topictoolbox", topicselect.getFullID(), i);
 			UIOutput.make(toolItem, "topictoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
+			i++;
 		    }
 		}
 
