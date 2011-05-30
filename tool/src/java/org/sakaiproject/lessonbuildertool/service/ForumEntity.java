@@ -302,6 +302,4 @@ public class ForumEntity implements LessonEntity {
 	return null;
     }
 
-    public void importObject(Object d, Object i) {
-    }
 }

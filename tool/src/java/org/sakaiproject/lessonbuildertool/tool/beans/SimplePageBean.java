@@ -220,6 +220,7 @@ public class SimplePageBean {
 	private String redirectSendingPage = null;
 	private String redirectViewId = null;
         private String quiztool = null;
+        private String topictool = null;
 
         public Map<String, MultipartFile> multipartMap;
 
@@ -384,6 +385,12 @@ public class SimplePageBean {
 	    if (q != null)
 		quiztool = q;
 	}
+
+	public void setTopictool(String q) {
+	    if (q != null)
+		topictool = q;
+	}
+
 
 	public String getName() {
 		if (itemId != null && itemId != -1) {
@@ -3136,7 +3143,13 @@ public class SimplePageBean {
 			    quizobject = q;
 		    }
 		    
-		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao, quizobject));
+		    LessonEntity topicobject = null;
+		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity()) {
+			if (q.getToolId().equals(topictool))
+			    topicobject = q;
+		    }
+
+		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao, quizobject, topicobject));
 
 		    System.out.println("have a file");
 		    System.out.println("name: " + file.getOriginalFilename());

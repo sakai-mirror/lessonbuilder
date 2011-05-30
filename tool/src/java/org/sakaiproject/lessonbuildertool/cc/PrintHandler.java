@@ -72,6 +72,7 @@ import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.event.api.NotificationService;
 import org.sakaiproject.lessonbuildertool.cc.QtiImport;
 import org.sakaiproject.lessonbuildertool.service.LessonEntity;
+import org.sakaiproject.lessonbuildertool.service.QuizEntity;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -129,16 +130,18 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private String baseName = null;
   private String siteId = null;
   private LessonEntity quiztool = null;
+  private LessonEntity topictool = null;
   private Set<String> filesAdded = new HashSet<String>();
 
-  public PrintHandler(SimplePageBean bean, CartridgeLoader utils, SimplePageToolDao dao, LessonEntity q) {
+  public PrintHandler(SimplePageBean bean, CartridgeLoader utils, SimplePageToolDao dao, LessonEntity q, LessonEntity l) {
       super();
       this.utils = utils;
       this.simplePageBean = bean;
       this.simplePageToolDao = dao;
       this.siteId = bean.getCurrentSiteId();
       this.quiztool = q;
-      System.out.println("setting up quiztool " + q);
+      this.topictool = l;
+      System.out.println("setting up quiztool " + q + " topictool " + l);
   }
 
   public void setAssessmentDetails(String the_ident, String the_title) {
@@ -365,13 +368,12 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 		  Document document = documentBuilder.parse(inputStream);
 		  System.out.println("printhand point 3");
 
+		  QuizEntity q = (QuizEntity)quiztool;
 		  System.out.println(quiztool.getToolId());
-		  if (quiztool.getToolId().equals("sakai.mneme"))
-		      quiztool.importObject(document, siteId);
-		  else
-		      quiztool.importObject(document, (Boolean)isBank);
 
-		  System.out.println("loaded into samigo");
+		  q.importObject(document, isBank, siteId);
+
+		  System.out.println("loaded into quiztool");
 
 	      } catch (Exception e) {
 		  System.out.println(e);

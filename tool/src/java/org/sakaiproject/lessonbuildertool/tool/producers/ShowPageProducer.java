@@ -1478,9 +1478,26 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIInput.make(toolItem, "quiztoolbox", "#{simplePageBean.quiztool}", q.getToolId());
 			UIOutput.make(toolItem, "quiztoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
 		    }
-
 		}
 		    
+		int numTopicEngines = 0;
+		for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity())
+		    numTopicEngines++;
+		
+		if (numTopicEngines == 0)
+		    UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.notopicengines"));
+		else if (numTopicEngines == 1)
+		    UIInput.make(form, "topictool", "#{simplePageBean.topictool}" ,forumEntity.getToolId());
+		else {
+		    UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.choosetopicengine"));
+		    UIOutput.make(form, "topictools");
+		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity()) {
+			UIBranchContainer toolItem = UIBranchContainer.make(form, "topictoolitem:");
+			UIInput.make(toolItem, "topictoolbox", "#{simplePageBean.topictool}", q.getToolId());
+			UIOutput.make(toolItem, "topictoollabel", simplePageBean.getCurrentToolTitle(q.getToolId()));
+		    }
+		}
+
 
 	}
 

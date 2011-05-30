@@ -135,6 +135,6 @@ public interface LessonEntity {
     // contents and settings. This will be null except in that situation
     public String editItemSettingsUrl(SimplePageBean bean);
 
-    public void importObject(Object d, Object i);
+ 
 
 }

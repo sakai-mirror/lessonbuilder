@@ -542,7 +542,4 @@ public class AssignmentEntity implements LessonEntity {
 	return null;
     }
 
-    public void importObject(Object d, Object i) {
-    }
-
 }

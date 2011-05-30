@@ -88,7 +88,7 @@ import uk.org.ponder.messageutil.MessageLocator;
 // injected class to handle tests and quizes as well. That will eventually
 // be converted to be a LessonEntity.
 
-public class SamigoEntity implements LessonEntity {
+public class SamigoEntity implements LessonEntity, QuizEntity {
 
     private static Log log = LogFactory.getLog(SamigoEntity.class);
 
@@ -495,9 +495,8 @@ public class SamigoEntity implements LessonEntity {
 
     }
 
-    public void importObject(Object d, Object i) {
-	Document document = (Document)d;
-	Boolean isBank = (Boolean)i;
+    public void importObject(Document document, boolean isBank, String siteId) {
+
 	QTIService qtiService = new QTIService();
 	System.out.println("about to load into samigo");
 	if (isBank)

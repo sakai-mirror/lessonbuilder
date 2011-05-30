@@ -452,6 +452,4 @@ public class JForumEntity implements LessonEntity {
 	return null;
     }
 
-    public void importObject(Object d, Object i) {
-    }
 }
