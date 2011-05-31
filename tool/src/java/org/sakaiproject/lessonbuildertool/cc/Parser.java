@@ -141,7 +141,6 @@ public class Parser extends AbstractParser {
       Element manifest=this.getXML(utils, IMS_MANIFEST);
       processManifest(manifest, the_handler);
     } catch (Exception e) {
-	System.out.println("before stack trace");
 	e.printStackTrace();
 	System.out.println("parse error " + e);
 	//      throw new ParseException(e.getMessage(),e);
@@ -150,21 +149,17 @@ public class Parser extends AbstractParser {
   
   private void
   processManifest(Element the_manifest, DefaultHandler the_handler) throws ParseException {
-      System.out.println("start manifest");
     the_handler.startManifest();
     the_handler.setManifestXml(the_manifest);
     processAuthorization(the_manifest, the_handler); 
     processManifestMetadata(the_manifest, the_handler);
-      System.out.println("start manifest 2");
     try {
       XPath path=XPath.newInstance(ITEM_QUERY);
       path.addNamespace(CC_NS);
       Element item = (Element)path.selectSingleNode(the_manifest);
       if (item!=null) {     
-	  System.out.println("have item " + item);
         for (Iterator iter=item.getChildren(CC_ITEM, CC_NS).iterator();iter.hasNext();) {
 	    Element thisitem = (Element)iter.next();
-	    System.out.println("processitem " + thisitem + "::" + the_manifest.getChild(CC_RESOURCES, CC_NS));
           processItem((Element)thisitem, the_manifest.getChild(CC_RESOURCES, CC_NS), the_handler);
         }
       } 
@@ -237,12 +232,9 @@ public class Parser extends AbstractParser {
               DefaultHandler the_handler) throws ParseException {
     if (the_item.getAttributeValue(CC_ITEM_IDREF)!=null) {
       Element resource=findResource(the_item.getAttributeValue(CC_ITEM_IDREF), the_resources);
-      System.out.println("item proce 1");
       the_handler.startCCItem(the_item.getAttributeValue(CC_ITEM_ID),
                               the_item.getChildText(CC_ITEM_TITLE, CC_NS));
-      System.out.println("item proce 2");
       the_handler.setCCItemXml(the_item, resource, this, utils);
-      System.out.println("item proce 3");
       ContentParser parser=parsers.get(resource.getAttributeValue(CC_RES_TYPE));
       if (parser==null) {
         throw new ParseException("content type not recongised");

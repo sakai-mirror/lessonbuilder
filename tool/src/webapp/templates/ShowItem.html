@@ -19,10 +19,18 @@
 function resizeiframe() {
 
 var iframe = document.getElementById('iframe1');
+var newsize = 350;
+try {
 // workarounds for differing implemtations in several browsers
 var doc = (iframe.contentWindow || iframe.contentDocument);
 if (doc.document) doc = doc.document;
-var newsize = doc.body.offsetHeight;
+newsize = doc.body.offsetHeight;
+} catch (err) {
+}
+
+var winh = window.top.innerHeight - 250;
+if (winh > newsize)
+   newsize = winh;
 
 if (newsize > 32760) newsize = 32760;
 

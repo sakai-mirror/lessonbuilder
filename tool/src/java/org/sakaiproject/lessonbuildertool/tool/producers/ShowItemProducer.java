@@ -180,7 +180,7 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		SimplePageBean.PathEntry entry = breadcrumbs.get(breadcrumbs.size()-1);
 
 
-		if (item.getType() == SimplePageItem.RESOURCE) {
+		if (item != null && item.getType() == SimplePageItem.RESOURCE) {
 		    int index = 0;
 		    for (SimplePageBean.PathEntry e : breadcrumbs) {
 			// don't show current page. We already have a title. This was too much

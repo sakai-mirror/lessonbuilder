@@ -27,7 +27,7 @@ public class QtiImport {
     int noscore = 0;
     int paras = 0;
     PrintWriter out = null;
-    boolean debug = true;
+    boolean debug = false;
     boolean needHeader = true;
     CharArrayWriter charout = null;
 

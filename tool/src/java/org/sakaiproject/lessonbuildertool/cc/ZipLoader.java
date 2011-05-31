@@ -102,7 +102,6 @@ public class ZipLoader implements CartridgeLoader {
           }
           int count;
           byte data[] = new byte[BUFFER];
-	  System.out.println("creating file " + target.getCanonicalPath());
           FileOutputStream fos = new FileOutputStream(target);
           dest=new BufferedOutputStream(fos, BUFFER);
           while ((count = zis.read(data,0,BUFFER))!=-1) {
