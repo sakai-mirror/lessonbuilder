@@ -30,6 +30,7 @@ public class QtiImport {
     boolean debug = false;
     boolean needHeader = true;
     CharArrayWriter charout = null;
+    String filebase = null;
 
     class Pair {
 	String left;
@@ -221,6 +222,9 @@ public class QtiImport {
 	String texttype = mattextl.getAttribute("texttype");
 	if (texttype != null && texttype.equals("text/plain"))
 	    retText = "<pre>\n" + retText + "\n</pre>";
+	else
+	    retText =  retText.replaceAll("\\$IMS-CC-FILEBASE\\$","/access/content" + filebase);
+
 	return retText;
     }
 
@@ -1454,9 +1458,10 @@ public class QtiImport {
     }
 
 
-    public void mainproc (InputStream i, PrintWriter o, boolean isBank) throws IOException {
+    public void mainproc (InputStream i, PrintWriter o, boolean isBank, String base) throws IOException {
 
         out = o;
+	filebase = base;
 
 	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 

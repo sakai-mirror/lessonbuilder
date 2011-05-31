@@ -376,9 +376,14 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	      PrintWriter outwriter = new PrintWriter(baos);
 	      
+	      String base = baseName + getFileName(resource);
+	      int slash = base.lastIndexOf("/");
+	      if (slash >= 0)
+		  base = base.substring(0, slash+1); // include trailing slash
+
 	      QtiImport imp = new QtiImport();
 	      try {
-		  imp.mainproc(instream, outwriter, isBank);
+		  imp.mainproc(instream, outwriter, isBank, base);
 	      } catch (Exception e) {
 		  e.printStackTrace();
 	      }
