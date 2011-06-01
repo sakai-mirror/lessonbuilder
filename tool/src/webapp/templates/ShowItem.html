@@ -16,6 +16,12 @@
 	html>body #outer{height:auto}
 </style>
 <script type="text/javascript">
+
+// need a delay to allow dynamic things like inserting the html editor
+function resizeiframe1() {
+setTimeout("resizeiframe()",1000);
+}
+
 function resizeiframe() {
 
 var iframe = document.getElementById('iframe1');
@@ -75,7 +81,7 @@ setMainFrameHeight(window.name);
 			name="iframe1"
                         id="iframe1"
 			height="350"
-                        onload="resizeiframe()"
+                        onload="resizeiframe1()"
 			width="100%"
 			frameborder="0"
 			marginwidth="0"
