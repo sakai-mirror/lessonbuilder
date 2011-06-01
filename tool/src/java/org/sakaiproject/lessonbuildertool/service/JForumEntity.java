@@ -453,7 +453,7 @@ public class JForumEntity implements LessonEntity, ForumInterface {
 	return null;
     }
 
-    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmenthrefs) {
+    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, String siteId,  List<String>attachmenthrefs) {
 	return SimplePageItem.DUMMY;
     }
 

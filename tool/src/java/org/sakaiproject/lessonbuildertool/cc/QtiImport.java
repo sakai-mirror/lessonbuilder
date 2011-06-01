@@ -223,7 +223,7 @@ public class QtiImport {
 	if (texttype != null && texttype.equals("text/plain"))
 	    retText = "<pre>\n" + retText + "\n</pre>";
 	else
-	    retText =  retText.replaceAll("\\$IMS-CC-FILEBASE\\$","/access/content" + filebase);
+	    retText =  retText.replaceAll("\\$IMS-CC-FILEBASE\\$", filebase);
 
 	return retText;
     }

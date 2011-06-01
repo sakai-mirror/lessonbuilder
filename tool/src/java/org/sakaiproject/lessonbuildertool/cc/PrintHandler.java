@@ -54,6 +54,7 @@ import java.io.FileOutputStream;
 import java.io.CharArrayWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.net.URLEncoder;
 
 import org.sakaiproject.util.Validator;
 import org.sakaiproject.tool.api.ToolManager;
@@ -64,6 +65,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.content.api.ContentCollectionEdit;
+import org.sakaiproject.content.api.ContentCollection;
 import org.sakaiproject.content.api.ContentResourceEdit;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.entity.api.ResourceProperties;
@@ -135,6 +137,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   private String title = null;
   private String description = null;
   private String baseName = null;
+  private String baseUrl = null;
   private String siteId = null;
   private LessonEntity quiztool = null;
   private LessonEntity topictool = null;
@@ -201,7 +204,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       }
   }
 
-  private String makeBaseFolder(String name) {
+  private ContentCollection makeBaseFolder(String name) {
 
       if (siteId == null) {
 	  simplePageBean.setErrKey("simplepage.nosite", "");
@@ -258,7 +261,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  simplePageBean.setErrKey("simplepage.resource100: ", name);
 	  return null;
       }
-      return collection.getId();
+      return collection;
   }
 
   private String getFileName(Element resource) {
@@ -344,7 +347,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 		      texthtml = true;
 	      }
 
-	      String base = baseName + filename;
+	      // I'm going to assume that URLs in the CC files are legal, but if
+	      // I add to them I nneed to URLencode what I add
+	      String base = baseUrl + filename;
 	      int slash = base.lastIndexOf("/");
 	      if (slash >= 0)
 		  base = base.substring(0, slash+1); // include trailing slash
@@ -359,12 +364,15 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 
 	      ForumInterface f = (ForumInterface)topictool;
 
+	      System.out.println("about to call forum import");
 	      // title is for the cartridge. That will be used as the forum
-	      String sakaiId = f.importObject(title, topicTitle, text, texthtml, base, attachmentHrefs);
+	      String sakaiId = f.importObject(title, topicTitle, text, texthtml, base, siteId, attachmentHrefs);
 
+	      System.out.println("about to add formum item");
 	      SimplePageItem item = simplePageToolDao.makeItem(page.getPageId(), seq, SimplePageItem.FORUM, sakaiId, title);
 	      simplePageBean.saveItem(item);
 	      sequences.set(top, seq+1);
+	      System.out.println("finished with forum item");
 
 	  } else if (quiztool != null && (
 		     type.equals(CC_ASSESSMENT0) || type.equals(CC_ASSESSMENT1) ||
@@ -376,7 +384,9 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	      ByteArrayOutputStream baos = new ByteArrayOutputStream();
 	      PrintWriter outwriter = new PrintWriter(baos);
 	      
-	      String base = baseName + getFileName(resource);
+	      // I'm going to assume that URLs in the CC files are legal, but if
+	      // I add to them I nneed to URLencode what I add
+	      String base = baseUrl + getFileName(resource);
 	      int slash = base.lastIndexOf("/");
 	      if (slash >= 0)
 		  base = base.substring(0, slash+1); // include trailing slash
@@ -423,6 +433,7 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  else
 	      System.err.println("implemented type: " + resource.getAttributeValue(TYPE));
       } catch (Exception e) {
+	  e.printStackTrace();
 	  System.err.println(">>>Exception " + e);
       }
 
@@ -659,7 +670,14 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
 	  title = "Cartridge";
       if ("".equals(description))
 	  description = null;
-      baseName = makeBaseFolder(title);
+
+      ContentCollection baseCollection = makeBaseFolder(title);
+      baseName = baseCollection.getId();
+      baseUrl = baseCollection.getUrl();
+      // kill the hostname part. We want to use relative URLs
+      int relPart = baseUrl.indexOf("/access/");
+      if (relPart >= 0)
+	  baseUrl = baseUrl.substring(relPart);
 
   }
 

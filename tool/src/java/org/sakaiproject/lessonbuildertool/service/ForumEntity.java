@@ -43,6 +43,7 @@ import org.sakaiproject.api.app.messageforums.Topic;
 import org.sakaiproject.api.app.messageforums.MessageForumsForumManager;
 import org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager;
 import org.sakaiproject.api.app.messageforums.MessageForumsMessageManager;
+import org.sakaiproject.api.app.messageforums.AreaManager;
 import org.sakaiproject.api.app.messageforums.Attachment;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.tool.cover.ToolManager;
@@ -321,11 +322,12 @@ public class ForumEntity implements LessonEntity, ForumInterface {
     }
 
     // returns SakaiId of thing just created
-    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, List<String>attachmentHrefs) {
+    public String importObject(String title, String topicTitle, String text, boolean texthtml, String base, String siteId, List<String>attachmentHrefs) {
 
 	DiscussionForumManager manager = (DiscussionForumManager)
 	    ComponentManager.get("org.sakaiproject.api.app.messageforums.ui.DiscussionForumManager");
-
+	AreaManager areaManager = (AreaManager)
+	    ComponentManager.get("org.sakaiproject.api.app.messageforums.AreaManager");
 	DiscussionForum ourForum = null;
 	DiscussionTopic ourTopic = null;
 
@@ -354,9 +356,12 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 		}
 		forumtry ++;
 
+		// if a new site, may need to create the area or we'll get a backtrace when creating forum
+		areaManager.getDiscussionArea(siteId);
+
 		ourForum = manager.createForum();
 		ourForum.setTitle(title);
-		manager.saveForum(ourForum);
+		manager.saveForum(siteId, ourForum);
 		
 		continue;  // reread, better be there this time
 
@@ -396,12 +401,12 @@ public class ForumEntity implements LessonEntity, ForumInterface {
 			label = label.substring(slash+1);
 		    if (label.equals(""))
 			label = "Attachment";
-		    attachHtml = attachHtml + "<p><a target='_blank' href='" + "/access/content" + base + href + "'>" + label + "</a>";
+		    attachHtml = attachHtml + "<p><a target='_blank' href='" + base + href + "'>" + label + "</a>";
 		}
 	    }
 
 	    if (texthtml) {
-		ourTopic.setExtendedDescription(text.replaceAll("\\$IMS-CC-FILEBASE\\$","/access/content" + base) + attachHtml);
+		ourTopic.setExtendedDescription(text.replaceAll("\\$IMS-CC-FILEBASE\\$", base) + attachHtml);
 		ourTopic.setShortDescription(FormattedText.convertFormattedTextToPlaintext(text));
 	    } else {
 		ourTopic.setExtendedDescription(FormattedText.convertPlaintextToFormattedText(text) + attachHtml);
