@@ -1492,7 +1492,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 		
 		if (numQuizEngines == 0)  // warning message saying no quiz will be loaded
-		    UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.noquizengines"));
+		    UIVerbatim.make(form, "quizmsg", messageLocator.getMessage("simplepage.noquizengines"));
 		else if (numQuizEngines == 1)  // just one engine, choose it
 		    UIInput.make(form, "quiztool", "#{simplePageBean.quiztool}" ,quizEntity.getToolId());
 		else {  // put up message and then radio buttons for each possibility
@@ -1532,7 +1532,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 
 		if (numTopicEngines == 0)
-		    UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.notopicengines"));
+		    UIVerbatim.make(form, "topicmsg", messageLocator.getMessage("simplepage.notopicengines"));
 		else if (numTopicEngines == 1)
 		    UIInput.make(form, "topictool", "#{simplePageBean.topictool}" ,forumEntity.getToolId());
 		else {

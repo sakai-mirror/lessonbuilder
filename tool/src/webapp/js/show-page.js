@@ -116,6 +116,11 @@ $(function() {
 		return false;
 	});
 
+	$('#import-cc-submit').click(function() {
+		$('#loading').show();
+		return true;
+	    });
+
 	$('#releaseDiv').click(function(){
 		$('#edit-title-dialog').height(550);
 	    });
