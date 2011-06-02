@@ -25,6 +25,7 @@
 package org.sakaiproject.lessonbuildertool.tool.beans;
 
 import java.io.IOException;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -3102,6 +3103,17 @@ public class SimplePageBean {
 	    }
 	}
 
+        public boolean deleteRecursive(File path) throws FileNotFoundException{
+	    if (!path.exists()) throw new FileNotFoundException(path.getAbsolutePath());
+	    boolean ret = true;
+	    if (path.isDirectory()){
+		for (File f : path.listFiles()){
+		    ret = ret && deleteRecursive(f);
+		}
+	    }
+	    return ret && path.delete();
+	}
+
 	public void importCc() {
 	    System.out.println("importCc");
 	    if (!canEditPage())
@@ -3117,9 +3129,11 @@ public class SimplePageBean {
 	    }
 
 	    if (file != null) {
+		File cc = null;
+		File root = null;
 		try {
-		    File cc = File.createTempFile("ccloader", "file");
-		    File root = File.createTempFile("ccloader", "root");
+		    cc = File.createTempFile("ccloader", "file");
+		    root = File.createTempFile("ccloader", "root");
 		    if (root.exists())
 			root.delete();
 		    root.mkdir();
@@ -3151,13 +3165,21 @@ public class SimplePageBean {
 
 		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao, quizobject, topicobject));
 
-		    System.out.println("have a file");
-		    System.out.println("name: " + file.getOriginalFilename());
-		    System.out.println("content type: " + file.getContentType());
-		    System.out.println("input stream: " + file.getInputStream());
 		} catch (Exception e) {
 		    System.out.println("exception in importcc " + e);
 		    e.printStackTrace();
+		} finally {
+		    if (cc != null)
+			try {
+			    deleteRecursive(cc);
+			} catch (Exception e){
+			    System.out.println("Unable to delete temp file " + cc);
+			}
+			try {
+			    deleteRecursive(root);
+			} catch (Exception e){
+			    System.out.println("Unable to delete temp file " + cc);
+			}
 		}
 	    }
 	}
