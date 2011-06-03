@@ -43,6 +43,10 @@ import org.sakaiproject.api.app.messageforums.Topic;
 import org.sakaiproject.api.app.messageforums.MessageForumsForumManager;
 import org.sakaiproject.api.app.messageforums.MessageForumsMessageManager;
 import org.sakaiproject.component.cover.ComponentManager;
+import org.sakaiproject.tool.cover.ToolManager;
+import org.sakaiproject.site.api.ToolConfiguration;
+import org.sakaiproject.site.api.Site;
+import org.sakaiproject.site.cover.SiteService;
 
 import uk.org.ponder.messageutil.MessageLocator;
 
@@ -224,8 +228,17 @@ public class ForumEntity implements LessonEntity {
     }
 
     public String getUrl() {
+	Site site = null;
+	try {
+	    site = SiteService.getSite(ToolManager.getCurrentPlacement().getContext());
+	} catch (Exception impossible) {
+	    return null;
+	}
+	ToolConfiguration tool = site.getToolForCommonId("sakai.forums");
+	String placement = tool.getId();
+
 	if (type == TYPE_FORUM_TOPIC)
-	    return "/direct/forum_topic/" + id;
+	    return "/messageforums-tool/jsp/discussionForum/message/dfAllMessagesDirect.jsf?topicId=" + id + "&placementId=" + placement;
 	else
 	    return "/direct/forum/" + id;
     }
