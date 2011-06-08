@@ -32,7 +32,7 @@ any existing sites where you want to use Lesson Builder:
 set lessonbuilder.upd and lessonbuilder.read.
   * for other roles, set just lessonbuilder.read
 
-That's enough to try Lesson Builder. For real you, there are
+That's enough to try Lesson Builder. For real use, there are
 a few more things:
 
 2) in sakai.properties, you will want
