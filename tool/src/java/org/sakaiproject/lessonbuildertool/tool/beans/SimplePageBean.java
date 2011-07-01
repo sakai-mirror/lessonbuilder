@@ -1993,6 +1993,12 @@ public class SimplePageBean {
 			page.setTitle(pageTitle);
 			update(page);
 		}
+		
+		if(pageTitle != null) {
+			pageItem.setName(pageTitle);
+			update(pageItem);
+			adjustPath("", pageItem.getPageId(), pageItem.getId(), pageTitle);
+		}
 
 		// have to do this after the page itself is updated
 		if (needRecompute)
