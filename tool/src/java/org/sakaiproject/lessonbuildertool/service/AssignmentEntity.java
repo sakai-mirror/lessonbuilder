@@ -482,7 +482,7 @@ public class AssignmentEntity implements LessonEntity {
 	LessonSubmission ret= new LessonSubmission(null);
 
 	if (submission == null)
-	    return ret;
+	    return null;
 
 	if (submission.getGradeReleased())  {
 	    String grade = submission.getGrade();

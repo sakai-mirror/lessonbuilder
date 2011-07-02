@@ -326,6 +326,21 @@ public class SimplePageBean {
 	   toolSession.setAttribute("lessonbuilder.error", s);
        }
 
+       public void setTopRefresh() {
+	   ToolSession toolSession = sessionManager.getCurrentToolSession();
+	   toolSession.setAttribute("lessonbuilder.topRefresh", true);
+       }
+
+       public boolean getTopRefresh() {
+	   ToolSession toolSession = sessionManager.getCurrentToolSession();
+	   if (toolSession.getAttribute("lessonbuilder.topRefresh") != null) {
+	       toolSession.removeAttribute("lessonbuilder.topRefresh");
+	       return true;
+	   }
+	   return false;
+       }
+
+
     // a lot of these are setters and getters used for the form process, as 
     // described above
 
@@ -1987,6 +2002,7 @@ public class SimplePageBean {
 					pageVisibilityHelper(site, page.getToolId(), !hidePage);
 					pageItem.setPrerequisite(prerequisite);
 					pageItem.setRequired(required);
+					pageItem.setName(pageTitle);
 					update(pageItem);
 				}
 
@@ -1998,6 +2014,8 @@ public class SimplePageBean {
 		} else if (pageTitle != null) {
 			page.setTitle(pageTitle);
 			update(page);
+			pageItem.setName(pageTitle);
+			update(pageItem);
 		}
 		
 		if(pageTitle != null) {
@@ -2061,6 +2079,9 @@ public class SimplePageBean {
 		    start++;
 		}
 	    }
+
+	    setTopRefresh();
+
 	    return "success";
 	}
 
