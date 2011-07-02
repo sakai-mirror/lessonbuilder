@@ -44,6 +44,13 @@ That's probably not essential.
 some changes, depending upon the version of Sakai you are
 running:
 
+* You will probably want to install SAK-20799. This allows people to
+hide tools without disablign them. A lot of faculty want to hide the
+assignments and tests tool so students can only go through Lesson
+Builder. The problem with hiding a tool in page order is that it
+disables the tool. This patch give you two options, one that disables
+the tool but one that just hides it.
+
 * If you want support for Mneme, you will need to enable it.
 See below.
 
