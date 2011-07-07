@@ -34,13 +34,16 @@ public class GeneralViewParameters extends SimpleViewParameters {
 	private String title = "";
 	private String source = "";
 	private String id = "";
-        private String clearAttr = "";
+	private String clearAttr = "";
 	private Long itemId = -1L;
     // the word "push", a number to return to that level in the path, or "next" to replace the top level
-        private String path = "";
-        private String returnView = "";
-        private String recheck = "";
+	private String path = "";
+	private String returnView = "";
+	private String recheck = "";
 	private String backPath = "";
+	
+	public boolean addComments = false;
+	public boolean postedComment = false;
 
 	public GeneralViewParameters() {
 		super();
@@ -121,7 +124,7 @@ public class GeneralViewParameters extends SimpleViewParameters {
 	}
 
 	public String getRecheck() {
-        	return recheck;
+		return recheck;
 	}
 
 

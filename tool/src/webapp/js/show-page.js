@@ -85,6 +85,14 @@ $(function() {
 		draggable: false
 	});
 	
+	$('#comments-dialog').dialog({
+		autoOpen: false,
+		width: 600,
+		modal: false,
+		resizable: false,
+		draggable: false
+	});
+	
 
 	$('.subpage-link').click(function(){
 		var position =  $(this).position();
@@ -171,6 +179,7 @@ $(function() {
 	    $("#youtube-dialog").dialog("option", "width", outerWidth-10);
 	    $("#movie-dialog").dialog("option", "width", outerWidth-10);
 	    $("#subpage-link").dialog("option", "width", outerWidth-10);
+	    $("#comments-dialog").dialog("option", "width", outerWidth-10);
 	}
 
 	if (!(navigator.userAgent.indexOf("Firefox/2.") > 0)) {
@@ -214,6 +223,33 @@ $(function() {
 		$("#movie-dialog").dialog("option", "position", [position.left, position.top]);
 		$('.hideOnDialog').hide();
 		$("#movie-dialog").dialog('open');
+		return false;
+	});
+	
+	$(".edit-comments").click(function(){
+		var row = $(this).parent().parent().parent();
+		var itemId = row.find(".comments-id").text();
+		
+		$("#commentsEditId").val(itemId);
+		
+		var anon = row.find(".commentsAnon").text();
+		if(anon == "true") {
+			$("#comments-anonymous").attr("checked", true);
+			$("#comments-anonymous").attr("defaultChecked", true)
+		}else {
+			$("#comments-anonymous").attr("checked", false);
+		}
+		
+//		$("#youtubeEditId").val(row.find(".youtube-id").text());
+//		$("#youtubeURL").val(row.find(".youtube-url").text());
+//		$("#youtubeHeight").val(row.find(".mm-height").text());
+//		$("#youtubeWidth").val(row.find(".mm-width").text());
+//		$("#description4").val(row.find(".description").text());
+		
+		var position = row.position();
+		$("#comments-dialog").dialog("option", "position", [position.left, position.top]);
+		$('.hideOnDialog').hide();
+		$('#comments-dialog').dialog('open');
 		return false;
 	});
 
@@ -634,6 +670,10 @@ function closeMovieDialog() {
 	$('#movie-dialog').dialog('close');
 }
 
+function closeCommentsDialog() {
+	$('#comments-dialog').dialog('close');
+}
+
 function checkEditTitleForm() {
 	if($('#pageTitle').val() == '') {
 		$('#edit-title-error').text(msg("simplepage.title_notblank"));
@@ -680,6 +720,10 @@ function checkYoutubeForm() {
 }
 
 function checkMovieForm() {
+	return true;
+}
+
+function checkCommentsForm() {
 	return true;
 }
 

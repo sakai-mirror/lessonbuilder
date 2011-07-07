@@ -19,17 +19,17 @@
 <script type="text/javascript" rsf:id="iframeJavascript">
 function resizeiframe(id) {
 
-var iframe = document.getElementById(id);
-// workarounds for differing implemtations in several browsers
-var doc = (iframe.contentWindow || iframe.contentDocument);
-if (doc.document) doc = doc.document;
-var newsize = doc.body.offsetHeight;
-
-if (newsize > 32760) newsize = 32760;
-
-iframe.style.height = (newsize + 20) + 'px';
-setMainFrameHeight(window.name);
-
+	var iframe = document.getElementById(id);
+	// workarounds for differing implemtations in several browsers
+	var doc = (iframe.contentWindow || iframe.contentDocument);
+	if (doc.document) doc = doc.document;
+	var newsize = doc.body.offsetHeight;
+	
+	if (newsize > 32760) newsize = 32760;
+	
+	iframe.style.height = (newsize + 20) + 'px';
+	setMainFrameHeight(window.name);
+	
 }
 </script>
 </head>
@@ -47,9 +47,9 @@ setMainFrameHeight(window.name);
 
 	<div class="portletBody" id="outer" role="application">
 		
-	        <div rsf:id="needPermissions">
-		  <p rsf:id="msg=simplepage.needpermissions"></p>
-		  <a href="#" rsf:id="callpermissions"></a>
+		<div rsf:id="needPermissions">
+			<p rsf:id="msg=simplepage.needpermissions"></p>
+			<a href="#" rsf:id="callpermissions"></a>
 		</div>
 
 		<div rsf:id="crumbdiv" class="fullwidth" role="navigation"><span rsf:id="crumb:"><a href="#" rsf:id="crumb-link"></a><span rsf:id="crumb-follow"></span></span></div>
@@ -90,6 +90,7 @@ setMainFrameHeight(window.name);
 			<a href="#" rsf:id="add-assignment"><span rsf:id="msg.simplepage.assignment"></span></a>
 			<a href="#" rsf:id="add-quiz"><span rsf:id="msg.simplepage.quiz"></span></a>
 			<a href="#" rsf:id="add-forum"><span rsf:id="msg.simplepage.forum"></span></a>
+			<a href="#" rsf:id="add-comments"><span rsf:id="msg.simplepage.comments"></span></a>
 			<a href="#" rsf:id="permissions"><span rsf:id="msg.simplepage.prmissions"></span></a>
 			<a href="#" rsf:id="help" target="_blank"></a>
 		</div>
@@ -198,6 +199,16 @@ setMainFrameHeight(window.name);
 					  <div style="display:none" rsf:id="current-item-id6" class="mm-itemid"></div>
 					</td>
 
+
+					<td rsf:id="comments-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton edit-comments" onclick="return false" rsf:id="edit-comments"></a></div></td>
+					
+					<td rsf:id="commentsSpan" role="gridcell">
+						<div class="replaceWithComments">Loading Comments ...</div>
+						<a href="#" style="display:none" rsf:id="commentsLink" class="commentsBlock"></a>
+						<div style="display:none" rsf:id="commentsId" class="comments-id"></div>
+						<div style="display:none" rsf:id="commentsAnon" class="commentsAnon"></div>
+					</td>
+
 				</tr>
 
 			</table>
@@ -222,7 +233,7 @@ setMainFrameHeight(window.name);
 
 
 		<div rsf:id="dialogDiv">
-		        <div id="messages">
+			<div id="messages">
 			  <p rsf:id="msg=simplepage.require_submit_assessment" id="simplepage.require_submit_assessment"></p>
 			  <p rsf:id="msg=simplepage.require_submit_assignment" id="simplepage.require_submit_assignment"></p>
 			  <p rsf:id="msg=simplepage.require_submit_forum" id="simplepage.require_submit_forum"></p>
@@ -592,7 +603,7 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 			</div>
 
 			<div id="remove-page-dialog" rsf:id="remove-page-dialog">
-			        <div style="margin-bottom: 2em" rsf:id="msg=simplepage.remove-page-explanation"></div>
+				<div style="margin-bottom: 2em" rsf:id="msg=simplepage.remove-page-explanation"></div>
 				<form action="#" rsf:id="remove-page-form">
 				  <input class="bold" type="submit" rsf:id="remove-page-submit" id="remove-page-submit" />
 				  <input type="submit" rsf:id="remove-page-cancel"  onclick="closeRemovePageDialog(); return false" />
@@ -691,8 +702,47 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 
 				</form>
 			</div>
+			
+			<div id="comments-dialog" rsf:id="comments-dialog">
+				<!--<div class="ui-widget" id="edit-youtube-error-container">
+					<div class="ui-state-error ui-corner-all" style="padding: 0 .7em;"> 
+						<p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span> 
+						<strong rsf:id="msg=simplepage.error_colon"></strong> <span id="edit-youtube-error"></span></p>
+					</div>
+				</div>-->
+				
+				<form action="#" rsf:id="comments-form">
+					<div class="border">
+						<input type="hidden" rsf:id="commentsEditId" id="commentsEditId" />
+						<div align="left">
+							<input type="checkbox" name="comments-anonymous" id="comments-anonymous" rsf:id="comments-anonymous" />
+							<label for="comments-anonymous"><span rsf:id="msg=simplepage.comments-anonymous"></span></label><br />
+						</div>
+					</div>
+					<br />
+					<div class="border2">
+						<div style="margin-top:5px; margin-bottom:5px;">
+							<b style="margin-left:50px;"><span rsf:id="msg=simplepage.delete"></span>:</b>
+							<input type="submit" style="margin-left:50px;" rsf:id="delete-comments-item" />
+						</div>
+					</div>
+		
+					<input class="bold" type="submit" onclick="event.returnValue = checkCommentsForm(); return checkCommentsForm();" id="update-comments" rsf:id="update-comments" />
+					<input type="submit" rsf:id="cancel-comments" onclick="closeCommentsDialog(); return false" />
+				</form>
+			</div>
 		</div>
-	</div>	
+	</div>
+	
+	<div rsf:id="delete-dialog" id="delete-dialog">
+		<span id="delete-dialog-comment-url" style="display:none"></span>
+	
+		<span class="ui-icon ui-icon-alert" style="float:left; margin:0 7px 0 0;"></span>
+		<span rsf:id="msg=simplepage.delete_comment_confirm" id="delete-comment-confirm"></span>
+	</div>
+	
+	<script type="text/javascript" rsf:id="comments-script" src="$context/js/comments.js"></script>
+	
 	<script type="text/javascript" language="JavaScript">
 		spiffyUp();	
 	</script>

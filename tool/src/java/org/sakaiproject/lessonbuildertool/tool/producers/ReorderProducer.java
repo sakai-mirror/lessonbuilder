@@ -73,12 +73,12 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 		if (((GeneralViewParameters) params).getSendingPage() != -1) {
 		    // will fail if page not in this site
 		    // security then depends upon making sure that we only deal with this page
-		    try {
-			simplePageBean.updatePageObject(((GeneralViewParameters) params).getSendingPage());
-		    } catch (Exception e) {
-			System.out.println("Reorder permission exception " + e);
-			return;
-		    }
+			try {
+				simplePageBean.updatePageObject(((GeneralViewParameters) params).getSendingPage());
+			} catch (Exception e) {
+				System.out.println("Reorder permission exception " + e);
+				return;
+			}
 		}
 
 		// doesn't use any item parameters, so this should be safe
@@ -94,7 +94,7 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 			for (SimplePageItem i : items) {
 				if (i.getType() == 7) {
 					i.setType(1); // Temporarily change multimedia to standard resource
-					// so that links work properly.
+								  // so that links work properly.
 				}
 
 				UIContainer row = UIBranchContainer.make(tofill, "item:");

@@ -310,6 +310,7 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		addAttr(doc, itemElement, "requirementtext", item.getRequirementText());
 		addAttr(doc, itemElement, "nextpage", item.getNextPage() ? "true" : "false");
 		addAttr(doc, itemElement, "format", item.getFormat());
+		addAttr(doc, itemElement, "anonymous", item.isAnonymous() ? "true" : "false");
 		if (item.isSameWindow() != null)
 		    addAttr(doc, itemElement, "samewindow", item.isSameWindow() ? "true" : "false");
 
@@ -535,6 +536,9 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		   s = itemElement.getAttribute("samewindow");
 		   if (s != null)
 		       item.setSameWindow(s.equals("true"));
+		   s = itemElement.getAttribute("anonymous");
+		   if (s != null)
+			   item.setAnonymous(s.equals("true"));
 
 
 		   simplePageToolDao.quickSaveItem(item);

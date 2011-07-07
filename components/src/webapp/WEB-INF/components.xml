@@ -12,9 +12,10 @@
     <property name="mappingResources">
       <list>
         <value>org/sakaiproject/lessonbuildertool/simplepageitem.hbm.xml</value>
-	<value>org/sakaiproject/lessonbuildertool/simplepage.hbm.xml</value>
-	<value>org/sakaiproject/lessonbuildertool/simplepagelogentry.hbm.xml</value>
-	<value>org/sakaiproject/lessonbuildertool/simplepagegroup.hbm.xml</value>
+		<value>org/sakaiproject/lessonbuildertool/simplepage.hbm.xml</value>
+		<value>org/sakaiproject/lessonbuildertool/simplepagelogentry.hbm.xml</value>
+		<value>org/sakaiproject/lessonbuildertool/simplepagegroup.hbm.xml</value>
+		<value>org/sakaiproject/lessonbuildertool/simplepagecomment.hbm.xml</value>
       </list>
     </property>
   </bean>

@@ -39,9 +39,10 @@ public interface SimplePageItem {
 	public static final int URL = 6;
 	public static final int MULTIMEDIA = 7;
 	public static final int FORUM = 8;
+	public static final int COMMENTS = 9;
 
     // sakaiId used for an item copied from another site with no real content
-        public static final String DUMMY = "/dummy";
+	public static final String DUMMY = "/dummy";
 
 
     /* WARNING. WARNING. WARNING. WARNING. WARNING. WARNING. WARNING. WARNING. WARNING. 
@@ -132,5 +133,9 @@ public interface SimplePageItem {
     public String getURL();
 
     public String getItemURL();
+    
+    public void setAnonymous(Boolean anon);
+    
+    public boolean isAnonymous();
 
 }

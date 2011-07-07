@@ -1,0 +1,30 @@
+<div>
+	<div rsf:id="anonymousAlert" class="ui-widget">
+		<div class="ui-state-highlight ui-corner-all" style="margin-bottom: 10px; margin-top:10px; padding: 0 .7em;"> 
+			<p><span class="ui-icon ui-icon-info" style="float: left; margin-right: .3em;"></span>
+			<span rsf:id="msg=simplepage.comment-anonymous-message"></span></p>
+		</div>
+	</div>
+
+	<div class="commentDiv" rsf:id="commentDiv:">
+		<a href="#" class="to-load" rsf:id="to-load"></a><a onclick="loadMore($(this));" class="loadMore" rsf:id="load-more-link"></a>
+		
+		<span class="author" rsf:id="userId"></span><span rsf:id="timePosted"></span>
+		<span rsf:id="deleteSpan"><a href="#" style="display:none" rsf:id="deleteCommentURL" class="deleteComment"></a>
+		<a onclick="deleteComment($(this));"><span rsf:id="msg=simplepage.comment_delete"></span></a></span>
+		<br />
+		<div class="commentBody" rsf:id="comment"></div>
+	</div>
+	
+	<form class="commentArea" rsf:id="comment-form">
+		<input type="hidden" rsf:id="comment-item-id"></input>
+		<textarea rows="5" cols="100" rsf:id="comment-text-area"></textarea>
+		<input type="submit" class="usebutton" href="#" rsf:id="add-comment" id="add-comment"><span rsf:id="msg=simplepage.add_comment"></span></input>
+	</form>
+	
+	
+	
+	<script rsf:id="highlightScript" type="text/javascript">
+		performHighlight();
+	</script>
+</div>
