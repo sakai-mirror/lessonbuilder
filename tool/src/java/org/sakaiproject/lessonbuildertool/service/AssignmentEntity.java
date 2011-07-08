@@ -25,6 +25,7 @@ package org.sakaiproject.lessonbuildertool.service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -168,7 +169,7 @@ public class AssignmentEntity implements LessonEntity {
 	}
 	
 	if (ret != null)
-	    assignmentCache.put(ref, ret);
+	    assignmentCache.put(ref, ret, DEFAULT_EXPIRATION);
 	return ret;
     }
 
@@ -489,7 +490,7 @@ public class AssignmentEntity implements LessonEntity {
 	LessonSubmission ret= new LessonSubmission(null);
 
 	if (submission == null)
-	    return ret;
+	    return null;
 
 	if (submission.getGradeReleased())  {
 	    String grade = submission.getGrade();
@@ -540,6 +541,99 @@ public class AssignmentEntity implements LessonEntity {
     // contents and settings. This will be null except in that situation                                                                     
     public String editItemSettingsUrl(SimplePageBean bean) {
 	return null;
+    }
+
+    // return the list of groups if the item is only accessible to specific groups
+    // null if it's accessible to the whole site.
+    public Collection<String> getGroups() {
+	if (assignment == null)
+	    assignment = getAssignment(id);
+	if (assignment == null)
+	    return null;
+	
+	if (assignment.getAccess() != Assignment.AssignmentAccess.GROUPED)
+	    return null;
+	    
+	Collection<String> groupRefs = assignment.getGroups();
+	List<String> groupIds = new ArrayList<String>();
+
+	for (String ref: groupRefs) {
+	    int i = ref.lastIndexOf("/");
+	    if (i >= 0)
+		ref = ref.substring(i+1);
+	    groupIds.add(ref);
+	}
+
+	return groupIds;
+    }
+  
+    // set the item to be accessible only to the specific groups.
+    // null to make it accessible to the whole site
+    public void setGroups(Collection<String> groups) {
+	if (assignment == null)
+	    assignment = getAssignment(id);
+	if (assignment == null)
+	    return;
+
+	String siteId = ToolManager.getCurrentPlacement().getContext();
+	Site site = null;
+	String ref = "/assignment/a/" + siteId + "/" + id;
+
+	try {
+	    site = SiteService.getSite(siteId);
+	} catch (Exception e) {
+	    log.warn("Unable to find site " + siteId, e);
+	    return;
+	}
+
+	AssignmentEdit edit = null;
+	
+	try {
+	    edit = AssignmentService.editAssignment(ref);
+	} catch (IdUnusedException e) {
+	    log.warn("ID unused ", e);
+	    return;
+	} catch (PermissionException e) {
+	    log.warn(e);
+	    return;
+	} catch (InUseException e) {
+	    log.warn(e);
+	    return;
+	}
+
+	boolean doCancel = true;
+
+	try {
+	    // need this to make sure we always unlock
+	    
+	    if (groups != null && groups.size() > 0) {
+		List<Group> groupObjs = new ArrayList<Group>();
+		
+		for (String groupId : groups) {
+		    Group group = site.getGroup(groupId);
+		    if (group != null)
+			groupObjs.add(group);
+		}
+
+		edit.setGroupAccess(groupObjs);
+	    } else {
+		edit.setAccess(Assignment.AssignmentAccess.SITE);
+		edit.clearGroupAccess();
+	    }
+
+	    AssignmentService.commitEdit(edit);
+	    doCancel = false;
+	    return;
+
+	} catch (Exception e) {
+	    log.warn(e);
+	    return;
+	} finally {
+	    if (doCancel) {
+		AssignmentService.commitEdit(edit);
+	    }
+	}
+
     }
 
 }

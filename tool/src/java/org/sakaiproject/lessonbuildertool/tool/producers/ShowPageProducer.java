@@ -309,6 +309,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		// Find the MSIE version, if we're running it.
 		int ieVersion = checkIEVersion();
 
+		if (simplePageBean.getTopRefresh()) {
+		    UIOutput.make(tofill, "refresh");
+		}
+
 		// set up locale
 		Locale M_locale = null;
 		String langLoc[] = localegetter.get().toString().split("_");
@@ -1696,7 +1700,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-resource",
 				"simplepage.resource", false, currentPage, "simplepage.resource.tooltip");
 
-		UILink subpagelink = UIInternalLink.makeURL(toolBar, "subpage-link", "");
+		UILink subpagelink = UIInternalLink.makeURL(toolBar, "subpage-link", "#");
 		subpagelink.decorate(new UITooltipDecorator(messageLocator.getMessage("simplepage.subpage")));
 		subpagelink.linktext = new UIBoundString(messageLocator.getMessage("simplepage.subpage"));
 

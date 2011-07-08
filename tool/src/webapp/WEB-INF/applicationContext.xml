@@ -59,9 +59,16 @@
   </bean>
 
   <bean id="org.sakaiproject.lessonbuildertool.service.ForumEntity"
-	class="org.sakaiproject.lessonbuildertool.service.ForumEntity">
+	class="org.sakaiproject.lessonbuildertool.service.ForumEntity"
+        init-method="init"
+        destroy-method="destroy">
+    <property name="sessionFactory">
+      <ref bean="org.sakaiproject.springframework.orm.hibernate.GlobalSessionFactory"/>
+    </property>
+
     <property name = "nextEntity" ref="org.sakaiproject.lessonbuildertool.service.JForumEntity" />
     <property name="messageLocator" ref="messageLocator"/>
+    <property name="memoryService"><ref bean="org.sakaiproject.memory.api.MemoryService"/></property>
   </bean>
   
   <bean id="org.sakaiproject.lessonbuildertool.service.SamigoEntity"
@@ -118,6 +125,7 @@
 
   <bean class="org.sakaiproject.lessonbuildertool.service.LessonBuilderAccessService"
         init-method="init"
+        destroy-method="destroy"
         singleton="true">
 
     <property name="lessonBuilderAccessAPI" ref="org.sakaiproject.lessonbuildertool.LessonBuilderAccessAPI" />
@@ -134,6 +142,7 @@
     <property name="quizEntity" ref="org.sakaiproject.lessonbuildertool.service.SamigoEntity"/>
     <property name="assignmentEntity" ref="org.sakaiproject.lessonbuildertool.service.AssignmentEntity"/>
     <property name="gradebookIfc" ref="org.sakaiproject.lessonbuildertool.service.GradebookIfc"/>
+    <property name="memoryService"><ref bean="org.sakaiproject.memory.api.MemoryService"/></property>
 
   </bean>
 

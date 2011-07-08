@@ -348,6 +348,21 @@ public class SimplePageBean {
 		toolSession.setAttribute("lessonbuilder.error", messageLocator.getMessage(key).replace("{}", text));
 	}
 
+       public void setTopRefresh() {
+	   ToolSession toolSession = sessionManager.getCurrentToolSession();
+	   toolSession.setAttribute("lessonbuilder.topRefresh", true);
+       }
+
+       public boolean getTopRefresh() {
+	   ToolSession toolSession = sessionManager.getCurrentToolSession();
+	   if (toolSession.getAttribute("lessonbuilder.topRefresh") != null) {
+	       toolSession.removeAttribute("lessonbuilder.topRefresh");
+	       return true;
+	   }
+	   return false;
+       }
+
+
     // a lot of these are setters and getters used for the form process, as 
     // described above
 
@@ -947,15 +962,30 @@ public class SimplePageBean {
 		    return null;
 		}
 
+		// if this is a next page, if there's no explict next it's
+		// not clear that it makes sense to go anywhere. it's kind of
+		// detached from its parent
+		if (item.getNextPage())
+		    return null;
+
 		// here for a page with no explicit next. Treat like any other item
 		// except that we need to compute pathop. Page must be complete or we
 		// would have returned null.
+
+
 	    }
+
+	    // this should be a top level page. We're not currently doing next for that.
+	    // we have to trap it because now and then we have items with bogus 0 page ID, so we
+	    // could get a spurious nextitem
+	    if (item.getPageId() == 0L)
+		return null;
 
 	    // see if there's an actual next we can go to, otherwise calling page
 	    SimplePageItem nextItem = simplePageToolDao.findNextItemOnPage(item.getPageId(), item.getSequence());
 	    boolean available = false;
 	    if (nextItem != null) {
+
 		int itemType = nextItem.getType();
 		if (itemType == SimplePageItem.ASSIGNMENT ||
 		    itemType == SimplePageItem.ASSESSMENT ||
@@ -2043,14 +2073,13 @@ public class SimplePageBean {
 				});
 
 				SitePage sitePage = site.getPage(page.getToolId());
-				
+					
 				for (ToolConfiguration t: sitePage.getTools()) {
 					if (t.getId().equals(placement.getId()))
 						t.setTitle(pageTitle);
 				}
 				
 				sitePage.setTitle(pageTitle);
-				sitePage.setTitleCustom(true);
 				siteService.save(site);
 				page.setTitle(pageTitle);
 				page.setHidden(hidePage);
@@ -2065,7 +2094,9 @@ public class SimplePageBean {
 				pageVisibilityHelper(site, page.getToolId(), !hidePage);
 				pageItem.setPrerequisite(prerequisite);
 				pageItem.setRequired(required);
+				pageItem.setName(pageTitle);
 				update(pageItem);
+
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
@@ -2137,6 +2168,9 @@ public class SimplePageBean {
 		    start++;
 		}
 	    }
+
+	    setTopRefresh();
+
 	    return "success";
 	}
 
