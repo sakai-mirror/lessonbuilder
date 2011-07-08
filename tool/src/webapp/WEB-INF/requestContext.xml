@@ -156,6 +156,8 @@
     	<property name="simplePageToolDao">
 			<ref bean="org.sakaiproject.lessonbuildertool.model.SimplePageToolDao" />
 		</property>
+		
+		<property name="richTextEvolver" ref="richTextEvolver" />
     </bean>
 
 	<!-- backing beans -->

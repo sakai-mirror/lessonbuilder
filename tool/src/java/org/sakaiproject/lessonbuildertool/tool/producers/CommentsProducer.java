@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
@@ -22,7 +23,9 @@ import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UIInput;
 import uk.org.ponder.rsf.components.UIInternalLink;
 import uk.org.ponder.rsf.components.UIOutput;
+import uk.org.ponder.rsf.components.decorators.UIFreeAttributeDecorator;
 import uk.org.ponder.rsf.components.decorators.UIStyleDecorator;
+import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.view.ComponentChecker;
@@ -40,6 +43,8 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	private SimplePageToolDao simplePageToolDao;
 	private HashMap<String, String> anonymousLookup = new HashMap<String, String>();
 	private String currentUserId;
+	
+	public TextInputEvolver richTextEvolver;
 	
 	public String getViewID() {
 		return VIEW_ID;
@@ -60,21 +65,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 				return c1.getTimePosted().compareTo(c2.getTimePosted());
 			}
 		});
-		
-/*		// ViewParameters indicate something was just posted by the user. Highlight it.
-		int highlightComment = -1;
-		if(params.postedComment) {
-			String currentUserId = UserDirectoryService.getCurrentUser().getId();
-			
-			// Find most recent comment by current user.
-			for(int i = comments.size() - 1; i >= 0; i--) {
-				if(comments.get(i).getAuthor().equals(currentUserId)) {
-					highlightComment = i;
-					break;
-				}
-			}
-		}*/
-		
 		
 		currentUserId = UserDirectoryService.getCurrentUser().getId();
 		
@@ -139,6 +129,12 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 
 		UIInput.make(form, "comment-item-id", "#{simplePageBean.itemId}", params.itemId.toString());
 		UIInput.make(form, "comment-text-area", "#{simplePageBean.comment}");
+		
+		UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment");
+		fckInput.decorate(new UIFreeAttributeDecorator("height", "200"));
+		fckInput.decorate(new UIFreeAttributeDecorator("width", "600"));
+		richTextEvolver.evolveTextInput(fckInput);
+		
 		UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
 	}
 	

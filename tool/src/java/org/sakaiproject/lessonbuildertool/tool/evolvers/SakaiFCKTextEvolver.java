@@ -68,8 +68,10 @@ public class SakaiFCKTextEvolver implements TextInputEvolver {
 			}
 		}
 
-   	        String editor = ServerConfigurationService.getString("wysiwyg.editor");
+		String editor = ServerConfigurationService.getString("wysiwyg.editor");
 
+		//editor = "ckeditor";
+		
 		UIContainer parent = toevolve.parent;
 		toevolve.parent.remove(toevolve);
 		UIJointContainer joint = new UIJointContainer(parent, toevolve.ID, COMPONENT_ID);
@@ -80,9 +82,13 @@ public class SakaiFCKTextEvolver implements TextInputEvolver {
 		joint.addComponent(toevolve);
 		String js = null;
 		if ("ckeditor".equals(editor)) {
+			System.out.println("CKEditor");
 		    js = HTMLUtil.emitJavascriptCall("sakai.editor.launch", new String[] { toevolve.getFullID() });
 		} else {
+			System.out.println("FCKEditor");
 		    String collectionID = context.equals("") ? "" : contentHostingService.getSiteCollection(context);
+		    System.out.println(collectionID);
+		    System.out.println(toevolve.getFullID());
 		    js = HTMLUtil.emitJavascriptCall("SakaiProject.fckeditor.initializeEditor", new String[] { toevolve.getFullID(), collectionID, height, width });
 		}
 		UIVerbatim.make(joint, "textarea-js", js);
