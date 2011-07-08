@@ -130,7 +130,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		UIInput.make(form, "comment-item-id", "#{simplePageBean.itemId}", params.itemId.toString());
 		UIInput.make(form, "comment-text-area", "#{simplePageBean.comment}");
 		
-		UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment");
+		UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment}");
 		fckInput.decorate(new UIFreeAttributeDecorator("height", "200"));
 		fckInput.decorate(new UIFreeAttributeDecorator("width", "600"));
 		richTextEvolver.evolveTextInput(fckInput);
