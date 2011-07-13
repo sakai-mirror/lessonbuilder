@@ -185,3 +185,15 @@ a.edit-movie:link,a.edit-movie:visited{
 .returnheader a:hover,returnheader  a:active{ 
    background-color: #edd;
 }
+.item-group-titles{
+        font-style:italic;
+        color: #930;
+	padding-left: 1em;
+}
+.navIntraTool .usebutton {
+    font-size:175%;
+}
+.link-div .usebutton {
+    font-size:160%;
+}
+
