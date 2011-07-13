@@ -461,8 +461,8 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		return new SimplePageLogEntryImpl(userId, itemId);
 	}
 
-	public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID) {
-		return new SimplePageCommentImpl(itemId, pageId, author, comment, UUID);
+	public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID, boolean html) {
+		return new SimplePageCommentImpl(itemId, pageId, author, comment, UUID, html);
 	}
 	
 	public SimplePageItem copyItem(SimplePageItem old) {

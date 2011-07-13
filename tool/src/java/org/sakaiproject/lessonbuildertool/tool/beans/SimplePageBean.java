@@ -178,6 +178,8 @@ public class SimplePageBean {
 	
 	public String commentsId;
 	public boolean anonymous;
+	public String comment;
+	public String formattedComment;
 	
 	private String linkUrl;
 
@@ -237,8 +239,6 @@ public class SimplePageBean {
 	private Map<Long, List<SimplePageItem>> itemsCache = new HashMap<Long, List<SimplePageItem>> ();
 	private Map<Long, SimplePageLogEntry> logCache = new HashMap<Long, SimplePageLogEntry>();
 	private Map<Long, Boolean> completeCache = new HashMap<Long, Boolean>();
-
-	public String comment;
 	
 	public static class PathEntry {
 		public Long pageId;
@@ -3371,13 +3371,21 @@ public class SimplePageBean {
 	}
 	
 	public String addComment() {
-		if(comment == "" || comment == null) {
+		boolean html = false;
+		
+		// Patch in the fancy editor's comment, if it's been used
+		if(formattedComment != null && !formattedComment.equals("")) {
+			comment = formattedComment;
+			html = true;
+		}
+		
+		if(comment.equals("") || comment == null) {
 			setErrMessage(messageLocator.getMessage("simplepage.empty-comment-error"));
 			return "failure";
 		}
 		
 		String userId = UserDirectoryService.getCurrentUser().getId();
-		SimplePageComment commentObject = simplePageToolDao.makeComment(itemId, getCurrentPage().getPageId(), userId, comment, IdManager.getInstance().createUuid());
+		SimplePageComment commentObject = simplePageToolDao.makeComment(itemId, getCurrentPage().getPageId(), userId, comment, IdManager.getInstance().createUuid(), html);
 		saveItem(commentObject, false);
 		
 		return "added-comment";

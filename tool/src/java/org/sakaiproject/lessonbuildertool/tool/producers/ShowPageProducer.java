@@ -590,6 +590,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		// Make sure we only add the comments javascript file once,
 		// even if there are multiple comments tools on the page.
 		boolean addedCommentsScript = false;
+		int commentsCount = 0;
 		
 		// Find the most recent comment on the page by current user
 		long postedCommentId = -1;
@@ -1232,6 +1233,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					
 					CommentsViewParameters eParams = new CommentsViewParameters(CommentsProducer.VIEW_ID);
 					eParams.itemId = i.getId();
+					eParams.commentsCount = ++commentsCount;
 					if(params.postedComment) {
 						eParams.postedComment = postedCommentId;
 					}
@@ -1240,6 +1242,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					
 					if(!addedCommentsScript) {
 						UIOutput.make(tofill, "comments-script");
+						UIOutput.make(tofill, "fckScript");
 						addedCommentsScript = true;
 						
 						if(canEditPage) {

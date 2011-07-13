@@ -16,9 +16,10 @@
 		<div class="commentBody" rsf:id="comment"></div>
 	</div>
 	
+	<a onclick="switchEditors($(this))"><span rsf:id="msg=simplepage.comment-switch-editors"></span></a>
 	<form class="commentArea" rsf:id="comment-form">
 		<input type="hidden" rsf:id="comment-item-id"></input>
-		<textarea rows="5" cols="100" rsf:id="comment-text-area"></textarea>
+		<textarea rows="5" cols="100" class="regular-text" rsf:id="comment-text-area"></textarea>
 		
 		<div class="longtext">
 			<textarea rsf:id="comment-text-area-evolved:"></textarea>

@@ -25,6 +25,9 @@ public interface SimplePageComment {
 	public String getUUID();
 	public void setUUID(String UUID);
 	
+	public boolean getHtml();
+	public void setHtml(boolean html);
+	
 	public int compareTo(Object o);
 	
 }

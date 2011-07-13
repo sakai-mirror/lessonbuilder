@@ -3,13 +3,14 @@ package org.sakaiproject.lessonbuildertool.tool.producers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
+import org.sakaiproject.lessonbuildertool.tool.evolvers.SakaiFCKTextEvolver;
 import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.user.api.User;
@@ -23,6 +24,7 @@ import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UIInput;
 import uk.org.ponder.rsf.components.UIInternalLink;
 import uk.org.ponder.rsf.components.UIOutput;
+import uk.org.ponder.rsf.components.UIVerbatim;
 import uk.org.ponder.rsf.components.decorators.UIFreeAttributeDecorator;
 import uk.org.ponder.rsf.components.decorators.UIStyleDecorator;
 import uk.org.ponder.rsf.evolvers.TextInputEvolver;
@@ -35,7 +37,6 @@ import uk.org.ponder.rsf.viewstate.ViewParameters;
 import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
 
 public class CommentsProducer implements ViewComponentProducer, ViewParamsReporter, NavigationCaseReporter {
-
 	public static final String VIEW_ID = "Comments";
 
 	private SimplePageBean simplePageBean;
@@ -53,8 +54,17 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	public void fillComponents(UIContainer tofill, ViewParameters viewparams, ComponentChecker checker) {
 		CommentsViewParameters params = (CommentsViewParameters) viewparams;
 		
+		// CKEDITOR complains if you try to replace the editor with one with the same name
+		String editorId = "" + params.commentsCount;
+		if(params.showAllComments) {
+			editorId += "B";
+		}
+		
 		if(params.deleteComment != null) {
 			simplePageBean.deleteComment(params.deleteComment);
+			
+			// Since comment deletion is via AJAX, you have to make sure the ID is unique.
+			editorId += params.deleteComment;
 		}
 		
 		List<SimplePageComment> comments = (List<SimplePageComment>) simplePageToolDao.findComments(params.itemId);
@@ -102,12 +112,13 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIBranchContainer container = UIBranchContainer.make(tofill, "commentDiv:");
 			CommentsViewParameters eParams = new CommentsViewParameters(VIEW_ID);
 			eParams.itemId = params.itemId;
+			eParams.commentsCount = params.commentsCount;
 			eParams.showAllComments=true;
 			UIInternalLink.make(container, "to-load", eParams);
 			
 			UIOutput.make(container, "load-more-link", messageLocator.getMessage("simplepage.see_all_comments").replace("{}", Integer.toString(comments.size())));
 			
-			// Show most recent 5 comments
+			// Show 5 most recent comments
 			for(int i = comments.size()-5; i < comments.size(); i++) {
 				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEditPage, params);
 				if(!highlighted) {
@@ -131,9 +142,11 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		UIInput.make(form, "comment-text-area", "#{simplePageBean.comment}");
 		
 		UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment}");
-		fckInput.decorate(new UIFreeAttributeDecorator("height", "200"));
-		fckInput.decorate(new UIFreeAttributeDecorator("width", "600"));
-		richTextEvolver.evolveTextInput(fckInput);
+		fckInput.decorate(new UIFreeAttributeDecorator("height", "175"));
+		fckInput.decorate(new UIFreeAttributeDecorator("width", "800"));
+		fckInput.decorate(new UIStyleDecorator("evolved-box"));
+		
+		((SakaiFCKTextEvolver)richTextEvolver).evolveTextInput(fckInput, editorId);
 		
 		UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
 	}
@@ -185,10 +198,15 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			
 			CommentsViewParameters eParams = (CommentsViewParameters) params.copy();
 			eParams.deleteComment = comment.getUUID();
+			
 			UIInternalLink.make(commentContainer, "deleteCommentURL", eParams);
 		}
 		
-		UIOutput.make(commentContainer, "comment", comment.getComment());
+		if(!comment.getHtml()) {
+			UIOutput.make(commentContainer, "comment", comment.getComment());
+		}else {
+			UIVerbatim.make(commentContainer, "comment", comment.getComment());
+		}
 	}
 	
 	public String getTimeDifference(long timeMillis) {
@@ -197,35 +215,77 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		// These constants are calculated to take rounding into effect, and try to give a fairly
 		// accurate representation of the time difference using words.
 		
+		String descrip = "";
+		
 		if(difference < 45) {
-			return "Seconds Ago";
+			descrip = messageLocator.getMessage("simplepage.seconds");
 		}else if(difference < 90) {
-			return "1 Minute Ago";
+			descrip = messageLocator.getMessage("simplepage.one_min");
 		}else if(difference < 3570) { // 2 mins --> 59 mins
 			int minutes = Math.max(2, Math.round(difference / 60));
-			return minutes + " Minutes Ago";
+			descrip = messageLocator.getMessage("simplepage.x_min").replace("{}", String.valueOf(minutes));
 		}else if(difference < 7170) {
-			return "1 Hour Ago";
+			descrip = messageLocator.getMessage("simplepage.one_hour");
 		}else if(difference < 84600) { // 2 hours --> 23 hours
 			int hours = Math.max(2, Math.round(difference / 3600));
-			return hours + " Hours Ago";
+			descrip = messageLocator.getMessage("simplepage.x_hour").replace("{}", String.valueOf(hours));
 		}else if(difference < 129600) {
-			return "1 Day Ago";
+			descrip = messageLocator.getMessage("simplepage.one_day");
 		}else if(difference < 2548800) { // 2 days --> 29 days
 			int days = Math.max(2, Math.round(difference / 86400));
-			return days + " Days Ago";
+			descrip = messageLocator.getMessage("simplepage.x_day").replace("{}", String.valueOf(days));
 		}else if(difference < 3888000) {
-			return "1 Month Ago";
+			descrip = messageLocator.getMessage("simplepage.one_month");
 		}else if(difference < 29808000) { // 2 months --> 11 months
 			int months = Math.max(2, Math.round(difference / 2592000));
-			return months + " Months Ago";
+			descrip = messageLocator.getMessage("simplepage.x_month").replace("{}", String.valueOf(months));
 		}else if(difference < 47304000) {
-			return "1 Year Ago";
+			descrip = messageLocator.getMessage("simplepage.one_year");
 		}else { // 2+ years
 			int years = Math.max(2, Math.round(difference / 31536000));
-			return years + " Years Ago";
+			descrip = messageLocator.getMessage("simplepage.x_year").replace("{}", String.valueOf(years));
 		}
 		
+		Date d = new Date(timeMillis);
+		Date now = new Date();
+		if(d.getMonth() == now.getMonth() && d.getDate() == now.getDate() && d.getYear() == now.getYear()) {
+			return ((d.getHours()-1) % 12 + 1) + ":" + (d.getMinutes() < 10? "0" : "") + d.getMinutes() + " (" + descrip + ")";
+		}else if(d.getYear() == now.getYear()) {
+			return translateMonth(d.getMonth()) + " " + d.getDate() + " (" + descrip + ")";
+		}else {
+			return d.getMonth() + "/" + d.getDate() + "/" + d.getYear() + " (" + descrip + ")";
+		}
+	}
+	
+	private String translateMonth(int month) {
+		switch(month) {
+		case 1:
+			return messageLocator.getMessage("simplepage.jan");
+		case 2:
+			return messageLocator.getMessage("simplepage.feb");
+		case 3:
+			return messageLocator.getMessage("simplepage.mar");
+		case 4:
+			return messageLocator.getMessage("simplepage.apr");
+		case 5:
+			return messageLocator.getMessage("simplepage.may");
+		case 6:
+			return messageLocator.getMessage("simplepage.jun");
+		case 7:
+			return messageLocator.getMessage("simplepage.jul");
+		case 8:
+			return messageLocator.getMessage("simplepage.aug");
+		case 9:
+			return messageLocator.getMessage("simplepage.sept");
+		case 10:
+			return messageLocator.getMessage("simplepage.oct");
+		case 11:
+			return messageLocator.getMessage("simplepage.nov");
+		case 12:
+			return messageLocator.getMessage("simplepage.dec");
+		default:
+			return "";
+		}
 	}
 	
 	public void setSimplePageBean(SimplePageBean bean) {

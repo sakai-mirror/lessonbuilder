@@ -22,6 +22,7 @@
 	<property name="author" type="string" length="36" not-null="true" />
 	<property name="comment" type="text" />
 	<property name="UUID" type="string" length="36" not-null="true" />
+	<property name="html" type="boolean" not-null="true" />
 
    </class>
 </hibernate-mapping>

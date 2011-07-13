@@ -134,7 +134,7 @@ public interface SimplePageToolDao {
 
     public SimplePageLogEntry makeLogEntry(String userId, long itemId);
     
-    public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID);
+    public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID, boolean html);
 
     public SimplePageItem copyItem(SimplePageItem old);
 

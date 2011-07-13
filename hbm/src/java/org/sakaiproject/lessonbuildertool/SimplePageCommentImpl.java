@@ -11,16 +11,18 @@ public class SimplePageCommentImpl implements SimplePageComment, Comparable {
 	private String author; // User ID of author
 	private String comment; // Text of the comment
 	private String UUID;
+	private boolean html;
 	
 	public SimplePageCommentImpl() { }
 	
-	public SimplePageCommentImpl(long itemId, long pageId, String author, String comment, String UUID) {
+	public SimplePageCommentImpl(long itemId, long pageId, String author, String comment, String UUID, boolean html) {
 		this.itemId = itemId;
 		this.pageId = pageId;
 		this.timePosted = new Date();
 		this.author = author;
 		this.comment = comment;
 		this.UUID = UUID;
+		this.html = html;
 	}
 	
 	public void setId(long id) {
@@ -77,6 +79,14 @@ public class SimplePageCommentImpl implements SimplePageComment, Comparable {
 	
 	public String getUUID() {
 		return UUID;
+	}
+	
+	public void setHtml(boolean html) {
+		this.html = html;
+	}
+	
+	public boolean getHtml() {
+		return html;
 	}
 	
 	

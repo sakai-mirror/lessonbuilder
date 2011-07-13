@@ -40,8 +40,12 @@ public class SakaiFCKTextEvolver implements TextInputEvolver {
 	public void setContentHostingService(ContentHostingService contentHostingService) {
 		this.contentHostingService = contentHostingService;
 	}
-
+	
 	public UIJointContainer evolveTextInput(UIInput toevolve) {
+		return evolveTextInput(toevolve, "1");
+	}
+
+	public UIJointContainer evolveTextInput(UIInput toevolve, String index) {
 
 		// dig out the size decorators and adjust the editor size.
 		// TODO: If you know a cleaner way, please replace this block!
@@ -69,8 +73,6 @@ public class SakaiFCKTextEvolver implements TextInputEvolver {
 		}
 
 		String editor = ServerConfigurationService.getString("wysiwyg.editor");
-
-		//editor = "ckeditor";
 		
 		UIContainer parent = toevolve.parent;
 		toevolve.parent.remove(toevolve);
@@ -78,19 +80,22 @@ public class SakaiFCKTextEvolver implements TextInputEvolver {
 
 		joint.decorators = toevolve.decorators;
 
+		String id = toevolve.ID;
 		toevolve.ID = SEED_ID; // must change ID while unattached
 		joint.addComponent(toevolve);
 		String js = null;
+		
+		// Work around to make sure that there are no duplicate IDs on the page, because comments are requested using Ajax.
+		js = "var i = document.getElementsByName('" + id + ":input')[0]; i.id = '" + id + ":input::" + index + "'; i.name = '" + id + ":input::" + index + "';";
+		js += "document.getElementsByName('" + id + ":input-fossil')[0].name = '" + id + ":input::" + index + "-fossil';";
+		
 		if ("ckeditor".equals(editor)) {
-			System.out.println("CKEditor");
-		    js = HTMLUtil.emitJavascriptCall("sakai.editor.launch", new String[] { toevolve.getFullID() });
+		    js += HTMLUtil.emitJavascriptCall("sakai.editor.launch", new String[] { toevolve.getFullID() + "::" + index, null, "800px", "200px"});
 		} else {
-			System.out.println("FCKEditor");
 		    String collectionID = context.equals("") ? "" : contentHostingService.getSiteCollection(context);
-		    System.out.println(collectionID);
-		    System.out.println(toevolve.getFullID());
-		    js = HTMLUtil.emitJavascriptCall("SakaiProject.fckeditor.initializeEditor", new String[] { toevolve.getFullID(), collectionID, height, width });
+		    js += HTMLUtil.emitJavascriptCall("SakaiProject.fckeditor.initializeEditor", new String[] { toevolve.getFullID() + "::" + index, collectionID, height, width });
 		}
+		
 		UIVerbatim.make(joint, "textarea-js", js);
 
 		return joint;
