@@ -211,7 +211,7 @@ function resizeiframe(id) {
 						<div class="commentsDiv">
 							<div class="replaceWithComments">Loading Comments ...</div>
 							
-							<a onclick="switchEditors($(this))"><span rsf:id="msg=simplepage.add-comment"></span></a>
+							<a class="switchLink" onclick="switchEditors($(this))"><span rsf:id="msg=simplepage.add-comment"></span></a>
 							<form class="commentArea" rsf:id="comment-form">
 								<input type="hidden" rsf:id="comment-item-id"></input>
 								<input type="hidden" rsf:id="comment-edit-id" class="comment-edit-id"></input>
@@ -221,6 +221,7 @@ function resizeiframe(id) {
 								</div>
 		
 								<input type="submit" class="usebutton submitButton" href="#" rsf:id="add-comment" id="add-comment"><span rsf:id="msg=simplepage.add_comment"></span></input>
+								<input type="submit" class="usebutton cancelButton"></input>
 							</form>
 						</div>
 						
@@ -275,6 +276,9 @@ function resizeiframe(id) {
 			  <p rsf:id="msg=simplepage.edit_topic" id="simplepage.edit_topic"></p>
 			  <p rsf:id="msg=simplepage.number_pages_not_number" id="simplepage.number_pages_not_number"></p>
 			  <p rsf:id="msg=simplepage.title_no_number" id="simplepage.title_no_number"></p>
+			  <p rsf:id="msg=simplepage.add-comment" id="simplepage.add-comment"></p>
+			  <p rsf:id="msg=simplepage.edit-comment" id="simplepage.edit-comment"></p>
+			  <p rsf:id="msg=simplepage.cancel_message" id="simplepage.cancel_message"></p>
 			</div>
 
 			<div id="subpage-dialog" rsf:id="subpage-dialog">
@@ -720,35 +724,6 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 					  <input type="text" name="mimetype" rsf:id="mimetype4" id="mimetype4" class="edit-movie-input wideinput" /><br />
 					</div>
 
-				</form>
-			</div>
-			
-			<div id="comments-dialog" rsf:id="comments-dialog">
-				<!--<div class="ui-widget" id="edit-youtube-error-container">
-					<div class="ui-state-error ui-corner-all" style="padding: 0 .7em;"> 
-						<p><span class="ui-icon ui-icon-alert" style="float: left; margin-right: .3em;"></span> 
-						<strong rsf:id="msg=simplepage.error_colon"></strong> <span id="edit-youtube-error"></span></p>
-					</div>
-				</div>-->
-				
-				<form action="#" rsf:id="comments-form">
-					<div class="border">
-						<input type="hidden" rsf:id="commentsEditId" id="commentsEditId" />
-						<div align="left">
-							<input type="checkbox" name="comments-anonymous" id="comments-anonymous" rsf:id="comments-anonymous" />
-							<label for="comments-anonymous"><span rsf:id="msg=simplepage.comments-anonymous"></span></label><br />
-						</div>
-					</div>
-					<br />
-					<div class="border2">
-						<div style="margin-top:5px; margin-bottom:5px;">
-							<b style="margin-left:50px;"><span rsf:id="msg=simplepage.delete"></span>:</b>
-							<input type="submit" style="margin-left:50px;" rsf:id="delete-comments-item" />
-						</div>
-					</div>
-		
-					<input class="bold" type="submit" onclick="event.returnValue = checkCommentsForm(); return checkCommentsForm();" id="update-comments" rsf:id="update-comments" />
-					<input type="submit" rsf:id="cancel-comments" onclick="closeCommentsDialog(); return false" />
 				</form>
 			</div>
 		</div>

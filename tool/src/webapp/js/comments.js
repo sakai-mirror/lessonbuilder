@@ -14,7 +14,13 @@ $(function() {
 		$(".evolved-box").hide();
 	}
 	
-	$(".submitButton").hide();
+	$(".submitButton").hide().val(msg("simplepage.add-comment"));
+	$(".cancelButton").hide().val(msg("simplepage.cancel_message"));
+	
+	$(".cancelButton").click(function() {
+		switchEditors($(this), false);
+		return false;
+	});
 	
 	$.ajaxSetup ({
 		cache: false
@@ -69,7 +75,9 @@ function performHighlight() {
 	$(".highlight-comment").effect("highlight", {}, 4000);
 }
 
-function switchEditors(link) {
+function switchEditors(link, show) {
+	if(show==undefined) show = true;
+	
 	var evolved;
 	
 	if(sakai.editor.editors.ckeditor==undefined) {
@@ -78,17 +86,37 @@ function switchEditors(link) {
 		evolved = $(link).parents(".commentsDiv").find(".evolved-box");
 	}
 	
-	evolved.show();
+	if(show) {
+		evolved.show();
+		
+		$(link).parents(".commentsDiv").find(".submitButton").show();
+		$(link).parents(".commentsDiv").find(".cancelButton").show();
+		
+		$(link).parents(".commentsDiv").find(".switchLink").hide();
+	}else {
+		evolved.hide();
+		
+		if(sakai.editor.editors.ckeditor==undefined) {
+			evolved = $(link).parents(".commentsDiv").find(".evolved-box");
+		}
+		
+		if(sakai.editor.editors.ckeditor==undefined) {
+			FCKeditorAPI.GetInstance(evolved.children("textarea").attr("name")).SetHTML("");
+		}else {
+			CKEDITOR.instances[evolved.children("textarea").attr("name")].setData("");
+		}
+		
+		$(link).parents(".commentsDiv").find(".submitButton").hide().val(msg("simplepage.add-comment"));
+		$(link).parents(".commentsDiv").find(".cancelButton").hide().val(msg("simplepage.cancel_message"));
+		
+		$(link).parents(".commentsDiv").find(".switchLink").show();
+	}
 	
 	if(sakai.editor.editors.ckeditor != undefined) {
 		evolved.find("textarea").hide();
 	}
 	
-	$(link).parents(".commentsDiv").find(".submitButton").show();
-	
-	$(link).hide();
-	
-	setMainFrameHeight(window.name);
+	if(show) setMainFrameHeight(window.name);
 }
 
 function deleteComment(link) {
@@ -138,7 +166,7 @@ function edit(link, id) {
 	}
 	
 	$(link).parents(".commentsDiv").find(".comment-edit-id").val(id);
-	$(link).parents(".commentsDiv").find(".submitButton").val("Edit Comment");
+	$(link).parents(".commentsDiv").find(".submitButton").val(msg("simplepage.edit-comment"));
 	
 	switchEditors(link);
 }

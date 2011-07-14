@@ -1246,10 +1246,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 						UIOutput.make(tofill, "comments-script");
 						UIOutput.make(tofill, "fckScript");
 						addedCommentsScript = true;
-						
-						if(canEditPage) {
-							UIOutput.make(tofill, "delete-dialog");
-						}
+						UIOutput.make(tofill, "delete-dialog");
 					}
 					
 					if(canEditPage) {

@@ -89,9 +89,11 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			}
 		}
 		
+		boolean canEditPage = simplePageBean.canEditPage();
+		
 		if(comments.size() <= 5 || params.showAllComments) {
 			for(int i = 0; i < comments.size(); i++) {
-				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i)), params);
+				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i), canEditPage), params);
 				if(!highlighted) {
 					highlighted = (params.postedComment == comments.get(i).getId());
 				}
@@ -107,7 +109,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			
 			// Show 5 most recent comments
 			for(int i = comments.size()-5; i < comments.size(); i++) {
-				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i)), params);
+				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i), canEditPage), params);
 				if(!highlighted) {
 					highlighted = (params.postedComment == comments.get(i).getId());
 				}

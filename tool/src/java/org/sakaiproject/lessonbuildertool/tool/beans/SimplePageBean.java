@@ -3372,17 +3372,25 @@ public class SimplePageBean {
 			
 			// Must clear the cache so that the new item appears on the page
 			itemsCache.remove(getCurrentPage().getPageId());
+		}else {
+			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
 		}
 	}
 	
 	/**
 	 *  Admins can always edit.  Authors can edit for 30 minutes.
+	 *  
+	 *  The second parameter is only used to distinguish this method from
+	 *  the one directly below it.  Allowing CommentsProducer to cache whether
+	 *  or not the current user can edit the page, without having to hit the
+	 *  database each time.
+	 *  
 	 */
-	public boolean canModifyComment(SimplePageComment c) {
-		if(canEditPage()) {
-			return true;
-		}else if(c.getAuthor().equals(UserDirectoryService.getCurrentUser().getId())){
-			// Same author can edit for 30 minutes.
+	public boolean canModifyComment(SimplePageComment c, boolean canEditPage) {
+		if(canEditPage) return true;
+		
+		if(c.getAuthor().equals(UserDirectoryService.getCurrentUser().getId())){
+			// Author can edit for 30 minutes.
 			if(System.currentTimeMillis() - c.getTimePosted().getTime() <= 1800000) {
 				return true;
 			}else {
@@ -3391,6 +3399,11 @@ public class SimplePageBean {
 		}else {
 			return false;
 		}
+	}
+	
+	// See method above
+	public boolean canModifyComment(SimplePageComment c) {
+		return canModifyComment(c, canEditPage());
 	}
 	
 	// May add or edit comments
@@ -3417,6 +3430,9 @@ public class SimplePageBean {
 			if(commentObject != null && canModifyComment(commentObject)) {
 				commentObject.setComment(comment);
 				update(commentObject, false);
+			}else {
+				setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
+				return "failure";
 			}
 		}
 		
@@ -3430,6 +3446,7 @@ public class SimplePageBean {
 			update(comment);
 			return "success";
 		}else {
+			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
 			return "failure";
 		}
 	}
@@ -3446,7 +3463,7 @@ public class SimplePageBean {
 		if(comment != null && comment.getPageId() == getCurrentPage().getPageId()) {
 			if(canModifyComment(comment)) {
 				comment.setComment("");
-				update(comment);
+				update(comment, false);
 				return "success";
 			}
 		}
