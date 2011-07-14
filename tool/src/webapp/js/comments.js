@@ -13,14 +13,16 @@ $(function() {
 	});
 	
 	$(".replaceWithComments").each(function(index) {
-		var pageToRequest = $(this).parent().children(".commentsBlock").attr("href");
+		var pageToRequest = $(this).parent().parent().children(".commentsBlock").attr("href");
 		$(this).load(pageToRequest, function() {
 			if(sakai.editor.editors.ckeditor==undefined) {
-				$(this).find(".evolved-box :not(textarea)").hide();
+				$(this).parent().find(".evolved-box :not(textarea)").hide();
 			}else {
-				$(this).find(".evolved-box").hide();
+				$(this).parent().find(".evolved-box").hide();
 			}
+
 		});
+
 	});
 	
 	$("#delete-dialog").dialog({
@@ -49,7 +51,7 @@ function loadMore(link) {
 		cache: false
 	});
 	
-	var pageToRequest = $(link).parent().children(".to-load").attr("href");
+	var pageToRequest = $(link).parent().parent().children(".to-load").attr("href");
 	
 	$(link).parents(".replaceWithComments").load(pageToRequest, function() {
 		if(sakai.editor.editors.ckeditor==undefined) {
@@ -67,9 +69,9 @@ function performHighlight() {
 }
 
 function switchEditors(link) {
-	var regular = $(link).parent().find(".regular-text");
+	var regular = $(link).parent(".commentsDiv").find(".regular-text");
 	
-	var evolved = $(link).parent().find(".evolved-box");
+	var evolved = $(link).parent(".commentsDiv").find(".evolved-box");
 	
 	
 	if($(link).parent().find(".regular-text").is(":visible")) {
@@ -82,7 +84,7 @@ function switchEditors(link) {
 	}
 	
 	if(sakai.editor.editors.ckeditor==undefined) {
-		evolved = $(link).parent().find(".evolved-box :not(textarea)");
+		evolved = $(link).parent(".commentsDiv").find(".evolved-box :not(textarea)");
 	}
 	
 	regular.toggle();

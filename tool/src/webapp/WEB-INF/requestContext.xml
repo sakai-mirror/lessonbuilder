@@ -49,6 +49,7 @@
 		<property name="httpServletRequest" ref="httpServletRequest" />
 		<property name="memoryService"><ref bean="org.sakaiproject.memory.api.MemoryService"/></property>
 		<property name="toolManager" ref="org.sakaiproject.tool.api.ActiveToolManager" />
+		<property name="richTextEvolver" ref="richTextEvolver" />
 	</bean>
 	
 	<bean class="org.sakaiproject.lessonbuildertool.tool.producers.ReorderProducer" >
@@ -156,8 +157,6 @@
     	<property name="simplePageToolDao">
 			<ref bean="org.sakaiproject.lessonbuildertool.model.SimplePageToolDao" />
 		</property>
-		
-		<property name="richTextEvolver" ref="richTextEvolver" />
     </bean>
 
 	<!-- backing beans -->

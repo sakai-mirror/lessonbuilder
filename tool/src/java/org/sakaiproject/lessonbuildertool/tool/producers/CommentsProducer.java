@@ -45,8 +45,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	private HashMap<String, String> anonymousLookup = new HashMap<String, String>();
 	private String currentUserId;
 	
-	public TextInputEvolver richTextEvolver;
-	
 	public String getViewID() {
 		return VIEW_ID;
 	}
@@ -135,20 +133,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		if(anonymous && canEditPage) {
 			UIOutput.make(tofill, "anonymousAlert");
 		}
-		
-		UIForm form = UIForm.make(tofill, "comment-form");
-
-		UIInput.make(form, "comment-item-id", "#{simplePageBean.itemId}", params.itemId.toString());
-		UIInput.make(form, "comment-text-area", "#{simplePageBean.comment}");
-		
-		UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment}");
-		fckInput.decorate(new UIFreeAttributeDecorator("height", "175"));
-		fckInput.decorate(new UIFreeAttributeDecorator("width", "800"));
-		fckInput.decorate(new UIStyleDecorator("evolved-box"));
-		
-		((SakaiFCKTextEvolver)richTextEvolver).evolveTextInput(fckInput, editorId);
-		
-		UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
 	}
 	
 	public void printComment(SimplePageComment comment, UIContainer tofill, boolean highlight, boolean anonymous, boolean showDelete, CommentsViewParameters params) {

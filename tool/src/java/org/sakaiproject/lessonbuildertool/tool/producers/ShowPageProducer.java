@@ -62,6 +62,7 @@ import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.service.LessonEntity;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.Status;
+import org.sakaiproject.lessonbuildertool.tool.evolvers.SakaiFCKTextEvolver;
 import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.FilePickerViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
@@ -96,6 +97,7 @@ import uk.org.ponder.rsf.components.decorators.UIFreeAttributeDecorator;
 import uk.org.ponder.rsf.components.decorators.UIStyleDecorator;
 import uk.org.ponder.rsf.components.decorators.UITooltipDecorator;
 import uk.org.ponder.rsf.evolvers.FormatAwareDateInputEvolver;
+import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.view.ComponentChecker;
@@ -122,6 +124,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 	private HttpServletRequest httpServletRequest;
 	private MemoryService memoryService = null;
 	private ToolManager toolManager;
+	public TextInputEvolver richTextEvolver;
 	
 	// I don't much like the static, because it opens us to a possible race
 	// condition, but I don't see much option
@@ -1261,6 +1264,20 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 						UIOutput.make(tableRow, "commentsId", String.valueOf(i.getId()));
 						UIOutput.make(tableRow, "commentsAnon", String.valueOf(i.isAnonymous()));
 					}
+					
+					UIForm form = UIForm.make(tableRow, "comment-form");
+
+					UIInput.make(form, "comment-item-id", "#{simplePageBean.itemId}", String.valueOf(i.getId()));
+					UIInput.make(form, "comment-text-area", "#{simplePageBean.comment}");
+					
+					UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment}");
+					fckInput.decorate(new UIFreeAttributeDecorator("height", "175"));
+					fckInput.decorate(new UIFreeAttributeDecorator("width", "800"));
+					fckInput.decorate(new UIStyleDecorator("evolved-box"));
+					
+					((SakaiFCKTextEvolver)richTextEvolver).evolveTextInput(fckInput, "" + commentsCount);
+					
+					UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
 				
 				} else {
 					// remaining type must be a block of HTML

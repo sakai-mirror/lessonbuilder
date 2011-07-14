@@ -208,7 +208,22 @@ function resizeiframe(id) {
 					<td rsf:id="comments-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton edit-comments" onclick="return false" rsf:id="edit-comments"></a></div></td>
 					
 					<td rsf:id="commentsSpan" role="gridcell">
-						<div class="replaceWithComments">Loading Comments ...</div>
+						<div class="commentsDiv">
+							<div class="replaceWithComments">Loading Comments ...</div>
+							
+							<a onclick="switchEditors($(this))"><span rsf:id="msg=simplepage.comment-switch-editors"></span></a>
+							<form class="commentArea" rsf:id="comment-form">
+								<input type="hidden" rsf:id="comment-item-id"></input>
+								<textarea class="regular-text" rsf:id="comment-text-area" rows="4" cols="100"></textarea>
+		
+								<div class="longtext">
+									<textarea rsf:id="comment-text-area-evolved:"></textarea>
+								</div>
+		
+								<input type="submit" class="usebutton" href="#" rsf:id="add-comment" id="add-comment"><span rsf:id="msg=simplepage.add_comment"></span></input>
+							</form>
+						</div>
+						
 						<a href="#" style="display:none" rsf:id="commentsLink" class="commentsBlock"></a>
 						<div style="display:none" rsf:id="commentsId" class="comments-id"></div>
 						<div style="display:none" rsf:id="commentsAnon" class="commentsAnon"></div>
