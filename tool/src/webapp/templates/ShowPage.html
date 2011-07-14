@@ -211,16 +211,16 @@ function resizeiframe(id) {
 						<div class="commentsDiv">
 							<div class="replaceWithComments">Loading Comments ...</div>
 							
-							<a onclick="switchEditors($(this))"><span rsf:id="msg=simplepage.comment-switch-editors"></span></a>
+							<a onclick="switchEditors($(this))"><span rsf:id="msg=simplepage.add-comment"></span></a>
 							<form class="commentArea" rsf:id="comment-form">
 								<input type="hidden" rsf:id="comment-item-id"></input>
-								<textarea class="regular-text" rsf:id="comment-text-area" rows="4" cols="100"></textarea>
-		
-								<div class="longtext">
+								<input type="hidden" rsf:id="comment-edit-id" class="comment-edit-id"></input>
+								
+								<div>
 									<textarea rsf:id="comment-text-area-evolved:"></textarea>
 								</div>
 		
-								<input type="submit" class="usebutton" href="#" rsf:id="add-comment" id="add-comment"><span rsf:id="msg=simplepage.add_comment"></span></input>
+								<input type="submit" class="usebutton submitButton" href="#" rsf:id="add-comment" id="add-comment"><span rsf:id="msg=simplepage.add_comment"></span></input>
 							</form>
 						</div>
 						

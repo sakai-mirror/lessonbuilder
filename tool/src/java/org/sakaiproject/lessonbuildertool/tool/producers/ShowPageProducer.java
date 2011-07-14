@@ -1236,7 +1236,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					
 					CommentsViewParameters eParams = new CommentsViewParameters(CommentsProducer.VIEW_ID);
 					eParams.itemId = i.getId();
-					eParams.commentsCount = ++commentsCount;
 					if(params.postedComment) {
 						eParams.postedComment = postedCommentId;
 					}
@@ -1268,7 +1267,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					UIForm form = UIForm.make(tableRow, "comment-form");
 
 					UIInput.make(form, "comment-item-id", "#{simplePageBean.itemId}", String.valueOf(i.getId()));
-					UIInput.make(form, "comment-text-area", "#{simplePageBean.comment}");
+					UIInput.make(form, "comment-edit-id", "#{simplePageBean.editId}");
 					
 					UIInput fckInput = UIInput.make(form, "comment-text-area-evolved:", "#{simplePageBean.formattedComment}");
 					fckInput.decorate(new UIFreeAttributeDecorator("height", "175"));
@@ -1306,8 +1305,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		}
 
 		// end of items. This is the end for normal users. Following is special
-		// checks and
-		// putting out the dialogs for the popups, for instructors.
+		// checks and putting out the dialogs for the popups, for instructors.
 
 		boolean showBreak = false;
 

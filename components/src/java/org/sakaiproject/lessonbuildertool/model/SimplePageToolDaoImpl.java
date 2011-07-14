@@ -329,11 +329,12 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		}
 	}
 
-	public boolean update(Object o, List<String>elist, String nowriteerr) {
-		if (!(o instanceof SimplePageLogEntry || canEditPage())) {
+	public boolean update(Object o, List<String>elist, String nowriteerr, boolean requiresEditPermission) {
+		if (!(o instanceof SimplePageLogEntry || canEditPage() || !requiresEditPermission)) {
 		    elist.add(nowriteerr);
 		    return false;
 		}
+		
 		if (o instanceof SimplePageItem) {
 		    SimplePageItem i = (SimplePageItem)o;
 		    EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.update", "/lessonbuilder/item/" + i.getId(), true));

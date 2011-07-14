@@ -7,7 +7,6 @@ public class CommentsViewParameters extends SimpleViewParameters {
 	public boolean showAllComments = false;
 	public long postedComment = -1;
 	public String deleteComment = null;
-	public int commentsCount = 1;
 	
 	public CommentsViewParameters() { super(); }
 	

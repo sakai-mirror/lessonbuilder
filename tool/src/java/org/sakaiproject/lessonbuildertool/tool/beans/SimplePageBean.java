@@ -180,6 +180,7 @@ public class SimplePageBean {
 	public boolean anonymous;
 	public String comment;
 	public String formattedComment;
+	public String editId;
 	
 	private String linkUrl;
 
@@ -525,13 +526,17 @@ public class SimplePageBean {
 	public boolean saveItem(Object i) {
 		return saveItem(i, true);
 	}
+	
+	boolean update(Object i) {
+		return update(i, true);
+	}
 
     // see notes for saveupdate
-	boolean update(Object i) {       
+	boolean update(Object i, boolean requiresEditPermission) {       
 		String err = null;
 		List<String>elist = new ArrayList<String>();
 		try {
-			simplePageToolDao.update(i,  elist, messageLocator.getMessage("simplepage.nowrite"));
+			simplePageToolDao.update(i,  elist, messageLocator.getMessage("simplepage.nowrite"), requiresEditPermission);
 		} catch (Throwable t) {
 			// this is probably a bogus error, but find its root cause
 			while (t.getCause() != null) {
@@ -1854,13 +1859,13 @@ public class SimplePageBean {
 					i.setName(selectedObject.getTitle());
 				    }
 				    // reset assignment-specific stuff
-				    i.setDescription("(Due " + DateFormat.getDateTimeInstance().format(selectedObject.getDueDate()));
+				    i.setDescription("(" + messageLocator.getMessage("simplepage.due") + " " + DateFormat.getDateTimeInstance().format(selectedObject.getDueDate()) + ")");
 				    update(i);
 				}
 			    } else {
 				// no, add new item
 				i = appendItem(selectedAssignment, selectedObject.getTitle(), SimplePageItem.ASSIGNMENT);
-				i.setDescription("(Due " + DateFormat.getDateTimeInstance().format(selectedObject.getDueDate()));
+				i.setDescription("(" + messageLocator.getMessage("simplepage.due") + " " + DateFormat.getDateTimeInstance().format(selectedObject.getDueDate()) + ")");
 				update(i);
 			    }
 			    return "success";
@@ -3370,6 +3375,25 @@ public class SimplePageBean {
 		}
 	}
 	
+	/**
+	 *  Admins can always edit.  Authors can edit for 30 minutes.
+	 */
+	public boolean canModifyComment(SimplePageComment c) {
+		if(canEditPage()) {
+			return true;
+		}else if(c.getAuthor().equals(UserDirectoryService.getCurrentUser().getId())){
+			// Same author can edit for 30 minutes.
+			if(System.currentTimeMillis() - c.getTimePosted().getTime() <= 1800000) {
+				return true;
+			}else {
+				return false;
+			}
+		}else {
+			return false;
+		}
+	}
+	
+	// May add or edit comments
 	public String addComment() {
 		boolean html = false;
 		
@@ -3379,14 +3403,22 @@ public class SimplePageBean {
 			html = true;
 		}
 		
-		if(comment.equals("") || comment == null) {
+		if(comment == null || comment.equals("")) {
 			setErrMessage(messageLocator.getMessage("simplepage.empty-comment-error"));
 			return "failure";
 		}
 		
-		String userId = UserDirectoryService.getCurrentUser().getId();
-		SimplePageComment commentObject = simplePageToolDao.makeComment(itemId, getCurrentPage().getPageId(), userId, comment, IdManager.getInstance().createUuid(), html);
-		saveItem(commentObject, false);
+		if(editId == null || editId.equals("")) {
+			String userId = UserDirectoryService.getCurrentUser().getId();
+			SimplePageComment commentObject = simplePageToolDao.makeComment(itemId, getCurrentPage().getPageId(), userId, comment, IdManager.getInstance().createUuid(), html);
+			saveItem(commentObject, false);
+		}else {
+			SimplePageComment commentObject = simplePageToolDao.findCommentById(Long.valueOf(editId));
+			if(commentObject != null && canModifyComment(commentObject)) {
+				commentObject.setComment(comment);
+				update(commentObject, false);
+			}
+		}
 		
 		return "added-comment";
 	}
@@ -3409,9 +3441,10 @@ public class SimplePageBean {
 	 * the numbering, which hinders discussion.
 	 */
 	public String deleteComment(String commentUUID) {
-		if(canEditPage()) {
-			SimplePageComment comment = simplePageToolDao.findCommentByUUID(commentUUID);
-			if(comment != null && comment.getPageId() == getCurrentPage().getPageId()) {
+		SimplePageComment comment = simplePageToolDao.findCommentByUUID(commentUUID);
+		
+		if(comment != null && comment.getPageId() == getCurrentPage().getPageId()) {
+			if(canModifyComment(comment)) {
 				comment.setComment("");
 				update(comment);
 				return "success";

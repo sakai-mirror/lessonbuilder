@@ -8,20 +8,21 @@ var deleteDialogCommentUrl = null;
 var originalDeleteDialogText = null;
 
 $(function() {
+	if(sakai.editor.editors.ckeditor==undefined) {
+		$(".evolved-box :not(textarea)").hide();
+	}else {
+		$(".evolved-box").hide();
+	}
+	
+	$(".submitButton").hide();
+	
 	$.ajaxSetup ({
 		cache: false
 	});
 	
 	$(".replaceWithComments").each(function(index) {
 		var pageToRequest = $(this).parent().parent().children(".commentsBlock").attr("href");
-		$(this).load(pageToRequest, function() {
-			if(sakai.editor.editors.ckeditor==undefined) {
-				$(this).parent().find(".evolved-box :not(textarea)").hide();
-			}else {
-				$(this).parent().find(".evolved-box").hide();
-			}
-
-		});
+		$(this).load(pageToRequest);
 
 	});
 	
@@ -51,7 +52,7 @@ function loadMore(link) {
 		cache: false
 	});
 	
-	var pageToRequest = $(link).parent().parent().children(".to-load").attr("href");
+	var pageToRequest = $(link).parent().parent().find(".to-load").attr("href");
 	
 	$(link).parents(".replaceWithComments").load(pageToRequest, function() {
 		if(sakai.editor.editors.ckeditor==undefined) {
@@ -69,30 +70,21 @@ function performHighlight() {
 }
 
 function switchEditors(link) {
-	var regular = $(link).parent(".commentsDiv").find(".regular-text");
-	
-	var evolved = $(link).parent(".commentsDiv").find(".evolved-box");
-	
-	
-	if($(link).parent().find(".regular-text").is(":visible")) {
-		if(sakai.editor.editors.ckeditor==undefined) {
-			//FCKeditorAPI.GetInstance("comment-text-area-evolved::input::1").SetHTML(regular.text(regular.val()).html());
-			FCKeditorAPI.GetInstance(evolved.children("textarea").attr("name")).SetHTML(regular.text(regular.val()).html());
-		}else {
-			CKEDITOR.instances[evolved.children("textarea").attr("name")].setData(regular.text(regular.val()).html());
-		}
-	}
+	var evolved;
 	
 	if(sakai.editor.editors.ckeditor==undefined) {
-		evolved = $(link).parent(".commentsDiv").find(".evolved-box :not(textarea)");
+		evolved = $(link).parents(".commentsDiv").find(".evolved-box :not(textarea)");
+	}else {
+		evolved = $(link).parents(".commentsDiv").find(".evolved-box");
 	}
 	
-	regular.toggle();
-	evolved.toggle();
+	evolved.show();
 	
 	if(sakai.editor.editors.ckeditor != undefined) {
 		evolved.find("textarea").hide();
 	}
+	
+	$(link).parents(".commentsDiv").find(".submitButton").show();
 	
 	$(link).hide();
 	
@@ -134,4 +126,19 @@ function confirmDelete() {
 	setMainFrameHeight(window.name);
 	$("#delete-dialog").dialog("close");
 	$("#delete-comment-confirm").text(originalDeleteDialogText);
+}
+
+function edit(link, id) {
+	var evolved = $(link).parents(".commentsDiv").find(".evolved-box");
+	
+	if(sakai.editor.editors.ckeditor==undefined) {
+		FCKeditorAPI.GetInstance(evolved.children("textarea").attr("name")).SetHTML($(link).parent().children(".commentBody").html());
+	}else {
+		CKEDITOR.instances[evolved.children("textarea").attr("name")].setData($(link).parent().children(".commentBody").html());
+	}
+	
+	$(link).parents(".commentsDiv").find(".comment-edit-id").val(id);
+	$(link).parents(".commentsDiv").find(".submitButton").val("Edit Comment");
+	
+	switchEditors(link);
 }

@@ -100,7 +100,7 @@ public interface SimplePageToolDao {
 	public boolean deleteItem(Object o);
 
     // see saveItem for details and caveats, same function except update instead of save
-	public boolean update(Object o, List<String> elist, String nowriteerr);
+	public boolean update(Object o, List<String> elist, String nowriteerr, boolean requiresEditPermission);
 
     // version without permission checking and logging
 	public boolean quickUpdate(Object o);

@@ -84,20 +84,12 @@ public class SakaiFCKTextEvolver implements TextInputEvolver {
 		toevolve.ID = SEED_ID; // must change ID while unattached
 		joint.addComponent(toevolve);
 		String js = null;
-		
-		System.out.println("evolver called " + index);
-		// Work around to make sure that there are no duplicate IDs on the page, because comments are requested using Ajax.
-		//js = "var i = document.getElementsByName('" + id + ":input')[0]; i.id = '" + id + ":input::" + index + "'; i.name = '" + id + ":input::" + index + "';";
-		//js += "document.getElementsByName('" + id + ":input-fossil')[0].name = '" + id + ":input::" + index + "-fossil';";
-		
-		//js = "var i = $('[name=\"" + id + ":input\"]').first(); i.attr('id', '" + id + ":input::" + index + "'); i.attr('name', '" + id + ":input::" + index + "');";
-		//js += "$('[name=\"" + id + ":input-fossil\"]').first().attr('name', '" + id + ":input::" + index + "-fossil');";
 
 		if ("ckeditor".equals(editor)) {
-		    js = HTMLUtil.emitJavascriptCall("sakai.editor.launch", new String[] { toevolve.getFullID() /*+ "::" + index*/, null, "800px", "200px"});
+		    js = HTMLUtil.emitJavascriptCall("sakai.editor.launch", new String[] { toevolve.getFullID(), null, "800px", "200px"});
 		} else {
 		    String collectionID = context.equals("") ? "" : contentHostingService.getSiteCollection(context);
-		    js = HTMLUtil.emitJavascriptCall("SakaiProject.fckeditor.initializeEditor", new String[] { toevolve.getFullID() /*+ "::" + index*/, collectionID, height, width });
+		    js = HTMLUtil.emitJavascriptCall("SakaiProject.fckeditor.initializeEditor", new String[] { toevolve.getFullID(), collectionID, height, width });
 		}
 		
 		UIVerbatim.make(joint, "textarea-js", js);

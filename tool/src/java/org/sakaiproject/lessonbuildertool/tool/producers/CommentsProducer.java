@@ -23,6 +23,7 @@ import uk.org.ponder.rsf.components.UIContainer;
 import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UIInput;
 import uk.org.ponder.rsf.components.UIInternalLink;
+import uk.org.ponder.rsf.components.UILink;
 import uk.org.ponder.rsf.components.UIOutput;
 import uk.org.ponder.rsf.components.UIVerbatim;
 import uk.org.ponder.rsf.components.decorators.UIFreeAttributeDecorator;
@@ -52,17 +53,8 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	public void fillComponents(UIContainer tofill, ViewParameters viewparams, ComponentChecker checker) {
 		CommentsViewParameters params = (CommentsViewParameters) viewparams;
 		
-		// CKEDITOR complains if you try to replace the editor with one with the same name
-		String editorId = "" + params.commentsCount;
-		if(params.showAllComments) {
-			editorId += "B";
-		}
-		
 		if(params.deleteComment != null) {
 			simplePageBean.deleteComment(params.deleteComment);
-			
-			// Since comment deletion is via AJAX, you have to make sure the ID is unique.
-			editorId += params.deleteComment;
 		}
 		
 		List<SimplePageComment> comments = (List<SimplePageComment>) simplePageToolDao.findComments(params.itemId);
@@ -89,8 +81,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		boolean highlighted = false;
 		
-		boolean canEditPage = simplePageBean.canEditPage();
-		
 		// Remove any "phantom" comments. So that the anonymous order stays the same,
 		// comments are deleted by removing all content.
 		for(int i = comments.size()-1; i >= 0; i--) {
@@ -101,7 +91,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		if(comments.size() <= 5 || params.showAllComments) {
 			for(int i = 0; i < comments.size(); i++) {
-				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEditPage, params);
+				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i)), params);
 				if(!highlighted) {
 					highlighted = (params.postedComment == comments.get(i).getId());
 				}
@@ -110,7 +100,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIBranchContainer container = UIBranchContainer.make(tofill, "commentDiv:");
 			CommentsViewParameters eParams = new CommentsViewParameters(VIEW_ID);
 			eParams.itemId = params.itemId;
-			eParams.commentsCount = params.commentsCount;
 			eParams.showAllComments=true;
 			UIInternalLink.make(container, "to-load", eParams);
 			
@@ -118,7 +107,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			
 			// Show 5 most recent comments
 			for(int i = comments.size()-5; i < comments.size(); i++) {
-				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEditPage, params);
+				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i)), params);
 				if(!highlighted) {
 					highlighted = (params.postedComment == comments.get(i).getId());
 				}
@@ -130,12 +119,12 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIOutput.make(tofill, "highlightScript");
 		}
 		
-		if(anonymous && canEditPage) {
+		if(anonymous && simplePageBean.canEditPage()) {
 			UIOutput.make(tofill, "anonymousAlert");
 		}
 	}
 	
-	public void printComment(SimplePageComment comment, UIContainer tofill, boolean highlight, boolean anonymous, boolean showDelete, CommentsViewParameters params) {
+	public void printComment(SimplePageComment comment, UIContainer tofill, boolean highlight, boolean anonymous, boolean showModifiers, CommentsViewParameters params) {
 		UIBranchContainer commentContainer = UIBranchContainer.make(tofill, "commentDiv:");
 		if(highlight) commentContainer.decorate(new UIStyleDecorator("highlight-comment"));
 		
@@ -177,13 +166,16 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		UIOutput.make(commentContainer, "timePosted", timeDifference);
 		
-		if(showDelete) {
+		if(showModifiers) {
 			UIOutput.make(commentContainer, "deleteSpan");
 			
 			CommentsViewParameters eParams = (CommentsViewParameters) params.copy();
 			eParams.deleteComment = comment.getUUID();
 			
 			UIInternalLink.make(commentContainer, "deleteCommentURL", eParams);
+			
+			UIOutput.make(commentContainer, "editComment").decorate(
+					new UIFreeAttributeDecorator("onclick", "edit($(this), " + comment.getId() + ");"));
 		}
 		
 		if(!comment.getHtml()) {
