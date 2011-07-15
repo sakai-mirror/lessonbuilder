@@ -3368,7 +3368,9 @@ public class SimplePageBean {
 	
 	public void addCommentsSection() {
 		if(canEditPage()) {
-			appendItem("", "Comment Section", SimplePageItem.COMMENTS);
+			SimplePageItem item = appendItem("", "Comment Section", SimplePageItem.COMMENTS);
+			item.setDescription("Comment Section");
+			update(item);
 			
 			// Must clear the cache so that the new item appears on the page
 			itemsCache.remove(getCurrentPage().getPageId());

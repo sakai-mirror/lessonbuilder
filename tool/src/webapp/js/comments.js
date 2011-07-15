@@ -28,7 +28,7 @@ $(function() {
 	
 	$(".replaceWithComments").each(function(index) {
 		var pageToRequest = $(this).parent().parent().children(".commentsBlock").attr("href");
-		$(this).load(pageToRequest);
+		$(this).load(pageToRequest, commentsLoaded);
 
 	});
 	
@@ -53,6 +53,11 @@ $(function() {
 	});
 });
 
+function commentsLoaded() {
+	$(".deleteLink").attr("title", msg("simplepage.comment_delete"));
+	$(".editLink").attr("title", msg("simplepage.edit-comment"));
+}
+
 function loadMore(link) {
 	$.ajaxSetup ({
 		cache: false
@@ -60,13 +65,7 @@ function loadMore(link) {
 	
 	var pageToRequest = $(link).parent().parent().find(".to-load").attr("href");
 	
-	$(link).parents(".replaceWithComments").load(pageToRequest, function() {
-		if(sakai.editor.editors.ckeditor==undefined) {
-			$(this).find(".evolved-box :not(textarea)").hide();
-		}else {
-			$(this).find(".evolved-box").hide();
-		}
-	});
+	$(link).parents(".replaceWithComments").load(pageToRequest, commentsLoaded);
 	
 	setMainFrameHeight(window.name);
 }
@@ -143,13 +142,7 @@ function deleteComment(link) {
 }
 
 function confirmDelete() {
-	$(commentToReload).load(deleteDialogCommentURL, function() {
-		if(sakai.editor.editors.ckeditor==undefined) {
-			$(this).find(".evolved-box :not(textarea)").hide();
-		}else {
-			$(this).find(".evolved-box").hide();
-		}
-	});
+	$(commentToReload).load(deleteDialogCommentURL, commentsLoaded);
 	//$("#delete-dialog").parents(".replaceWithComments").load($(dialog).children(".delete-dialog-comment-url").text());
 	setMainFrameHeight(window.name);
 	$("#delete-dialog").dialog("close");

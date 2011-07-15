@@ -128,7 +128,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 	
 	// I don't much like the static, because it opens us to a possible race
 	// condition, but I don't see much option
-	// see the setter. It has to be static becaue it's used in makeLink, which
+	// see the setter. It has to be static because it's used in makeLink, which
 	// is static so it can be used
 	// by ReorderProducer. I wonder if this whole producer could be made
 	// application scope?
@@ -1457,8 +1457,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		} else if (i.getType() == SimplePageItem.PAGE) {
 			SimplePage p = simplePageToolDao.getPage(Long.valueOf(i.getSakaiId()));
 
-			GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, p
-					.getPageId());
+			GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, p.getPageId());
 			eParams.setItemId(i.getId());
 			// nextpage indicates whether it should be pushed onto breadcrumbs
 			// or replace the top item
