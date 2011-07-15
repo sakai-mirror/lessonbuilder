@@ -1412,6 +1412,15 @@ public class SimplePageBean {
 		boolean makeNewPage = (selectedEntity == null || selectedEntity.length() == 0);
 		boolean makeNewItem = (itemId == null || itemId == -1);
 
+		// make sure the page is legit
+		if (!makeNewPage) {
+		    SimplePage p = simplePageToolDao.getPage(Long.valueOf(selectedEntity));
+		    if (p == null || !getCurrentSiteId().equals(p.getSiteId())) {
+			log.warn("addpage tried to add invalid page: " + selectedEntity);
+			return "invalidpage";
+		    }
+		}
+
 		if ((title == null || title.length() == 0) &&
 		    (selectedEntity == null || selectedEntity.length() == 0)) {
 			return "notitle";
