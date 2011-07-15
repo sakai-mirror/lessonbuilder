@@ -138,4 +138,8 @@ public interface SimplePageItem {
     
     public boolean isAnonymous();
 
+    public void setGroups(String groups);
+
+    public String getGroups();
+
 }

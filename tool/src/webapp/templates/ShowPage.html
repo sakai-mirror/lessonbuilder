@@ -83,7 +83,7 @@ function resizeiframe(id) {
 		  <a class="usebutton" href="#" rsf:id="remove-page" id="remove-page"><span rsf:id="msg=simplepage.remove-page"></span></a> 
 		  <a class="usebutton" href="#" rsf:id="new-page" id="new-page"><span rsf:id="msg=simplepage.new-page"></span></a> 
 		  <a class="usebutton" href="#" rsf:id="import-cc" id="import-cc"><span rsf:id="msg=simplepage.import_cc_button"></span></a>
-		  <span class="navIntraTool" style="background-color:transparent;border:none"> <a href="#" rsf:id="prev">next</a> <a href="#" rsf:id="next">next</a> </span>
+		  <span class="navIntraTool" style="background-color:transparent;border:none"> <a href="#" rsf:id="prev" class="usebutton">next</a> <a href="#" rsf:id="next" class="usebutton">next</a> </span>
 		</div>
 	
 		<div rsf:id="tool-bar:" class="navIntraTool" role="toolbar">
@@ -125,7 +125,7 @@ function resizeiframe(id) {
 				<tr rsf:id="item:" id="item" role="row">
 					<td rsf:id="edit-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton edit-link" onclick="return false" rsf:id="edit-link"></a></div></td>
 					<td rsf:id="item-td" role="gridcell"><div style="float:left"><img class="status-image" rsf:id="status" height="18" width="18" style="margin-right:3px" /></div>
-					  <div style="margin-left:30px"><div rsf:id="link-div" class="link-div"><a class="itemlink" href="#" rsf:id="link" style="width:36px"><span rsf:id="link-note" class="offscreen"></span><span rsf:id="link-text" class="link-text"></span></a><span rsf:id="link-button-span" class="navIntraTool" style="background-color:transparent;border:none"><a href="#" class="itemlink" rsf:id="link-button"><span rsf:id="link-button-note" class="offscreen"></span><span rsf:id="link-button-text" class="link-text"></span></a></span></div><div class="rowdescription" rsf:id="description"></div></div>
+					  <div style="margin-left:30px"><div rsf:id="link-div" class="link-div"><a class="itemlink" href="#" rsf:id="link" style="width:36px"><span rsf:id="link-note" class="offscreen"></span><span rsf:id="link-text" class="link-text"></span></a><span rsf:id="link-button-span" class="navIntraTool" style="background-color:transparent;border:none"><a href="#" class="usebutton" rsf:id="link-button"><span rsf:id="link-button-note" class="offscreen"></span><span rsf:id="link-button-text" class="link-text"></span></a></span><span rsf:id="item-group-titles" class="item-group-titles"></span></div><div class="rowdescription" rsf:id="description"></div></div>
 					  <div style="display:none">
 					    <span rsf:id="current-item-id2" class="current-item-id2"></span>
 					    <span rsf:id="prerequisite-info" class="prerequisite-info"></span>
@@ -136,13 +136,17 @@ function resizeiframe(id) {
 					    <span rsf:id="edit-url" class="edit-url"></span>
 					    <span rsf:id="edit-settings-url" class="edit-settings-url"></span>
 					    <span rsf:id="item-samewindow" class="item-samewindow"></span>
+					    <span rsf:id="item-groups" class="item-groups"></span>
 					  </div>
 					</td>
 					<td rsf:id="edittext-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton itemLink" rsf:id="edit-link"></a></div></td>
-					<td rsf:id="itemSpan" role="gridcell"><div rsf:id="content"></div>
+					<td rsf:id="itemSpan" role="gridcell">
+					  <div rsf:id="item-groups-titles-text" class="item-group-titles"></div>
+					  <div rsf:id="content"></div>
 					</td>
 					<td rsf:id="editmm-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton multimedia-edit" onclick="return false" rsf:id="iframe-edit"></a></div></td>
 					<td rsf:id="iframeSpan" role="gridcell" class="hideOnDialog"><div>
+					  <div rsf:id="item-group-titles2" class="item-group-titles"></div>
 					  <iframe
 					     name="SimplePageIFrame"
 					     class="portletMainIframe multimedia"
@@ -159,21 +163,25 @@ function resizeiframe(id) {
 					  <div class="description" rsf:id="description5"></div>
 					  <div style="display:none" rsf:id="mimetype3" class="mm-type"></div>
 					  <div style="display:none" rsf:id="current-item-id3" class="mm-itemid"></div>
+					  <div style="display:none" rsf:id="item-groups2" class="item-groups"></div>
 					  </div>
 					</td>
 	
 					<td rsf:id="imageSpan" role="gridcell"><div>
+					    <div rsf:id="item-group-titles3" class="item-group-titles"></div>
 					    <img rsf:id="image" class="multimedia" />
 					    <div style="display:none" rsf:id="imageHeight" class="mm-height"></div>
 					    <div style="display:none" rsf:id="imageWidth" class="mm-width"></div>
 					    <div class="description" rsf:id="description2"></div>
 					    <div style="display:none" rsf:id="mimetype2" class="mm-type"></div>
 					    <div style="display:none" rsf:id="current-item-id4" class="mm-itemid"></div>
+					    <div style="display:none" rsf:id="item-groups3" class="item-groups"></div>
 					  </div>
 					</td>
 
 					<td rsf:id="youtube-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton edit-youtube" onclick="return false" rsf:id="youtube-edit"></a></div></td>
 					<td rsf:id="youtubeSpan" role="gridcell"  id="youtubeSpan"  class="hideOnDialog"><div>
+					    <div rsf:id="item-group-titles4" class="item-group-titles"></div>
 					    <object rsf:id="youtubeObject"><param name="allowFullScreen" value="true" /><param name="allowSscriptAccess" value="always" /><param name="movie" rsf:id="youtubeURLInject" /><embed rsf:id="youtubeEmbed" allowfullscreen="true" allowScriptAccess="always" /></object>
 					  </div>
 					  <div style="display:none" rsf:id="youtubeId" class="youtube-id"></div>
@@ -182,11 +190,13 @@ function resizeiframe(id) {
 					  <div style="display:none" rsf:id="currentYoutubeWidth" class="mm-width"></div>
 					  <div class="description" rsf:id="description4"></div>
 					  <div style="display:none" rsf:id="current-item-id5" class="mm-itemid"></div>
+					  <div style="display:none" rsf:id="item-groups4" class="item-groups"></div>
 					</td>
 
 					<td rsf:id="movie-td" role="gridcell" class="edit-col"><div><a href="#" class="usebutton edit-movie" onclick="return false" rsf:id="edit-movie"></a></div></td>
 
 					<td rsf:id="movieSpan" role="gridcell" class="hideOnDialog"><div>
+					    <div rsf:id="item-group-titles5" class="item-group-titles"></div>
 					    <embed rsf:id="movieEmbed" autoplay="false" autostart="false" scale="aspect" />
 					    <object rsf:id="movieObject"><param name="src" rsf:id="movieURLInject" /><param name="FlashVars" rsf:id="flashvars"/><param name="autoplay" value="false"/><param name="autostart" value="false"/><param name="scale" value="aspect"/>
 					      <p rsf:id="noplugin-p"></p><br rsf:id="noplugin-br"/><a href="#" rsf:id="noplugin" target="_blank"></a>
@@ -202,6 +212,7 @@ function resizeiframe(id) {
 					  <div class="description" rsf:id="description3"></div>
 					  <div style="display:none" rsf:id="mimetype5" class="mm-type"></div>
 					  <div style="display:none" rsf:id="current-item-id6" class="mm-itemid"></div>
+					  <div style="display:none" rsf:id="item-groups5" class="item-groups"></div>
 					</td>
 
 
@@ -395,8 +406,21 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 						</select>
 						<input id="assignment-points" rsf:id="assignment-points" size="4"/>
 						<label for="assignment-points" id="assignment-points-label"> points on the assignment</label>
+						
+						<p id="editgroups">
+						  <a href="#"><span rsf:id="msg=simplepage.edit-group"></span></a>
+						</p>
+						<p id="resource-group-inherited" rsf:id="msg=simplepage.resource-group-inherited"></p>
+						<div id="grouplist" rsf:id="grouplist">
+						  <span rsf:id="group-list-span"/>
+						  <p rsf:id="msg=simplepage.select-group"></p>
+						  <p id="select-resource-group" rsf:id="msg=simplepage.select-resource-group"></p>
+						  <div rsf:id="select-group-list:">
+						    <input type="checkbox" rsf:id="select-group" /><span rsf:id="select-group-text"></span>
+						  </div>
+						</div>
 					</div>
-					
+
 					<div class="border2">
 						<div style="margin-top:5px; margin-bottom:5px;">
 							<b style="margin-left:50px;"><span rsf:id="msg=simplepage.delete"></span>:</b>
@@ -472,6 +496,9 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 						<p class="shorttext required" id="change-resource-mm-p">
 						  <a href="#" rsf:id="change-resource-mm" id="change-resource-mm"><span rsf:id="msg.simplepage.change_resource"></span></a>
 					        </p>
+						<p id="editgroups-mm">
+						  <a href="#"><span rsf:id="msg=simplepage.edit-group"></span></a>
+						</p>
 					</div>
 					<br />
 
@@ -665,6 +692,9 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 						  <label rsf:id="description4-label" for="alt">Page Title</label><br />
 						  <textarea name="description4" rsf:id="description4" id="description4" rows="5" class="edit-multimedia-input" ></textarea>
 						</p>
+						<p id="editgroups-youtube">
+						  <a href="#"><span rsf:id="msg=simplepage.edit-group"></span></a>
+						</p>
 					</div>
 					<br />
 					<div class="border2">
@@ -700,6 +730,9 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 						<p class="shorttext required" id="change-resource-movie-p">
 						  <a href="#" rsf:id="change-resource-movie" id="change-resource-movie"><span rsf:id="msg.simplepage.change_resource"></span></a>
 					        </p>
+						<p id="editgroups-movie">
+						  <a href="#"><span rsf:id="msg=simplepage.edit-group"></span></a>
+						</p>
 					</div>
 					<br />
 					<div class="border2">

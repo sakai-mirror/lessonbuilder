@@ -29,11 +29,14 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -57,6 +60,7 @@ import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.content.api.ContentResourceEdit;
 import org.sakaiproject.content.api.FilePickerHelper;
+import org.sakaiproject.content.api.GroupAwareEntity.AccessMode;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
 import org.sakaiproject.event.cover.EventTrackingService;
@@ -82,6 +86,9 @@ import org.sakaiproject.lessonbuildertool.service.LessonSubmission;
 import org.sakaiproject.lessonbuildertool.tool.producers.ShowItemProducer;
 import org.sakaiproject.lessonbuildertool.tool.producers.ShowPageProducer;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
+import org.sakaiproject.memory.api.Cache;
+import org.sakaiproject.memory.api.MemoryService;
+import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SitePage;
 import org.sakaiproject.site.api.SiteService;
@@ -114,6 +121,8 @@ import uk.org.ponder.rsf.components.UIInternalLink;
 //    DAO directly. This layer sticks caches on top of the data access, and provides more complex logic. Security
 //    is primarily in the DAO, but the DAO only checks permissions. We have to make sure we only acccess pages
 //    and items in our site
+//       Most of the caches are local. Since this bean is request-scope they are recreated for each request.
+//    Thus we don't have to worry about timing out the entries.
 // 2) It is used by RSF to access data. Normally the bean is associated with a specific page. However the 
 //    UI often has to update attributes of a specific item. For that use, there are some item-specific variables
 //    in the bean. They are only meaningful during item operations, when itemId will show which item is involved.
@@ -145,9 +154,14 @@ public class SimplePageBean {
 	private String subpageTitle = null;
 	private boolean subpageNext = false;
 	private boolean subpageButton = false;
-    private List<Long> currentPath = null;
+
+	private List<Long> currentPath = null;
 	private Set<Long> allowedPages = null;    
+
 	private Site currentSite = null; // cache, can be null; used by getCurrentSite
+
+	private List<GroupEntry> currentGroups = null;
+	private Set<String> myGroups = null;
 
 	private boolean filterHtml = ServerConfigurationService.getBoolean(FILTERHTML, false);
 
@@ -157,6 +171,7 @@ public class SimplePageBean {
     // coming from the picker. We'll use the same variable for any entity type
 	public String selectedEntity = null;
 	public String[] selectedEntities = new String[] {};
+	public String[] selectedGroups = new String[] {};
 
 	public String selectedQuiz = null;
 
@@ -165,6 +180,8 @@ public class SimplePageBean {
 	private Long currentPageItemId = null;
 	private String currentUserId = null;
 	private long previousPageId = -1;
+
+	private Boolean okToEditPage = null;
 
     // Item-specific variables. These are set by setters which are called
     // by the various edit dialogs. So they're basically inputs to the
@@ -240,7 +257,11 @@ public class SimplePageBean {
 	private Map<Long, List<SimplePageItem>> itemsCache = new HashMap<Long, List<SimplePageItem>> ();
 	private Map<Long, SimplePageLogEntry> logCache = new HashMap<Long, SimplePageLogEntry>();
 	private Map<Long, Boolean> completeCache = new HashMap<Long, Boolean>();
-	
+    private Map<Long, Boolean> visibleCache = new HashMap<Long, Boolean>();
+    // this one needs to be global
+	private static Cache groupCache = null;   // itemId => grouplist
+	protected static final int DEFAULT_EXPIRATION = 10 * 60;
+
 	public static class PathEntry {
 		public Long pageId;
 		public Long pageItemId;
@@ -254,6 +275,11 @@ public class SimplePageBean {
 			this.Url = Url;
 			this.label = label;
 	    }
+	}
+
+	public static class GroupEntry {
+	    public String name;
+	    public String id;
 	}
 
     // Image types
@@ -318,7 +344,21 @@ public class SimplePageBean {
 	    return messageLocator;
 	}
 
+	static MemoryService memoryService = null;
+	public void setMemoryService(MemoryService m) {
+	    memoryService = m;
+	}
+
     // End Injection
+
+	public void init () {	
+	    if (groupCache == null)
+		groupCache = memoryService
+		    .newCache("org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.cache");
+	}
+
+    // no destroy. We want to leave the cache intact when we exit, because there's one of us
+    // per request.
 
 	public SimplePageItem findItem(long itId) {
 		Long itemId = itId;
@@ -607,7 +647,9 @@ public class SimplePageBean {
 				}
 
 				item.setHtml(html);
+				setItemGroups(item, selectedGroups);
 				update(item);
+
 			} else {
 				rv = "cancel";
 			}
@@ -795,8 +837,11 @@ public class SimplePageBean {
 	 * @return
 	 */
 	public boolean canEditPage() {
+		if (okToEditPage != null)
+		    return (boolean)okToEditPage;
 		String ref = "/site/" + toolManager.getCurrentPlacement().getContext();
-		return securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_UPDATE, ref);
+		okToEditPage = securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_UPDATE, ref);
+		return (boolean)okToEditPage;
 	}
 
 	public boolean canReadPage() {
@@ -858,7 +903,7 @@ public class SimplePageBean {
 		// if access controlled, clear it before deleting item
 		if (i.isPrerequisite()) {
 		    i.setPrerequisite(false);
-		    checkControlGroup(i);
+		    checkControlGroup(i, false);
 		}
 		b = simplePageToolDao.deleteItem(i);
 
@@ -988,6 +1033,12 @@ public class SimplePageBean {
 
 	    // see if there's an actual next we can go to, otherwise calling page
 	    SimplePageItem nextItem = simplePageToolDao.findNextItemOnPage(item.getPageId(), item.getSequence());
+
+	    // skip items which won't show becauser user isn't in the group
+		while (nextItem != null && !isItemVisible(nextItem)) {
+			nextItem = simplePageToolDao.findNextItemOnPage(nextItem.getPageId(), nextItem.getSequence());		
+		}
+
 	    boolean available = false;
 	    if (nextItem != null) {
 
@@ -1572,7 +1623,7 @@ public class SimplePageBean {
 			// if access controlled, clear it before deleting item
 			if (item.isPrerequisite()) {
 			    item.setPrerequisite(false);
-			    checkControlGroup(item);
+			    checkControlGroup(item, false);
 			}
 			simplePageToolDao.deleteItem(item);
 		    }
@@ -1672,8 +1723,10 @@ public class SimplePageBean {
 					update(page);
 				}
 			} else {
-				checkControlGroup(i);
+				checkControlGroup(i, i.isPrerequisite());
 			}
+
+			setItemGroups(i, selectedGroups);
 
 			return "successEdit"; // Shouldn't reload page
 		}
@@ -1683,7 +1736,8 @@ public class SimplePageBean {
     // This code should depend only upon isPrerequisite() in the item object, not the database,
     // because we call it when deleting or updating items, before saving them to the database.
     // The caller will update the item in the database, typically after this call
-	private void checkControlGroup(SimplePageItem i) {
+    //    correct is correct value, i.e whether it hsould be there or not
+	private void checkControlGroup(SimplePageItem i, boolean correct) {
 	    	if (i.getType() != SimplePageItem.ASSESSMENT && 
 		    i.getType() != SimplePageItem.ASSIGNMENT && 
 		    i.getType() != SimplePageItem.FORUM) {
@@ -1696,22 +1750,57 @@ public class SimplePageBean {
 		    return;
 
 		SimplePageGroup group = simplePageToolDao.findGroup(i.getSakaiId());
+		String ourGroupName = null;
 		try {
-			if (i.isPrerequisite()) {
+		    // correct is the correct setting, i.e. if there is supposed to be
+		    // a group or not. We only change if reality disagrees with it.
+			if (correct) {
 				if (group == null) {
-				        String groupId = GroupPermissionsService.makeGroup(getCurrentPage().getSiteId(), "Access: " + getNameOfSakaiItem(i));
-					saveItem(simplePageToolDao.makeGroup(i.getSakaiId(), groupId));
-					GroupPermissionsService.addControl(i.getSakaiId(), getCurrentPage().getSiteId(), groupId, i.getType());
-				} else {
-					GroupPermissionsService.addControl(i.getSakaiId(), getCurrentPage().getSiteId(), group.getGroupId(), i.getType());
+					// create our a new access control group, and save the current tool group list with it.
+					LessonEntity lessonEntity = null;
+					switch (i.getType()) {
+					case SimplePageItem.ASSIGNMENT:
+					    lessonEntity = assignmentEntity.getEntity(i.getSakaiId()); break;
+					case SimplePageItem.ASSESSMENT:
+					    lessonEntity = quizEntity.getEntity(i.getSakaiId()); break;
+					case SimplePageItem.FORUM:
+					    lessonEntity = forumEntity.getEntity(i.getSakaiId()); break;
+					}
+					if (lessonEntity != null) {
+					    String groups = getItemGroupString (i, lessonEntity, true);
+					    ourGroupName = "Access: " + getNameOfSakaiItem(i);
+					    String groupId = GroupPermissionsService.makeGroup(getCurrentPage().getSiteId(), ourGroupName);
+					    saveItem(simplePageToolDao.makeGroup(i.getSakaiId(), groupId, groups));
+
+					    // update the tool access control to point to our access control group
+					    
+					    String[] newGroups = {groupId};
+					    lessonEntity.setGroups(Arrays.asList(newGroups));
+					}
 				}
 			} else {
-				// if no group ID, nothing to do
-				if (group != null)
-					GroupPermissionsService.removeControl(i.getSakaiId(), getCurrentPage().getSiteId(), group.getGroupId(), i.getType());
+			    if (group != null) {
+				// shouldn't be under control. Delete our access control and put the 
+				// groups back into the tool's list
+
+				LessonEntity lessonEntity = null;
+				switch (i.getType()) {
+				case SimplePageItem.ASSIGNMENT:
+				    lessonEntity = assignmentEntity.getEntity(i.getSakaiId()); break;
+				case SimplePageItem.ASSESSMENT:
+				    lessonEntity = quizEntity.getEntity(i.getSakaiId()); break;
+				case SimplePageItem.FORUM:
+				    lessonEntity = forumEntity.getEntity(i.getSakaiId()); break;
+				}
+				if (lessonEntity != null) {
+				    String groups = group.getGroups();
+				    lessonEntity.setGroups(Arrays.asList(groups.split(",")));
+				    simplePageToolDao.deleteItem(group);
+				}
+			    }
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace();
+		    ex.printStackTrace();
 		}
 	}
 
@@ -1787,12 +1876,12 @@ public class SimplePageBean {
 				    // if access controlled, clear restriction from old assignment and add to new
 				    if (i.isPrerequisite()) {
 					i.setPrerequisite(false);
-					checkControlGroup(i);
+					checkControlGroup(i, false);
 					// sakaiid and name are used in setting control
 					i.setSakaiId(selectedEntity);
 					i.setName(selectedObject.getTitle());
 					i.setPrerequisite(true);
-						checkControlGroup(i);
+					checkControlGroup(i, true);
 				    } else {
 					i.setSakaiId(selectedEntity);
 					i.setName(selectedObject.getTitle());
@@ -1848,12 +1937,12 @@ public class SimplePageBean {
 				    // if access controlled, clear restriction from old assignment and add to new
 				    if (i.isPrerequisite()) {
 					i.setPrerequisite(false);
-					checkControlGroup(i);
+					checkControlGroup(i, false);
 					// sakaiid and name are used in setting control
 					i.setSakaiId(selectedAssignment);
 					i.setName(selectedObject.getTitle());
 					i.setPrerequisite(true);
-					checkControlGroup(i);
+					checkControlGroup(i, true);
 				    } else {
 					i.setSakaiId(selectedAssignment);
 					i.setName(selectedObject.getTitle());
@@ -1877,6 +1966,352 @@ public class SimplePageBean {
 			}
 		}
 	}
+
+    /// ShowPageProducers needs the item ID list anyway. So to avoid calling the underlying
+    // code twice, we take that list and translate to titles, rather than calling
+    // getItemGroups again
+	public String getItemGroupTitles(String itemGroups) {
+	    if (itemGroups == null || itemGroups.equals(""))
+		return null;
+
+	    List<String> groupNames = new ArrayList<String>();
+	    Site site = getCurrentSite();
+	    String[] groupIds = itemGroups.split(",");
+	    for (int i = 0; i < groupIds.length; i++) {
+		Group group=site.getGroup(groupIds[i]);
+		if (group != null)
+		    groupNames.add(group.getTitle());
+	    }
+	    Collections.sort(groupNames);
+	    String ret = "";
+	    for (String name: groupNames) {
+		if (ret.equals(""))
+		    ret = name;
+		else
+		    ret = ret + "," + name;
+	    }
+
+	    return ret;
+	}
+
+        public String getItemGroupString (SimplePageItem i, LessonEntity entity, boolean nocache) {
+	    String ret = "";
+	    Collection<String> groups = getItemGroups (i, entity, nocache);
+	    if (groups == null)
+		return "";
+	    for (String g: groups) {
+		ret = ret + "," + g;
+	    }
+	    return ret.substring(1);
+	}
+
+    //  return GroupEntrys for all groups associated with item
+    // need group entries so we can display labels to user
+    // entity is optional. pass it if you have it, to avoid requiring
+    // us to get it a second time
+	public Collection<String>getItemGroups (SimplePageItem i, LessonEntity entity, boolean nocache) {
+
+	    Collection<String> ret = new ArrayList<String>();
+
+
+
+	    if (!nocache && i.getType() != SimplePageItem.PAGE 
+		         && i.getType() != SimplePageItem.TEXT) {
+	       Object cached = groupCache.get(i.getSakaiId());
+	       if (cached != null) {
+		   if (cached instanceof String)
+		       return null;
+		   return (List<String>)cached;
+	       }
+	   }
+
+	   if (entity == null) {
+	       switch (i.getType()) {
+	       case SimplePageItem.ASSIGNMENT:
+		   entity = assignmentEntity.getEntity(i.getSakaiId()); break;
+	       case SimplePageItem.ASSESSMENT:
+		   entity = quizEntity.getEntity(i.getSakaiId()); break;
+	       case SimplePageItem.FORUM:
+		   entity = forumEntity.getEntity(i.getSakaiId()); break;
+	       case SimplePageItem.RESOURCE:
+	       case SimplePageItem.MULTIMEDIA:
+		   return getResourceGroups(i, nocache);  // responsible for caching the result
+	       case SimplePageItem.TEXT:
+	       case SimplePageItem.PAGE:
+		   return getLBItemGroups(i); // for all native LB objects
+	       }
+	   }
+
+	   // in principle the groups are stored in a SimplePageGroup if we
+	   // are doing access control, and in the tool if not. We can
+	   // check that with i.isPrerequisite. However I'm concerned
+	   // that if multiple items point to the same object, and some
+	   // are set with prerequisite and some are not, that things
+	   // could get out of kilter. So I'm going to use the
+	   // SimplePageGroup if it exists, and the tool if not.
+
+	   SimplePageGroup simplePageGroup = simplePageToolDao.findGroup(i.getSakaiId());
+	   if (simplePageGroup != null) {
+	       String groups = simplePageGroup.getGroups();
+	       if (groups != null)
+		   ret = Arrays.asList(groups.split(","));
+	       else 
+		   ;  // leave ret as an empty list
+	   } else
+	       // not under our control, use list from tool
+	       ret = entity.getGroups(nocache);	       
+
+	   if (ret == null)
+	       groupCache.put(i.getSakaiId(), "*", DEFAULT_EXPIRATION);
+	   else
+	       groupCache.put(i.getSakaiId(), ret, DEFAULT_EXPIRATION);
+
+	   return ret;
+
+       }
+
+    // obviously this function must be called right after getResourceGroups
+       private boolean inherited = false;
+       public boolean getInherited() {
+	   return inherited;
+       }
+
+    // getItemGroups version for resources, since we don't have
+    // an interface object
+       public Collection<String>getResourceGroups (SimplePageItem i, boolean nocache) {
+	   Collection<String> ret = null;
+
+	   ContentResource resource = null;
+	   try {
+	       resource = contentHostingService.getResource(i.getSakaiId());
+	   } catch (Exception ignore) {
+	       return null;
+	   }
+	   
+	   Collection<String>groups = null;
+	   AccessMode access = resource.getAccess();
+	   boolean inheritingPubView =  contentHostingService.isInheritingPubView(i.getSakaiId());
+	   if(AccessMode.INHERITED.equals(access) || inheritingPubView) {
+	       access = resource.getInheritedAccess();
+	       // inherited means that we can't set it locally
+	       // an inherited value of site is OK
+	       // anything else can't be changed, so we set inherited
+	       if (AccessMode.SITE.equals(access) && ! inheritingPubView)
+		   inherited = false;
+	       else
+		   inherited = true;
+	       if (AccessMode.GROUPED.equals(access))
+		   groups = resource.getInheritedGroups();
+	   } else {
+	       // we can always change local modes, even if they are public
+	       inherited = false;
+	       if (AccessMode.GROUPED.equals(access))
+		   groups = resource.getGroups();
+	   }
+
+	   if (groups != null) {
+	       ret = new ArrayList<String>();
+	       for (String group: groups) {
+		   int n = group.indexOf("/group/");
+		   ret.add(group.substring(n+7));
+	       }
+	   }
+
+	   if (!nocache) {
+	       if (ret == null)
+		   groupCache.put(i.getSakaiId(), "*", DEFAULT_EXPIRATION);
+	       else
+		   groupCache.put(i.getSakaiId(), ret, DEFAULT_EXPIRATION);
+	   }
+
+	   return ret;
+       }
+
+    // no obvious need to cache
+       public Collection<String>getLBItemGroups (SimplePageItem i) {
+	   List<String> ret = null;
+
+	   String groupString = i.getGroups();
+	   if (groupString == null || groupString.equals("")) {
+	       return null;
+	   }
+	       
+	   String[] groupsArray = groupString.split(",");
+	   return Arrays.asList(groupsArray);
+
+       }
+
+    // set group list in tool. We'll have an array of group ids
+    // returns old list, sorted, or null if entity not found.
+    // WARNING: you must check whether isprerequisite. If so, we maintain
+    // the group list, so you need to do i.setGroups().
+       public List<String> setItemGroups (SimplePageItem i, String[] groups) {
+	   LessonEntity lessonEntity = null;
+	   switch (i.getType()) {
+	   case SimplePageItem.ASSIGNMENT:
+	       lessonEntity = assignmentEntity.getEntity(i.getSakaiId()); break;
+	   case SimplePageItem.ASSESSMENT:
+	       lessonEntity = quizEntity.getEntity(i.getSakaiId()); break;
+	   case SimplePageItem.FORUM:
+	       lessonEntity = forumEntity.getEntity(i.getSakaiId()); break;
+	   case SimplePageItem.RESOURCE:
+	   case SimplePageItem.MULTIMEDIA:
+	       return setResourceGroups (i, groups);
+	   case SimplePageItem.TEXT:
+	   case SimplePageItem.PAGE:
+	       return setLBItemGroups(i, groups);
+	   }
+	   if (lessonEntity != null) {
+	       // need a list to sort it.
+	       Collection oldGroupCollection = getItemGroups(i, lessonEntity, true);
+	       List<String>oldGroups = null;
+	       if (oldGroupCollection == null)
+		   oldGroups = new ArrayList<String>();
+	       else
+		   oldGroups = new ArrayList<String>(oldGroupCollection);
+
+	       Collections.sort(oldGroups);
+	       List<String>newGroups = Arrays.asList(groups);
+	       Collections.sort(newGroups);
+	       boolean difference = false;
+	       if (oldGroups.size() == newGroups.size()) {
+		   for (int n = 0; n < oldGroups.size(); n++)
+		       if (!oldGroups.get(n).equals(newGroups.get(n))) {
+			   difference = true;
+			   break;
+		       }
+	       } else
+		   difference = true;
+
+	       if (difference) {
+		   if (i.isPrerequisite()) {
+		       String groupString = "";
+		       for (String groupId: newGroups) {
+			   if (groupString.equals(""))
+			       groupString = groupId;
+			   else
+			       groupString = groupString + "," + groupId;
+		       }
+
+		       SimplePageGroup simplePageGroup = simplePageToolDao.findGroup(i.getSakaiId());
+		       simplePageGroup.setGroups(groupString);
+		       update(simplePageGroup);
+		   } else
+		       lessonEntity.setGroups(Arrays.asList(groups));
+	       }
+	       return oldGroups;
+	   }
+	   return null;
+       }
+
+       public List<String> setResourceGroups (SimplePageItem i, String[] groups) {
+
+	   ContentResourceEdit resource = null;
+	   List<String>ret = null;
+
+	   try {
+	       resource = contentHostingService.editResource(i.getSakaiId());
+
+	       if (AccessMode.GROUPED.equals(resource.getInheritedAccess())) {
+		   Collection<String> oldGroups = resource.getInheritedGroups();
+		   if (oldGroups instanceof List)
+		       ret = (List<String>)oldGroups;
+		   else if (oldGroups != null)
+		       ret = new ArrayList<String>(oldGroups);
+	       }
+	       // else null
+
+	       if (groups == null || groups.length == 0) {
+		   if (AccessMode.GROUPED.equals(resource.getAccess()))
+		       resource.clearGroupAccess();
+		   // else must be public or site already, leave it
+	       } else {
+		   Site site = getCurrentSite();
+		   for (int n = 0; n < groups.length; n++) {
+		       Group group = site.getGroup(groups[n]);
+		       groups[n] = group.getReference();
+		   }
+		   resource.setGroupAccess(Arrays.asList(groups));
+	       }
+	       contentHostingService.commitResource(resource);
+	       resource = null;
+
+	   } catch (Exception e) {
+	       setErrMessage(e.toString());
+	       return null;
+	   } finally {
+	       if (resource != null)
+		   contentHostingService.cancelResource(resource);
+	   }
+
+	   return ret;
+
+       }
+
+       public List<String> setLBItemGroups (SimplePageItem i, String[] groups) {
+
+	   List<String>ret = null;
+	   // old value
+	   String groupString = i.getGroups();
+	   if (groupString != null && !groupString.equals("")) {
+	       ret = Arrays.asList(groupString.split(","));
+	   }
+	       
+	   groupString = null;
+	   if (groups != null) {
+	       for (int n = 0; n < groups.length; n++) {
+		   if (groupString == null)
+		       groupString = groups[n];
+		   else
+		       groupString = groupString + "," + groups[n];
+	       }
+	   }
+	   i.setGroups(groupString);
+	   update(i);
+
+	   return ret; // old value
+       }
+
+       public Set<String> getMyGroups() {
+	   if (myGroups != null)
+	       return myGroups;
+	   String userId = getCurrentUserId();
+	   Collection<Group> groups = getCurrentSite().getGroupsWithMember(userId);
+	   Set<String>ret = new HashSet<String>();
+	   if (groups == null)
+	       return ret;
+	   for (Group group: groups)
+	       ret.add(group.getId());
+	   myGroups = ret;
+	   return ret;
+       }
+
+    // sort the list, since it will typically be presented
+    // to the user
+       public List<GroupEntry> getCurrentGroups() {
+	   if (currentGroups != null)
+	       return currentGroups;
+
+	   Site site = getCurrentSite();
+	   Collection<Group> groups = site.getGroups();
+	   List<GroupEntry> groupEntries = new ArrayList<GroupEntry>();
+	   for (Group g: groups) {
+	       GroupEntry e = new GroupEntry();
+	       e.name = g.getTitle();
+	       e.id = g.getId();
+	       groupEntries.add(e);
+	   }
+
+	   Collections.sort(groupEntries,new Comparator() {
+		   public int compare(Object o1, Object o2) {
+		       GroupEntry e1 = (GroupEntry)o1;
+		       GroupEntry e2 = (GroupEntry)o2;
+		       return e1.name.compareTo(e2.name);
+		   }
+	       });
+	   currentGroups = groupEntries;
+	   return groupEntries;
+       }
 
     // called by add quiz dialog. Create a new item that points to a quiz
     // or update an existing item, depending upon whether itemid is set
@@ -1907,12 +2342,12 @@ public class SimplePageBean {
 				    // if access controlled, clear restriction from old quiz and add to new
 				    if (i.isPrerequisite()) {
 					i.setPrerequisite(false);
-					checkControlGroup(i);
+					checkControlGroup(i, false);
 					// sakaiid and name are used in setting control
 					i.setSakaiId(selectedQuiz);
 					i.setName(selectedObject.getTitle());
 					i.setPrerequisite(true);
-					checkControlGroup(i);
+					checkControlGroup(i, true);
 				    } else {
 					i.setSakaiId(selectedQuiz);
 					i.setName(selectedObject.getTitle());
@@ -2009,6 +2444,7 @@ public class SimplePageBean {
 			i.setDescription(description);
 			i.setHtml(mimetype);
 			update(i);
+			setItemGroups(i, selectedGroups);
 			return "success";
 		} else {
 			log.warn("editMultimedia Could not find multimedia object: " + itemId);
@@ -2429,6 +2865,33 @@ public class SimplePageBean {
 		return (getLogEntry(itemId) != null);
 	}
 
+    // if the item has a group requirement, are we in one of the groups.
+    // this is called a lot and is fairly expensive, so results are cached
+	public boolean isItemVisible(SimplePageItem item) {
+		if (canEditPage())
+		    return true;
+        	Boolean ret = visibleCache.get(item.getId());
+		if (ret != null)
+		    return (boolean)ret;
+		getMyGroups();
+		Collection<String>itemGroups = getItemGroups(item, null, false);
+		if (itemGroups == null || itemGroups.size() == 0) {
+		    // this includes items for which for which visibility doesn't apply
+		    visibleCache.put(item.getId(), true);
+		    return true;
+		}
+
+		for (String group: itemGroups) {
+		    if (myGroups.contains(group)) {
+			visibleCache.put(item.getId(), true);
+			return true;
+		    }
+		}
+
+		visibleCache.put(item.getId(), false);
+		return false;
+	}
+		
     // this is called in a loop to see whether items are avaiable. Since computing it can require
     // database transactions, we cache the results
 	public boolean isItemComplete(SimplePageItem item) {
@@ -2703,7 +3166,7 @@ public class SimplePageBean {
 			for (SimplePageItem i : items) {
 				if (i.getSequence() >= item.getSequence()) {
 				    break;
-				} else if (i.isRequired()) {
+				} else if (i.isRequired() && isItemVisible(i)) {
 				    if (!isItemComplete(i))
 					return false;
 				}
@@ -2719,7 +3182,7 @@ public class SimplePageBean {
 	    for (SimplePageItem i : items) {
 		if (i.getSequence() >= item.getSequence()) {
 		    break;
-		} else if (i.isRequired()) {
+		} else if (i.isRequired() && isItemVisible(i)) {
 		    if (!isItemComplete(i))
 			return false;
 		}
@@ -2818,6 +3281,9 @@ public class SimplePageBean {
 	 *            Is it allowed to delete the row in the table for the group and recurse to try
 	 *            again. true for normal calls; false if called inside this code to avoid infinite loop
 	 */
+    // only called if the item should be under control. Also only called if the item is displayed
+    // so if it's limited to a group, we'll never add people who aren't in the group, since the
+    // item isn't shown to them.
 	private void checkItemPermissions(SimplePageItem item, boolean shouldHaveAccess, boolean canRecurse) {
 	        if (SimplePageItem.DUMMY.equals(item.getSakaiId()))
 		    return;
@@ -2843,25 +3309,11 @@ public class SimplePageBean {
 		SimplePageGroup group = simplePageToolDao.findGroup(item.getSakaiId());
 		if (group == null) {
 			// For some reason, the group doesn't exist. Let's re-add it.
-			String groupId;
-			try {
-				groupId = GroupPermissionsService.makeGroup(getCurrentPage().getSiteId(), "Access: " + getNameOfSakaiItem(item));
-				saveItem(simplePageToolDao.makeGroup(item.getSakaiId(), groupId));
-				GroupPermissionsService.addControl(item.getSakaiId(), getCurrentPage().getSiteId(), groupId, item.getType());
-			} catch (IOException e) {
-				// If this fails, there's no way for us to check the permissions
-				// in the group. This shouldn't happen.
-
-				e.printStackTrace();
-				return;
-			}
-
-			group = simplePageToolDao.findGroup(item.getSakaiId());
-			if (group == null) {
-				// Something really weird is up.
-				log.warn("checkItemPermissions Can't create a group for " + item.getName() + " permissions.");
-				return;
-			}
+		    checkControlGroup(item, true);
+		    group = simplePageToolDao.findGroup(item.getSakaiId());
+		    if (group == null) {
+			return;
+		    }
 		}
 
 		boolean success = true;
@@ -2901,12 +3353,8 @@ public class SimplePageBean {
 			// OK, group doesn't exist. When we recreate it, it's going to have a 
 			// different groupId, so we have to back out of everything and reset it
 
-			try {
-				GroupPermissionsService.removeControl(item.getSakaiId(), getCurrentPage().getSiteId(), groupId, item.getType());
-			} catch (IOException e) {
-				// Shoudln't happen, but we'll continue anyway
-				e.printStackTrace();
-			}
+			checkControlGroup(item, false);
+
 			simplePageToolDao.deleteItem(group);
 
 			// We've undone it; call ourselves again, since the code at the
@@ -3297,6 +3745,8 @@ public class SimplePageBean {
 		item.setDescription(description);
 		update(item);
 
+		setItemGroups(item, selectedGroups);
+
 	}
 
 	/**
@@ -3364,6 +3814,9 @@ public class SimplePageBean {
 		item.setDescription(description);
 		item.setHtml(mimetype);
 		update(item);
+
+		setItemGroups(item, selectedGroups);
+
 	}
 	
 	public void addCommentsSection() {

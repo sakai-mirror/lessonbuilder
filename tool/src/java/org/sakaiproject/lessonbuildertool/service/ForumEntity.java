@@ -148,8 +148,8 @@ public class ForumEntity extends HibernateDaoSupport implements LessonEntity, Fo
     }
 
     public void init () {	
-	topicCache = memoryService
-	    .newCache("org.sakaiproject.lessonbuildertool.service.ForumEntity.cache");
+	//	topicCache = memoryService
+	//	    .newCache("org.sakaiproject.lessonbuildertool.service.ForumEntity.cache");
 	sessionFactory = getSessionFactory();
     }
 
@@ -160,8 +160,8 @@ public class ForumEntity extends HibernateDaoSupport implements LessonEntity, Fo
 
     public void destroy()
     {
-	topicCache.destroy();
-	topicCache = null;
+	//	topicCache.destroy();
+	//	topicCache = null;
 
 	log.info("destroy()");
     }
@@ -741,18 +741,19 @@ public class ForumEntity extends HibernateDaoSupport implements LessonEntity, Fo
 
     // return the list of groups if the item is only accessible to specific groups
     // null if it's accessible to the whole site.
-    public List<String> getGroups() {
+    public List<String> getGroups(boolean nocache) {
 
-	List<String>ret = (List<String>)topicCache.get(id);
-	if (ret != null) {
-	    if (ret.size() == 0)
-		return null;
-	    else 
-		return ret;
-	} else {
-	}
+	// don't need cache, since simplepagebean is now caching groups
+	//	List<String>ret = (List<String>)topicCache.get(id);
+	//	if (!nocache && ret != null) {
+	//	    if (ret.size() == 0)
+	//		return null;
+	//	    else 
+	//		return ret;
+	//	} else {
+	//	}
 
-	ret = new ArrayList<String>();
+	List <String>ret = new ArrayList<String>();
 
 	if (topic == null)
 	    topic = forumManager.getTopicById(true, id);
@@ -780,7 +781,7 @@ public class ForumEntity extends HibernateDaoSupport implements LessonEntity, Fo
 	    }
 	}
 
-	topicCache.put(id, ret);
+	//	topicCache.put(id, ret, DEFAULT_EXPIRATION);
 	if (ret.size() == 0)
 	    return null;
 	else

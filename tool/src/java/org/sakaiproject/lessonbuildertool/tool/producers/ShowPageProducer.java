@@ -45,6 +45,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Collection;
 import java.util.StringTokenizer;
 import java.util.TimeZone;
 
@@ -64,6 +65,7 @@ import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.Status;
 import org.sakaiproject.lessonbuildertool.tool.evolvers.SakaiFCKTextEvolver;
 import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
+import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.GroupEntry;
 import org.sakaiproject.lessonbuildertool.tool.view.FilePickerViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.memory.api.Cache;
@@ -113,8 +115,7 @@ import uk.org.ponder.rsf.viewstate.ViewParamsReporter;
  * 
  * @author Eric Jeney <jeney@rutgers.edu>
  */
-public class ShowPageProducer implements ViewComponentProducer, DefaultView,
-		NavigationCaseReporter, ViewParamsReporter {
+public class ShowPageProducer implements ViewComponentProducer, DefaultView, NavigationCaseReporter, ViewParamsReporter {
 	private static Log log = LogFactory.getLog(ShowPageProducer.class);
 
 	private SimplePageBean simplePageBean;
@@ -125,7 +126,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 	private MemoryService memoryService = null;
 	private ToolManager toolManager;
 	public TextInputEvolver richTextEvolver;
-	
+
 	// I don't much like the static, because it opens us to a possible race
 	// condition, but I don't see much option
 	// see the setter. It has to be static because it's used in makeLink, which
@@ -215,15 +216,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 				url = url.substring(7);
 				suffix = url.indexOf("_");
 				if (suffix > 0) {
-					url = messageLocator.getMessage("simplepage.fromhost").replace("{}",
-							url.substring(0, suffix));
+					url = messageLocator.getMessage("simplepage.fromhost").replace("{}", url.substring(0, suffix));
 				}
 			} else if (url.startsWith("https:__")) {
 				url = url.substring(8);
 				suffix = url.indexOf("_");
 				if (suffix > 0) {
-					url = messageLocator.getMessage("simplepage.fromhost").replace("{}",
-							url.substring(0, suffix));
+					url = messageLocator.getMessage("simplepage.fromhost").replace("{}", url.substring(0, suffix));
 				}
 			}
 		} else {
@@ -489,10 +488,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 			UIOutput.make(tofill, "dialogDiv");
 		} else if (!canReadPage) {
 			return;
-
-		// at this point we know we can read or edit the page.
-		// the instructor won't get these tests. While I try to be similar to
-		// student view, I have to let them onto the page so they can edit it.
 		} else {
 			// see if there are any unsatisfied prerequisites
 			List<String> needed = simplePageBean.pagesNeeded(pageItem);
@@ -657,6 +652,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 				// "button".equals(i.getFormat())))
 
 				UIBranchContainer tableRow = UIBranchContainer.make(tableContainer, "item:");
+			if (! simplePageBean.isItemVisible(i)) {
+				continue;
+			}
+
 
 				// you really need the HTML file open at the same time to make
 				// sense of the following code
@@ -760,6 +759,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 						UIOutput.make(tableRow, "prerequisite-info", String.valueOf(i
 								.isPrerequisite()));
 
+						String itemGroupString = null;
+
 						if (i.getType() == SimplePageItem.ASSIGNMENT) {
 							// the type indicates whether scoring is letter
 							// grade, number, etc.
@@ -777,12 +778,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 								assignment = assignmentEntity.getEntity(i.getSakaiId());
 								if (assignment != null) {
 									type = assignment.getTypeOfGrade();
-								}
-								String editUrl = assignment.editItemUrl(simplePageBean);
-								if (editUrl != null) {
-									UIOutput.make(tableRow, "edit-url", editUrl);
+									String editUrl = assignment.editItemUrl(simplePageBean);
+									if (editUrl != null) {
+										UIOutput.make(tableRow, "edit-url", editUrl);
+									}
+									itemGroupString = simplePageBean.getItemGroupString(i, assignment, true);
+									UIOutput.make(tableRow, "item-groups", itemGroupString );
 								}
 							}
+
 
 							UIOutput.make(tableRow, "type", String.valueOf(type));
 							String requirement = String.valueOf(i.getSubrequirement());
@@ -808,7 +812,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 								if (editUrl != null) {
 									UIOutput.make(tableRow, "edit-settings-url", editUrl);
 								}
-
+								itemGroupString = simplePageBean.getItemGroupString(i, quiz, true);
+							    UIOutput.make(tableRow, "item-groups", itemGroupString );
 							}
 						} else if (i.getType() == SimplePageItem.FORUM) {
 							UIOutput.make(tableRow, "extra-info");
@@ -820,6 +825,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 									UIOutput.make(tableRow, "edit-url", editUrl);
 								}
 							}
+							itemGroupString = simplePageBean.getItemGroupString(i, forum, true);
+						    UIOutput.make(tableRow, "item-groups", itemGroupString );
 						} else if (i.getType() == SimplePageItem.PAGE) {
 							UIOutput.make(tableRow, "type", "page");
 							UIOutput.make(tableRow, "page-next", Boolean.toString(i.getNextPage()));
@@ -830,15 +837,19 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 									.isSameWindow()));
 						}
 
+					if (itemGroupString != null) {
+					    itemGroupString = simplePageBean.getItemGroupTitles(itemGroupString);
+					    if (itemGroupString != null) {
+							UIOutput.make(tableRow, "item-group-titles", " [" + itemGroupString + "]");
+						}
 					}
-
+					}
 					// the following are for the inline item types. Multimedia
 					// is the most complex because
 					// it can be IMG, IFRAME, or OBJECT, and Youtube is treated
 					// separately
 
 				} else if (i.getType() == SimplePageItem.MULTIMEDIA) {
-
 					// the reason this code is complex is that we try to choose
 					// the best
 					// HTML for displaying the particular type of object. We've
@@ -846,10 +857,22 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					// over time as we get more expeerience with different
 					// object types and browsers.
 
+					String itemGroupString = simplePageBean.getItemGroupString(i, null, true);
+					String itemGroupTitles = simplePageBean.getItemGroupTitles(itemGroupString);
+					if (itemGroupTitles != null) {
+						itemGroupTitles =  "[" + itemGroupTitles + "]";
+					}
+					
+					UIOutput.make(tableRow, "item-groups", itemGroupString);
+					
+			    // 	the reason this code is complex is that we try to choose the best
+			    // 	HTML for displaying the particular type of object. We've added complexities
+			    // 	over time as we get more expeerience with different object types and browsers.
+					
 					StringTokenizer token = new StringTokenizer(i.getSakaiId(), ".");
-
+					
 					String extension = "";
-
+					
 					while (token.hasMoreTokens()) {
 						extension = token.nextToken().toLowerCase();
 					}
@@ -885,6 +908,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					if (simplePageBean.isImageType(i)) {
 
 						UIOutput.make(tableRow, "imageSpan");
+
+					if (itemGroupString != null) {
+					    UIOutput.make(tableRow, "item-group-titles3", itemGroupTitles);
+					    UIOutput.make(tableRow, "item-groups3", itemGroupString);
+					}
 
 						String imageName = i.getAlt();
 						if (imageName == null || imageName.equals("")) {
@@ -932,6 +960,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 						// interpreted as old style
 
 						UIOutput.make(tableRow, "youtubeSpan");
+
+					if (itemGroupString != null) {
+					    UIOutput.make(tableRow, "item-group-titles4", itemGroupTitles);
+					    UIOutput.make(tableRow, "item-groups4", itemGroupString);
+					}
 
 						// if width is blank or 100% scale the height
 						if (width != null && height != null && !height.number.equals("")) {
@@ -1023,6 +1056,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 						// this is a flash presentation or a movie. Try to be
 						// smart about how we show movies.
 						// HTML is done with an IFRAME in the next "if" case
+					if (itemGroupString != null) {
+					    UIOutput.make(tableRow, "item-group-titles5", itemGroupTitles);
+					    UIOutput.make(tableRow, "item-groups5", itemGroupString);
+					}
 
 						UIComponent item2;
 						UIOutput.make(tableRow, "movieSpan");
@@ -1178,6 +1215,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 						}
 
 						UIOutput.make(tableRow, "iframeSpan");
+						
+						if (itemGroupString != null) {
+						    UIOutput.make(tableRow, "item-group-titles2", itemGroupTitles);
+						    UIOutput.make(tableRow, "item-groups2", itemGroupString);
+						}
 
 						item = UIOutput.make(tableRow, "iframe").decorate(
 								new UIFreeAttributeDecorator("src", i.getItemURL()));
@@ -1274,30 +1316,34 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					((SakaiFCKTextEvolver)richTextEvolver).evolveTextInput(fckInput, "" + commentsCount);
 					
 					UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
-				
-				} else {
-					// remaining type must be a block of HTML
-					UIOutput.make(tableRow, "itemSpan");
-					UIVerbatim.make(tableRow, "content", (i.getHtml() == null ? "" : i.getHtml()));
+			} else {
+			    // remaining type must be a block of HTML
+				UIOutput.make(tableRow, "itemSpan");
 
-					// editing is done using a special producer that calls FCK.
-					if (canEditPage) {
-						GeneralViewParameters eParams = new GeneralViewParameters();
-						eParams.setSendingPage(currentPage.getPageId());
-						eParams.setItemId(i.getId());
-						eParams.viewID = EditPageProducer.VIEW_ID;
-						UIOutput.make(tableRow, "edittext-td");
-						UIInternalLink.make(tableRow, "edit-link",
-								messageLocator.getMessage("simplepage.editItem"), eParams)
-								.decorate(
-										new UIFreeAttributeDecorator("title", messageLocator
-												.getMessage("simplepage.edit-title.textbox")
-												.replace("{}", Integer.toString(textboxcount))));
-
-						textboxcount++;
-					}
+				String itemGroupString = simplePageBean.getItemGroupString(i, null, true);
+				String itemGroupTitles = simplePageBean.getItemGroupTitles(itemGroupString);
+				if (itemGroupTitles != null) {
+					itemGroupTitles =  "[" + itemGroupTitles + "]";
 				}
 
+				UIOutput.make(tableRow, "item-groups-titles-text", itemGroupTitles);
+
+				UIVerbatim.make(tableRow, "content", (i.getHtml() == null ? "" : i.getHtml()));
+
+				// editing is done using a special producer that calls FCK. 
+				if (canEditPage) {
+					GeneralViewParameters eParams = new GeneralViewParameters();
+					eParams.setSendingPage(currentPage.getPageId());
+					eParams.setItemId(i.getId());
+					eParams.viewID = EditPageProducer.VIEW_ID;
+					UIOutput.make(tableRow, "edittext-td");
+					UIInternalLink.make(tableRow, "edit-link", messageLocator.getMessage("simplepage.editItem"), eParams).
+					    decorate(new UIFreeAttributeDecorator("title", 
+						  messageLocator.getMessage("simplepage.edit-title.textbox").replace("{}", Integer.toString(textboxcount))));
+
+					
+					textboxcount++;
+				}
 			}
 		}
 
@@ -1352,6 +1398,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		if (showBreak) {
 			UIOutput.make(tofill, "breakAfterWarnings");
 		}
+		}
 
 		// more warnings: if no item on the page, give faculty instructions,
 		// students an error
@@ -1395,10 +1442,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		this.httpServletRequest = httpServletRequest;
 	}
 
-	private boolean makeLink(UIContainer container, String ID, SimplePageItem i,
-			boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {
-		return makeLink(container, ID, i, simplePageBean, simplePageToolDao, messageLocator,
-				canEditPage, currentPage, notDone, status);
+	private boolean makeLink(UIContainer container, String ID, SimplePageItem i, boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {
+		return makeLink(container, ID, i, simplePageBean, simplePageToolDao, messageLocator, canEditPage, currentPage, notDone, status);
 	}
 
 	/**
@@ -1410,10 +1455,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 	 * @param simplePageToolDao
 	 * @return Whether or not this item is available.
 	 */
-	protected static boolean makeLink(UIContainer container, String ID, SimplePageItem i,
-			SimplePageBean simplePageBean, SimplePageToolDao simplePageToolDao,
-			MessageLocator messageLocator, boolean canEditPage, SimplePage currentPage,
-			boolean notDone, Status status) {
+	protected static boolean makeLink(UIContainer container, String ID, SimplePageItem i, SimplePageBean simplePageBean, SimplePageToolDao simplePageToolDao, MessageLocator messageLocator, boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {
 
 		String URL = "";
 		boolean available = simplePageBean.isItemAvailable(i);
@@ -1429,15 +1471,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 
 			if (i.getType() == SimplePageItem.RESOURCE && i.isSameWindow()) {
 				if (available) {
-					GeneralViewParameters params = new GeneralViewParameters(
-							ShowItemProducer.VIEW_ID);
+					GeneralViewParameters params = new GeneralViewParameters(ShowItemProducer.VIEW_ID);
 					params.setSendingPage(currentPage.getPageId());
 					params.setSource(i.getItemURL());
 					params.setItemId(i.getId());
 					UIInternalLink.make(container, "link", params);
 				} else {
-					UIInternalLink link = LinkTrackerProducer.make(container, ID, i.getName(), URL,
-							i.getId(), notDone);
+					UIInternalLink link = LinkTrackerProducer.make(container, ID, i.getName(), URL, i.getId(), notDone);
 					disableLink(link, messageLocator);
 				}
 			} else {
@@ -1445,8 +1485,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 					URL = i.getItemURL();
 				}
 
-				UIInternalLink link = LinkTrackerProducer.make(container, ID, i.getName(), URL, i
-						.getId(), notDone);
+				UIInternalLink link = LinkTrackerProducer.make(container, ID, i.getName(), URL, i.getId(), notDone);
 
 				if (available) {
 					link.decorate(new UIFreeAttributeDecorator("target", "_blank"));
@@ -1479,8 +1518,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 				if (!i.isRequired()) {
 					span.decorate(new UIFreeAttributeDecorator("class", "navIntraTool buttonItem"));
 				}
-				;
+				isbutton = true;
 			}
+
 			UILink link;
 			if (available) {
 				link = UIInternalLink.make(container, ID, eParams);
@@ -1588,16 +1628,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		link.decorate(new UIFreeAttributeDecorator("onclick", "return false"));
 		link.decorate(new UIDisabledDecorator());
 		link.decorate(new UIStyleDecorator("disabled"));
-		link.decorate(new UITooltipDecorator(messageLocator
-				.getMessage("simplepage.complete_required")));
+		link.decorate(new UITooltipDecorator(messageLocator.getMessage("simplepage.complete_required")));
 	}
 
 	// show is if it was disabled but don't actually
 	private static void fakeDisableLink(UILink link, MessageLocator messageLocator) {
 		link.decorate(new UIDisabledDecorator());
 		link.decorate(new UIStyleDecorator("disabled"));
-		link.decorate(new UITooltipDecorator(messageLocator
-				.getMessage("simplepage.complete_required")));
+		link.decorate(new UITooltipDecorator(messageLocator.getMessage("simplepage.complete_required")));
 	}
 
 	public void setSimplePageToolDao(SimplePageToolDao s) {
@@ -1655,14 +1693,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		if (urlCache == null) {
 			synchronized (urlCacheLock) {
 				if (urlCache == null) {
-					urlCache = memoryService
-							.newCache("org.sakaiproject.lessonbuildertool.tool.producers.ShowPageProducer.url.cache");
+					urlCache = memoryService.newCache("org.sakaiproject.lessonbuildertool.tool.producers.ShowPageProducer.url.cache");
 				}
 			}
 		}
 
 	}
-	
+
 	public void setToolManager(ToolManager m) {
 		toolManager = m;
 	}
@@ -1670,9 +1707,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 	public ViewParameters getViewParameters() {
 		return new GeneralViewParameters();
 	}
-	
+
 	/**
 	 * Checks for the version of IE. Returns 0 if we're not running IE.
+	 * 
 	 * @return
 	 */
 	public int checkIEVersion() {
@@ -1696,7 +1734,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 				ieVersion = Integer.parseInt(ieV);
 			}
 		}
-		
+
 		return ieVersion;
 	}
 
@@ -1705,52 +1743,41 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 
 		// decided not to use long tooltips. with screen reader they're too
 		// verbose. We now have good help
-		createToolBarLink(ReorderProducer.VIEW_ID, toolBar, "reorder", "simplepage.reorder",
-				currentPage, "simplepage.reorder-tooltip");
-		
-		createToolBarLink(EditPageProducer.VIEW_ID, toolBar, "add-text", "simplepage.text",
-				currentPage, "simplepage.text.tooltip").setItemId(null);
+		createToolBarLink(ReorderProducer.VIEW_ID, toolBar, "reorder", "simplepage.reorder", currentPage, "simplepage.reorder-tooltip");
 
-		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-resource",
-				"simplepage.resource", false, currentPage, "simplepage.resource.tooltip");
+		createToolBarLink(EditPageProducer.VIEW_ID, toolBar, "add-text", "simplepage.text", currentPage, "simplepage.text.tooltip").setItemId(null);
+
+		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-resource", "simplepage.resource", false, currentPage, "simplepage.resource.tooltip");
 
 		UILink subpagelink = UIInternalLink.makeURL(toolBar, "subpage-link", "#");
 		subpagelink.decorate(new UITooltipDecorator(messageLocator.getMessage("simplepage.subpage")));
 		subpagelink.linktext = new UIBoundString(messageLocator.getMessage("simplepage.subpage"));
 
-		createToolBarLink(AssignmentPickerProducer.VIEW_ID, toolBar, "add-assignment",
-				"simplepage.assignment", currentPage, "simplepage.assignment");
-		
-		createToolBarLink(QuizPickerProducer.VIEW_ID, toolBar, "add-quiz", "simplepage.quiz",
-				currentPage, "simplepage.quiz");
-		
-		createToolBarLink(ForumPickerProducer.VIEW_ID, toolBar, "add-forum", "simplepage.forum",
-				currentPage, "simplepage.forum");
-		
-		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-multimedia",
-				"simplepage.multimedia", true, currentPage, "simplepage.multimedia.tooltip");
-		
-		createToolBarLink(PermissionsHelperProducer.VIEW_ID, toolBar, "permissions",
-				"simplepage.permissions", currentPage, "simplepage.permissions.tooltip");
-		
+		createToolBarLink(AssignmentPickerProducer.VIEW_ID, toolBar, "add-assignment", "simplepage.assignment", currentPage, "simplepage.assignment");
+
+		createToolBarLink(QuizPickerProducer.VIEW_ID, toolBar, "add-quiz", "simplepage.quiz", currentPage, "simplepage.quiz");
+
+		createToolBarLink(ForumPickerProducer.VIEW_ID, toolBar, "add-forum", "simplepage.forum", currentPage, "simplepage.forum");
+
+		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-multimedia", "simplepage.multimedia", true, currentPage, "simplepage.multimedia.tooltip");
+
+		createToolBarLink(PermissionsHelperProducer.VIEW_ID, toolBar, "permissions", "simplepage.permissions", currentPage, "simplepage.permissions.tooltip");
+
 		GeneralViewParameters eParams = new GeneralViewParameters(VIEW_ID);
 		eParams.addComments = true;
 		UIInternalLink.make(toolBar, "add-comments", messageLocator.getMessage("simplepage.comments"), eParams);
-		
-		UILink.make(toolBar, "help", messageLocator.getMessage("simplepage.help"),
-				getLocalizedURL("general.html"));
+
+		UILink.make(toolBar, "help", messageLocator.getMessage("simplepage.help"), getLocalizedURL("general.html"));
 	}
 
-	private GeneralViewParameters createToolBarLink(String viewID, UIContainer tofill, String ID,
-			String message, SimplePage currentPage, String tooltip) {
+	private GeneralViewParameters createToolBarLink(String viewID, UIContainer tofill, String ID, String message, SimplePage currentPage, String tooltip) {
 		GeneralViewParameters params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
 		createStandardToolBarLink(viewID, tofill, ID, message, params, tooltip);
 		return params;
 	}
 
-	private FilePickerViewParameters createFilePickerToolBarLink(String viewID, UIContainer tofill,
-			String ID, String message, boolean resourceType, SimplePage currentPage, String tooltip) {
+	private FilePickerViewParameters createFilePickerToolBarLink(String viewID, UIContainer tofill, String ID, String message, boolean resourceType, SimplePage currentPage, String tooltip) {
 		FilePickerViewParameters fileparams = new FilePickerViewParameters();
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(resourceType);
@@ -1758,8 +1785,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		return fileparams;
 	}
 
-	private void createStandardToolBarLink(String viewID, UIContainer tofill, String ID,
-			String message, SimpleViewParameters params, String tooltip) {
+	private void createStandardToolBarLink(String viewID, UIContainer tofill, String ID, String message, SimpleViewParameters params, String tooltip) {
 		params.viewID = viewID;
 		UILink link = UIInternalLink.make(tofill, ID, messageLocator.getMessage(message), params);
 		link.decorate(new UITooltipDecorator(messageLocator.getMessage(tooltip)));
@@ -1772,82 +1798,66 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		togo.add(new NavigationCase("cancel", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
 		togo.add(new NavigationCase("failure", new SimpleViewParameters(ReloadPageProducer.VIEW_ID)));
 		togo.add(new NavigationCase("reload", new SimpleViewParameters(ReloadPageProducer.VIEW_ID)));
-		
-		
+
 		return togo;
 	}
 
 	private void createSubpageDialog(UIContainer tofill, SimplePage currentPage) {
-		UIOutput.make(tofill, "subpage-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.subpage")));
+		UIOutput.make(tofill, "subpage-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.subpage")));
 		UIForm form = UIForm.make(tofill, "subpage-form");
 
-		UIOutput.make(form, "subpage-label", messageLocator
-				.getMessage("simplepage.pageTitle_label"));
+		UIOutput.make(form, "subpage-label", messageLocator.getMessage("simplepage.pageTitle_label"));
 		UIInput.make(form, "subpage-title", "#{simplePageBean.subpageTitle}");
 
 		GeneralViewParameters view = new GeneralViewParameters(PagePickerProducer.VIEW_ID);
 		view.setSendingPage(currentPage.getPageId());
 
-		UIInternalLink.make(form, "subpage-choose", messageLocator
-				.getMessage("simplepage.choose_existing_page"), view);
+		UIInternalLink.make(form, "subpage-choose", messageLocator.getMessage("simplepage.choose_existing_page"), view);
 
 		UIBoundBoolean.make(form, "subpage-next", "#{simplePageBean.subpageNext}", false);
 		UIBoundBoolean.make(form, "subpage-button", "#{simplePageBean.subpageButton}", false);
 
-		UICommand.make(form, "create-subpage", messageLocator.getMessage("simplepage.create"),
-				"#{simplePageBean.createSubpage}");
-		UICommand
-				.make(form, "cancel-subpage", messageLocator.getMessage("simplepage.cancel"), null);
+		UICommand.make(form, "create-subpage", messageLocator.getMessage("simplepage.create"), "#{simplePageBean.createSubpage}");
+		UICommand.make(form, "cancel-subpage", messageLocator.getMessage("simplepage.cancel"), null);
 
 	}
 
-	private void createEditItemDialog(UIContainer tofill, SimplePage currentPage,
-			SimplePageItem pageItem) {
-		UIOutput.make(tofill, "edit-item-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.edititem_header")));
+	private void createEditItemDialog(UIContainer tofill, SimplePage currentPage, SimplePageItem pageItem) {
+		UIOutput.make(tofill, "edit-item-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edititem_header")));
 
 		UIForm form = UIForm.make(tofill, "edit-form");
 
 		UIOutput.make(form, "name-label", messageLocator.getMessage("simplepage.name_label"));
 		UIInput.make(form, "name", "#{simplePageBean.name}");
 
-		UIOutput.make(form, "description-label", messageLocator
-				.getMessage("simplepage.description_label"));
+		UIOutput.make(form, "description-label", messageLocator.getMessage("simplepage.description_label"));
 		UIInput.make(form, "description", "#{simplePageBean.description}");
 
 		GeneralViewParameters params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
 		params.viewID = AssignmentPickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-assignment", messageLocator
-				.getMessage("simplepage.change_assignment"), params);
+		UIInternalLink.make(form, "change-assignment", messageLocator.getMessage("simplepage.change_assignment"), params);
 
 		params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
 		params.viewID = QuizPickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-quiz", messageLocator
-				.getMessage("simplepage.change_quiz"), params);
+		UIInternalLink.make(form, "change-quiz", messageLocator.getMessage("simplepage.change_quiz"), params);
 
 		params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
 		params.viewID = ForumPickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-forum", messageLocator
-				.getMessage("simplepage.change_forum"), params);
+		UIInternalLink.make(form, "change-forum", messageLocator.getMessage("simplepage.change_forum"), params);
 
 		FilePickerViewParameters fileparams = new FilePickerViewParameters();
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(false);
 		fileparams.viewID = ResourcePickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-resource", messageLocator
-				.getMessage("simplepage.change_resource"), fileparams);
+		UIInternalLink.make(form, "change-resource", messageLocator.getMessage("simplepage.change_resource"), fileparams);
 
 		params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
 		params.viewID = PagePickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-page", messageLocator
-				.getMessage("simplepage.change_page"), params);
+		UIInternalLink.make(form, "change-page", messageLocator.getMessage("simplepage.change_page"), params);
 
 		params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
@@ -1881,28 +1891,66 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 
 		UIBoundBoolean.make(form, "item-newwindow", "#{simplePageBean.newWindow}", false);
 
-		UISelect.make(form, "assignment-dropdown", SimplePageBean.GRADES,
-				"#{simplePageBean.dropDown}", SimplePageBean.GRADES[0]);
+		UISelect.make(form, "assignment-dropdown", SimplePageBean.GRADES, "#{simplePageBean.dropDown}", SimplePageBean.GRADES[0]);
 		UIInput.make(form, "assignment-points", "#{simplePageBean.points}");
 
-		UICommand.make(form, "edit-item", messageLocator.getMessage("simplepage.edit"),
-				"#{simplePageBean.editItem}");
+		UICommand.make(form, "edit-item", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.editItem}");
 
-		UICommand.make(form, "delete-item", messageLocator.getMessage("simplepage.delete"),
-				"#{simplePageBean.deleteItem}");
-		UICommand.make(form, "edit-item-cancel", messageLocator.getMessage("simplepage.cancel"),
-				null);
+		createGroupList(form, null);
+
+		UICommand.make(form, "delete-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
+		UICommand.make(form, "edit-item-cancel", messageLocator.getMessage("simplepage.cancel"), null);
+	}
+
+	// for both add multimedia and add resource, as well as updating resources
+	// in the edit dialogs
+	public void createGroupList(UIContainer tofill, Collection<String> groupsSet) {
+		List<GroupEntry> groups = simplePageBean.getCurrentGroups();
+		ArrayList<String> values = new ArrayList<String>();
+		ArrayList<String> initValues = new ArrayList<String>();
+
+		if (groups == null || groups.size() == 0)
+			return;
+
+		for (GroupEntry entry : groups) {
+			if (entry.name.startsWith("Access: ")) {
+				continue;
+			}
+			values.add(entry.id);
+			if (groupsSet != null && groupsSet.contains(entry.id)) {
+				initValues.add(entry.id);
+			}
+		}
+		if (groupsSet == null || groupsSet.size() == 0) {
+			initValues.add("");
+		}
+
+		// this could happen if the only groups are Access groups
+		if (values.size() == 0)
+			return;
+
+		UIOutput.make(tofill, "grouplist");
+		UISelect select = UISelect.makeMultiple(tofill, "group-list-span", values.toArray(new String[1]), "#{simplePageBean.selectedGroups}", initValues.toArray(new String[1]));
+
+		int index = 0;
+		for (GroupEntry entry : groups) {
+			if (entry.name.startsWith("Access: ")) {
+				continue;
+			}
+			UIBranchContainer row = UIBranchContainer.make(tofill, "select-group-list:");
+			UISelectChoice.make(row, "select-group", select.getFullID(), index);
+
+			UIOutput.make(row, "select-group-text", entry.name);
+			index++;
+		}
+
 	}
 
 	// for both add multimedia and add resource, as well as updating resources
 	// in the edit dialogs
 	private void createAddMultimediaDialog(UIContainer tofill, SimplePage currentPage) {
-		UIOutput.make(tofill, "add-multimedia-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.resource")));
-		UILink.make(tofill, "mm-additional-instructions", messageLocator
-				.getMessage("simplepage.additional-instructions-label"), messageLocator
-				.getMessage("simplepage.additional-instructions"));
+		UIOutput.make(tofill, "add-multimedia-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.resource")));
+		UILink.make(tofill, "mm-additional-instructions", messageLocator.getMessage("simplepage.additional-instructions-label"), messageLocator.getMessage("simplepage.additional-instructions"));
 
 		UIForm form = UIForm.make(tofill, "add-multimedia-form");
 
@@ -1915,29 +1963,24 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(true);
 		fileparams.viewID = ResourcePickerProducer.VIEW_ID;
-		UILink link = UIInternalLink.make(form, "mm-choose", messageLocator
-				.getMessage("simplepage.choose_existing"), fileparams);
+		UILink link = UIInternalLink.make(form, "mm-choose", messageLocator.getMessage("simplepage.choose_existing"), fileparams);
 
 		// createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar,
 		// "add-resource", "simplepage.resource", false, currentPage,
 		// "simplepage.resource.tooltip");
 
-		UICommand.make(form, "mm-add-item", messageLocator.getMessage("simplepage.save_message"),
-				"#{simplePageBean.addMultimedia}");
+		UICommand.make(form, "mm-add-item", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.addMultimedia}");
 		UIInput.make(form, "mm-item-id", "#{simplePageBean.itemId}");
 		UIInput.make(form, "mm-is-mm", "#{simplePageBean.isMultimedia}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
 	private void createImportCcDialog(UIContainer tofill) {
-		UIOutput.make(tofill, "import-cc-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.import_cc")));
+		UIOutput.make(tofill, "import-cc-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
 
 		UIForm form = UIForm.make(tofill, "import-cc-form");
 
-		UICommand.make(form, "import-cc-submit", messageLocator
-				.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
+		UICommand.make(form, "import-cc-submit", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 
 		class ToolData {
@@ -1975,15 +2018,12 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 			}
 
 			// the message
-			UIOutput
-					.make(form, "quizmsg", messageLocator.getMessage("simplepage.choosequizengine"));
+			UIOutput.make(form, "quizmsg", messageLocator.getMessage("simplepage.choosequizengine"));
 			// now the list of radio buttons
-			UISelect quizselect = UISelect.make(form, "quiztools", values.toArray(new String[1]),
-					"#{simplePageBean.quiztool}", null);
+			UISelect quizselect = UISelect.make(form, "quiztools", values.toArray(new String[1]), "#{simplePageBean.quiztool}", null);
 			int i = 0;
 			for (ToolData toolData : quizEngines) {
-				UIBranchContainer toolItem = UIBranchContainer.make(form, "quiztoolitem:", String
-						.valueOf(i));
+				UIBranchContainer toolItem = UIBranchContainer.make(form, "quiztoolitem:", String.valueOf(i));
 				UISelectChoice.make(toolItem, "quiztoolbox", quizselect.getFullID(), i);
 				UIOutput.make(toolItem, "quiztoollabel", toolData.toolName);
 				i++;
@@ -2007,8 +2047,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		}
 
 		if (numTopicEngines == 0) {
-			UIVerbatim.make(form, "topicmsg", messageLocator
-					.getMessage("simplepage.notopicengines"));
+			UIVerbatim.make(form, "topicmsg", messageLocator.getMessage("simplepage.notopicengines"));
 		} else if (numTopicEngines == 1) {
 			UIInput.make(form, "topictool", "#{simplePageBean.topictool}", forumEntity.getToolId());
 		} else {
@@ -2017,14 +2056,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 				values.add(toolData.toolId);
 			}
 
-			UIOutput.make(form, "topicmsg", messageLocator
-					.getMessage("simplepage.choosetopicengine"));
-			UISelect topicselect = UISelect.make(form, "topictools", values.toArray(new String[1]),
-					"#{simplePageBean.topictool}", null);
+			UIOutput.make(form, "topicmsg", messageLocator.getMessage("simplepage.choosetopicengine"));
+			UISelect topicselect = UISelect.make(form, "topictools", values.toArray(new String[1]), "#{simplePageBean.topictool}", null);
 			int i = 0;
 			for (ToolData toolData : topicEngines) {
-				UIBranchContainer toolItem = UIBranchContainer.make(form, "topictoolitem:", String
-						.valueOf(i));
+				UIBranchContainer toolItem = UIBranchContainer.make(form, "topictoolitem:", String.valueOf(i));
 				UISelectChoice.make(toolItem, "topictoolbox", topicselect.getFullID(), i);
 				UIOutput.make(toolItem, "topictoollabel", toolData.toolName);
 				i++;
@@ -2034,9 +2070,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 	}
 
 	private void createEditMultimediaDialog(UIContainer tofill, SimplePage currentPage) {
-		UIOutput.make(tofill, "edit-multimedia-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.editMultimedia")));
+		UIOutput.make(tofill, "edit-multimedia-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.editMultimedia")));
 
 		UIOutput.make(tofill, "instructions");
 
@@ -2048,65 +2082,52 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		UIOutput.make(form, "width-label", messageLocator.getMessage("simplepage.width_label"));
 		UIInput.make(form, "width", "#{simplePageBean.width}");
 
-		UIOutput.make(form, "description2-label", messageLocator
-				.getMessage("simplepage.description_label"));
+		UIOutput.make(form, "description2-label", messageLocator.getMessage("simplepage.description_label"));
 		UIInput.make(form, "description2", "#{simplePageBean.description}");
 
 		FilePickerViewParameters fileparams = new FilePickerViewParameters();
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(true);
 		fileparams.viewID = ResourcePickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-resource-mm", messageLocator
-				.getMessage("simplepage.change_resource"), fileparams);
+		UIInternalLink.make(form, "change-resource-mm", messageLocator.getMessage("simplepage.change_resource"), fileparams);
 
 		UIOutput.make(form, "alt-label", messageLocator.getMessage("simplepage.alt_label"));
 		UIInput.make(form, "alt", "#{simplePageBean.alt}");
 
 		UIInput.make(form, "mimetype", "#{simplePageBean.mimetype}");
 
-		UICommand.make(form, "edit-multimedia-item", messageLocator
-				.getMessage("simplepage.save_message"), "#{simplePageBean.editMultimedia}");
+		UICommand.make(form, "edit-multimedia-item", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.editMultimedia}");
 
 		UIInput.make(form, "multimedia-item-id", "#{simplePageBean.itemId}");
 
-		UICommand.make(form, "delete-multimedia-item", messageLocator
-				.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
-		UICommand.make(form, "edit-multimedia-cancel", messageLocator
-				.getMessage("simplepage.cancel"), null);
+		UICommand.make(form, "delete-multimedia-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
+		UICommand.make(form, "edit-multimedia-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
 	private void createYoutubeDialog(UIContainer tofill) {
-		UIOutput.make(tofill, "youtube-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.edit_youtubelink")));
+		UIOutput.make(tofill, "youtube-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_youtubelink")));
 
 		UIForm form = UIForm.make(tofill, "youtube-form");
 		UIInput.make(form, "youtubeURL", "#{simplePageBean.youtubeURL}");
 		UIInput.make(form, "youtubeEditId", "#{simplePageBean.youtubeId}");
 		UIInput.make(form, "youtubeHeight", "#{simplePageBean.height}");
 		UIInput.make(form, "youtubeWidth", "#{simplePageBean.width}");
-		UIOutput.make(form, "description4-label", messageLocator
-				.getMessage("simplepage.description_label"));
+		UIOutput.make(form, "description4-label", messageLocator.getMessage("simplepage.description_label"));
 		UIInput.make(form, "description4", "#{simplePageBean.description}");
-		UICommand.make(form, "delete-youtube-item", messageLocator.getMessage("simplepage.delete"),
-				"#{simplePageBean.deleteYoutubeItem}");
-		UICommand.make(form, "update-youtube", messageLocator.getMessage("simplepage.edit"),
-				"#{simplePageBean.updateYoutube}");
+		UICommand.make(form, "delete-youtube-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteYoutubeItem}");
+		UICommand.make(form, "update-youtube", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateYoutube}");
 		UICommand.make(form, "cancel-youtube", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
 	private void createMovieDialog(UIContainer tofill, SimplePage currentPage) {
-		UIOutput.make(tofill, "movie-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.edititem_header")));
+		UIOutput.make(tofill, "movie-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edititem_header")));
 
 		UIForm form = UIForm.make(tofill, "movie-form");
 
 		UIInput.make(form, "movie-height", "#{simplePageBean.height}");
 		UIInput.make(form, "movie-width", "#{simplePageBean.width}");
 		UIInput.make(form, "movieEditId", "#{simplePageBean.itemId}");
-		UIOutput.make(form, "description3-label", messageLocator
-				.getMessage("simplepage.description_label"));
+		UIOutput.make(form, "description3-label", messageLocator.getMessage("simplepage.description_label"));
 		UIInput.make(form, "description3", "#{simplePageBean.description}");
 		UIInput.make(form, "mimetype4", "#{simplePageBean.mimetype}");
 
@@ -2114,24 +2135,18 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(true);
 		fileparams.viewID = ResourcePickerProducer.VIEW_ID;
-		UIInternalLink.make(form, "change-resource-movie", messageLocator
-				.getMessage("simplepage.change_resource"), fileparams);
+		UIInternalLink.make(form, "change-resource-movie", messageLocator.getMessage("simplepage.change_resource"), fileparams);
 
-		UICommand.make(form, "delete-movie-item", messageLocator.getMessage("simplepage.delete"),
-				"#{simplePageBean.deleteItem}");
-		UICommand.make(form, "update-movie", messageLocator.getMessage("simplepage.edit"),
-				"#{simplePageBean.updateMovie}");
+		UICommand.make(form, "delete-movie-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
+		UICommand.make(form, "update-movie", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateMovie}");
 		UICommand.make(form, "movie-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
 	private void createEditTitleDialog(UIContainer tofill, SimplePage page, SimplePageItem pageItem) {
-		UIOutput.make(tofill, "edit-title-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.editTitle")));
+		UIOutput.make(tofill, "edit-title-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.editTitle")));
 
 		UIForm form = UIForm.make(tofill, "title-form");
-		UIOutput.make(form, "pageTitleLabel", messageLocator
-				.getMessage("simplepage.pageTitle_label"));
+		UIOutput.make(form, "pageTitleLabel", messageLocator.getMessage("simplepage.pageTitle_label"));
 		UIInput.make(form, "pageTitle", "#{simplePageBean.pageTitle}");
 
 		if (pageItem.getPageId() == 0) {
@@ -2140,8 +2155,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 
 			Date releaseDate = page.getReleaseDate();
 
-			UIBoundBoolean.make(form, "page-releasedate", "#{simplePageBean.hasReleaseDate}",
-					(releaseDate != null));
+			UIBoundBoolean.make(form, "page-releasedate", "#{simplePageBean.hasReleaseDate}", (releaseDate != null));
 
 			if (releaseDate == null) {
 				releaseDate = new Date();
@@ -2151,10 +2165,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 			dateevolver.setStyle(FormatAwareDateInputEvolver.DATE_TIME_INPUT);
 			dateevolver.evolveDateInput(releaseForm, page.getReleaseDate());
 
-			UIBoundBoolean.make(form, "page-required", "#{simplePageBean.required}", (pageItem
-					.isRequired()));
-			UIBoundBoolean.make(form, "page-prerequisites", "#{simplePageBean.prerequisite}",
-					(pageItem.isPrerequisite()));
+			UIBoundBoolean.make(form, "page-required", "#{simplePageBean.required}", (pageItem.isRequired()));
+			UIBoundBoolean.make(form, "page-prerequisites", "#{simplePageBean.prerequisite}", (pageItem.isPrerequisite()));
 		}
 
 		UIOutput.make(form, "page-gradebook");
@@ -2165,16 +2177,12 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		}
 		UIInput.make(form, "page-points", "#{simplePageBean.points}", pointString);
 
-		UICommand.make(form, "create-title", messageLocator.getMessage("simplepage.save"),
-				"#{simplePageBean.editTitle}");
-		UICommand.make(form, "cancel-title", messageLocator.getMessage("simplepage.cancel"),
-				"#{simplePageBean.cancel}");
+		UICommand.make(form, "create-title", messageLocator.getMessage("simplepage.save"), "#{simplePageBean.editTitle}");
+		UICommand.make(form, "cancel-title", messageLocator.getMessage("simplepage.cancel"), "#{simplePageBean.cancel}");
 	}
 
 	private void createNewPageDialog(UIContainer tofill, SimplePage page, SimplePageItem pageItem) {
-		UIOutput.make(tofill, "new-page-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.new-page")));
+		UIOutput.make(tofill, "new-page-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-page")));
 
 		UIForm form = UIForm.make(tofill, "new-page-form");
 
@@ -2184,46 +2192,35 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 
 		UIBoundBoolean.make(form, "new-page-copy", "#{simplePageBean.copyPage}", false);
 
-		UICommand.make(form, "new-page-submit", messageLocator.getMessage("simplepage.save"),
-				"#{simplePageBean.addPages}");
-		UICommand.make(form, "new-page-cancel", messageLocator.getMessage("simplepage.cancel"),
-				"#{simplePageBean.cancel}");
+		UICommand.make(form, "new-page-submit", messageLocator.getMessage("simplepage.save"), "#{simplePageBean.addPages}");
+		UICommand.make(form, "new-page-cancel", messageLocator.getMessage("simplepage.cancel"), "#{simplePageBean.cancel}");
 	}
 
 	private void createRemovePageDialog(UIContainer tofill, SimplePage page, SimplePageItem pageItem) {
-		UIOutput.make(tofill, "remove-page-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.remove-page")));
+		UIOutput.make(tofill, "remove-page-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page")));
 
 		UIForm form = UIForm.make(tofill, "remove-page-form");
 
 		GeneralViewParameters params = new GeneralViewParameters(RemovePageProducer.VIEW_ID);
-		UIInternalLink.make(form, "remove-page-submit", "", params).decorate(
-				new UIFreeAttributeDecorator("value", messageLocator
-						.getMessage("simplepage.remove")));
+		UIInternalLink.make(form, "remove-page-submit", "", params).decorate(new UIFreeAttributeDecorator("value", messageLocator.getMessage("simplepage.remove")));
 
 		// UICommand.make(form, "remove-page-submit",
 		// messageLocator.getMessage("simplepage.remove"),
 		// "#{simplePageBean.removePage}");
-		UICommand.make(form, "remove-page-cancel", messageLocator.getMessage("simplepage.cancel"),
-				"#{simplePageBean.cancel}");
+		UICommand.make(form, "remove-page-cancel", messageLocator.getMessage("simplepage.cancel"), "#{simplePageBean.cancel}");
 	}
-	
+
 	private void createCommentsDialog(UIContainer tofill) {
-		UIOutput.make(tofill, "comments-dialog").decorate(
-				new UIFreeAttributeDecorator("title", messageLocator
-						.getMessage("simplepage.edit_commentslink")));
+		UIOutput.make(tofill, "comments-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_commentslink")));
 
 		UIForm form = UIForm.make(tofill, "comments-form");
 
 		UIInput.make(form, "commentsEditId", "#{simplePageBean.itemId}");
 
 		UIBoundBoolean.make(form, "comments-anonymous", "#{simplePageBean.anonymous}");
-		
-		UICommand.make(form, "delete-comments-item", messageLocator.getMessage("simplepage.delete"),
-				"#{simplePageBean.deleteItem}");
-		UICommand.make(form, "update-comments", messageLocator.getMessage("simplepage.edit"),
-				"#{simplePageBean.updateComments}");
+
+		UICommand.make(form, "delete-comments-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
+		UICommand.make(form, "update-comments", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateComments}");
 		UICommand.make(form, "cancel-comments", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
@@ -2261,19 +2258,19 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		if (status == Status.COMPLETED) {
 			imagePath += "checkmark.png";
 			imageAlt = ""; // messageLocator.getMessage("simplepage.status.completed")
-						   // + " " + name;
+			// + " " + name;
 		} else if (status == Status.DISABLED) {
 			imagePath += "unavailable.png";
 			imageAlt = ""; // messageLocator.getMessage("simplepage.status.disabled")
-							// + " " + name;
+			// + " " + name;
 		} else if (status == Status.FAILED) {
 			imagePath += "failed.png";
 			imageAlt = ""; // messageLocator.getMessage("simplepage.status.failed")
-							// + " " + name;
+			// + " " + name;
 		} else if (status == Status.REQUIRED) {
 			imagePath += "available.png";
 			imageAlt = ""; // messageLocator.getMessage("simplepage.status.required")
-							// + " " + name;
+			// + " " + name;
 		} else if (status == Status.NOT_REQUIRED) {
 			imagePath += "not-required.png";
 			// it's a blank image, no need for screen readers to say anything
@@ -2281,9 +2278,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		}
 
 		UIOutput.make(container, "status-td");
-		UIOutput.make(container, imageId).decorate(new UIFreeAttributeDecorator("src", imagePath))
-				.decorate(new UIFreeAttributeDecorator("alt", imageAlt)).decorate(
-						new UITooltipDecorator(imageAlt));
+		UIOutput.make(container, imageId).decorate(new UIFreeAttributeDecorator("src", imagePath)).decorate(new UIFreeAttributeDecorator("alt", imageAlt)).decorate(new UITooltipDecorator(imageAlt));
 	}
 
 	private String getLocalizedURL(String fileName) {
@@ -2347,8 +2342,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		}
 
 		if (localeSize > 1) {
-			localizedPath = prefix + "_" + locale.getLanguage() + "_" + locale.getCountry()
-					+ suffix;
+			localizedPath = prefix + "_" + locale.getLanguage() + "_" + locale.getCountry() + suffix;
 			filePath = testPrefix + localizedPath;
 			if (UrlOk(filePath))
 				return localizedPath;
@@ -2386,22 +2380,20 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView,
 		}
 
 	}
-	
+
 	private long findMostRecentComment() {
-		List<SimplePageComment> comments = simplePageToolDao.findCommentsOnPageByAuthor(simplePageBean.getCurrentPage().getPageId(),
-				UserDirectoryService.getCurrentUser().getId());
-		
+		List<SimplePageComment> comments = simplePageToolDao.findCommentsOnPageByAuthor(simplePageBean.getCurrentPage().getPageId(), UserDirectoryService.getCurrentUser().getId());
+
 		Collections.sort(comments, new Comparator<SimplePageComment>() {
 			public int compare(SimplePageComment c1, SimplePageComment c2) {
 				return c1.getTimePosted().compareTo(c2.getTimePosted());
 			}
 		});
-		
-		if(comments.size() > 0) {
-			return comments.get(comments.size()-1).getId();
-		}else {
+
+		if (comments.size() > 0)
+			return comments.get(comments.size() - 1).getId();
+		else
 			return -1;
-		}
 	}
 
 }

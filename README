@@ -19,6 +19,49 @@ that this shouldn't conflict with the original tool.)
 It has only been tested on mysql, though I would expect it to work
 with the other databases.
 
+BUILDING
+
+To build, the normal Sakai maven commands will work. However you'll
+probably need to edit pom.xml to change versions. The main pom.xml
+file in this directory is all you should have to change. pom files
+in other directories take their information from this one.
+
+You'll need to change two things;
+
+1) Near the top, in the <parent> declaration, the version
+should match your version of Sakai. Currently it is
+2.9-SNAPHOT. For 2.8 you'd use 2.8.0, 2.8.1, etc.
+
+2) Look for the <profile> declaration. There are two
+profiles. The default is set for 2.9 and later. If you're
+building for 2.7 or 2.8, move the <activation> lines
+
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+from the profile saying <id>default</id> down to the second profile,
+with <id>sakai-2.8</id> So it would read
+
+            <id>sakai-2.8</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+
+You can also use this sakai-2.8 profile with 2.7.
+
+Then for the profile you're using (either default or 2.8), set the
+appropriate version numbers for the components we use. You can look at
+pom.xml in your "master" directory to see the version numbers for
+entitybroker, assignment, msgcntr, and samigo. Normally assignment,
+msgcntr and samigo will match the version of Sakai, although that
+may not always be true. entitybroker has separate version numbering.
+
+Other than that, the properties can be left as is. In particular,
+don't change the version of RSF. We depend upon a newer version than
+the rest of Sakai.
+
+
 INSTALLATION
 
 The most recent version of Lesson Builder is set up so that it should
@@ -395,6 +438,19 @@ references to that quiz or assignment must be consistent. That is, if
 you use the same quiz or assignment in several lessons, all must be
 set to have prerequisites or none must. (Similar controls are used
 for Forums starting in the next version of Lsson Builder.)
+
+There's one danger here: once we set the quiz or assignment to have a
+prerequisite, we create a special group, and add the user to it as he
+meets the prequisites. If the instructor goes into the tool, they'll
+see the assignment as being released to a special group named "Access:
+.....". if they modify the groups in the assignment, Lesson Builder's
+prerequisite system will no longer work properly. It is possible to
+change which groups can see an assignment, quiz or forum in Lesson
+Builder itself. Once an item has been added to Lesson Builder, it is
+best to adjust groups through the Lesson Builder "Edit". (This applies
+to Assignments, Tests and Quizzes / Samigo, and Forums. It does not
+apply to Mneme and jForum. Lesson Builder currently is not group-aware
+for those tools.)
 
 It's really nice to be able to include things like Flash and movies
 in a lesson. Unfortunately it's surprisingly hard to make it work

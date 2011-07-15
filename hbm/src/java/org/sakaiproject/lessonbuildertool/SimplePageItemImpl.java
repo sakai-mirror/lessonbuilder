@@ -77,6 +77,9 @@ public class SimplePageItemImpl implements SimplePageItem  {
 	
 	private boolean anonymous = false; // Should comments be anonymous
 
+	private String groups;
+
+
 	public SimplePageItemImpl() {
 
 	}
@@ -374,5 +377,12 @@ public class SimplePageItemImpl implements SimplePageItem  {
 		return anonymous;
 	}
 
+	public String getGroups() {
+	    return groups;
+	}
+
+	public void setGroups(String g) {
+	    groups = g;
+	}
 
 }

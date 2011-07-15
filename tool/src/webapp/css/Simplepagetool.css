@@ -217,3 +217,15 @@ a.edit-movie:link,a.edit-movie:visited{
 	background-color: #669;
 	color: white;
 }
+
+.item-group-titles{
+        font-style:italic;
+        color: #930;
+	padding-left: 1em;
+}
+.navIntraTool .usebutton {
+    font-size:175%;
+}
+.link-div .usebutton {
+    font-size:160%;
+}
