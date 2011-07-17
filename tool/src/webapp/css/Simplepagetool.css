@@ -190,14 +190,14 @@ a.edit-movie:link,a.edit-movie:visited{
 .author {
 	margin-right:15px;
 	font-weight:bold;
+	color:#039;
 }
 
 .commentDiv {
 	margin-top: 5px;
 	margin-bottom: 5px;
-	background-color: #e9edff;
-    border: 1px solid #d0d0df;
-    padding:5px 10px;
+	background-color: #e4edff;
+	padding:5px 10px;
 }
 
 .commentBody {
@@ -214,8 +214,8 @@ a.edit-movie:link,a.edit-movie:visited{
 
 /* Commenter looking at their own comment */
 .personalComment {
-	background-color: #669;
-	color: white;
+	background-color: white;
+	padding-top:1px;
 }
 
 .item-group-titles{
@@ -228,4 +228,11 @@ a.edit-movie:link,a.edit-movie:visited{
 }
 .link-div .usebutton {
     font-size:160%;
+}
+.add-comment-button  {
+    margin: 7px 0px 2px 0px;
+}
+.add-comment-button span {
+    background-color: #ebebeb;
+    padding: 2px 8px 2px 8px;
 }

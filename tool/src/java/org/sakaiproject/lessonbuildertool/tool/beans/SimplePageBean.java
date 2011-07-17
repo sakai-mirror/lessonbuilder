@@ -2039,7 +2039,7 @@ public class SimplePageBean {
 	       case SimplePageItem.TEXT:
 	       case SimplePageItem.PAGE:
 		   return getLBItemGroups(i); // for all native LB objects
-	       case SimplePageItem.COMMENTS:
+	       default:
 	    	   return null;
 	       }
 	   }
