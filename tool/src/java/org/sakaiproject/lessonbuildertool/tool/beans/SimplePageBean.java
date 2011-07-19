@@ -53,6 +53,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
+import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentCollectionEdit;
@@ -181,8 +182,6 @@ public class SimplePageBean {
 	private String currentUserId = null;
 	private long previousPageId = -1;
 
-	private Boolean okToEditPage = null;
-
     // Item-specific variables. These are set by setters which are called
     // by the various edit dialogs. So they're basically inputs to the
     // methods used to make changes to items. The way it works is that
@@ -231,6 +230,8 @@ public class SimplePageBean {
 	private String redirectViewId = null;
 	private String quiztool = null;
 	private String topictool = null;
+	
+	private Integer editPrivs = null;
 
 	public Map<String, MultipartFile> multipartMap;
 
@@ -313,29 +314,32 @@ public class SimplePageBean {
 		this.contentHostingService = contentHostingService;
 	}
 
-        private GradebookIfc gradebookIfc = null;
+	private GradebookIfc gradebookIfc = null;
 
-        public void setGradebookIfc(GradebookIfc g) {
-	    gradebookIfc = g;
+	public void setGradebookIfc(GradebookIfc g) {
+		gradebookIfc = g;
 	}
 
-        private LessonEntity forumEntity = null;
-        public void setForumEntity(Object e) {
-	    forumEntity = (LessonEntity)e;
-        }
+	private LessonEntity forumEntity = null;
+	public void setForumEntity(Object e) {
+		forumEntity = (LessonEntity)e;
+	}
 
-        private LessonEntity quizEntity = null;
-        public void setQuizEntity(Object e) {
-	    quizEntity = (LessonEntity)e;
-        }
-        private LessonEntity assignmentEntity = null;
-        public void setAssignmentEntity(Object e) {
-	    assignmentEntity = (LessonEntity)e;
-        }
+	private LessonEntity quizEntity = null;
+	public void setQuizEntity(Object e) {
+		quizEntity = (LessonEntity)e;
+	}
+	
+	private LessonEntity assignmentEntity = null;
+	public void setAssignmentEntity(Object e) {
+		assignmentEntity = (LessonEntity)e;
+	}
+	
 	private ToolManager toolManager;
 	private SecurityService securityService;
 	private SiteService siteService;
 	private SimplePageToolDao simplePageToolDao;
+	
 	private MessageLocator messageLocator;
 	public void setMessageLocator(MessageLocator x) {
 	    messageLocator = x;
@@ -545,6 +549,8 @@ public class SimplePageBean {
 		try {
 			simplePageToolDao.saveItem(i,  elist, messageLocator.getMessage("simplepage.nowrite"), requiresEditPermission);
 		} catch (Throwable t) {
+			t.printStackTrace();
+			
 			// this is probably a bogus error, but find its root cause
 			while (t.getCause() != null) {
 				t = t.getCause();
@@ -597,37 +603,37 @@ public class SimplePageBean {
 
     // The permissions model assumes that all code operates on the current
     // page. When the current page is set, the set code verifies that the
-    // page is in the current site. However when operatig on items, we
+    // page is in the current site. However when operating on items, we
     // have to make sure they are in the current page, or we could end up
     // hacking on an item in a completely different site. This method checks
     // that an item is OK to hack on, given the current page.
 
 	private boolean itemOk(Long itemId) {
-	    // not specified, we'll add a new one
-	    if (itemId == null || itemId == -1)
+		// not specified, we'll add a new one
+		if (itemId == null || itemId == -1)
+			return true;
+		SimplePageItem item = findItem(itemId);
+		if (item.getPageId() != getCurrentPageId()) {
+			return false;
+		}
 		return true;
-	    SimplePageItem item = findItem(itemId);
-	    if (item.getPageId() != getCurrentPageId()) {
-		return false;
-	    }
-	    return true;
 	}
 
     // called by the producer that uses FCK to update a text block
 	public String submit() {
 		String rv = "success";
-
+		
 		if (!itemOk(itemId))
 		    return "permission-failed";
-
+		
 		if (canEditPage()) {
 			Placement placement = toolManager.getCurrentPlacement();
 
 			StringBuilder error = new StringBuilder();
 
 			// there's an issue with HTML security in the Sakai community.
-			// a lot of people feel users shouldn't be able to add javascirpt, etc
-			// to their HTML. I thik enforcing that makes Sakai less than useful.
+			// a lot of people feel users shouldn't be able to add javascript, etc
+			// to their HTML. I think enforcing that makes Sakai less than useful.
 			// So check config options to see whether to do that check
 			String html = contents;
 			if (filterHtml && ! "false".equals(placement.getPlacementConfig().getProperty("filterHtml")) ||
@@ -636,6 +642,7 @@ public class SimplePageBean {
 			} else {
 				html = FormattedText.processHtmlDocument(contents, error);
 			}
+			
 			if (html != null) {
 				SimplePageItem item;
 				// itemid -1 means we're adding a new item to the page, 
@@ -649,13 +656,11 @@ public class SimplePageBean {
 				item.setHtml(html);
 				setItemGroups(item, selectedGroups);
 				update(item);
-
 			} else {
 				rv = "cancel";
 			}
 
 			placement.save();
-
 		} else {
 			rv = "cancel";
 		}
@@ -729,6 +734,7 @@ public class SimplePageBean {
 			}
 			Reference ref = (Reference) refs.get(0);
 			id = ref.getId();
+			System.out.println("ID: " + id);
 
 			name = ref.getProperties().getProperty("DAV:displayname");
 
@@ -745,7 +751,9 @@ public class SimplePageBean {
 			        mimeType = null; // use default rules if we can't find it
 				String url = null;
 				// part 1, fix up the type fields
+				boolean pushed = false;
 				try {
+					pushed = pushAdvisor();
 					ContentResourceEdit res = contentHostingService.editResource(id);
 					res.setContentType("text/url");
 					res.setResourceType("org.sakaiproject.content.types.urlResource");
@@ -753,6 +761,8 @@ public class SimplePageBean {
 					contentHostingService.commitResource(res);
 				} catch (Exception ignore) {
 					return "no-reference";
+				}finally {
+					if(pushed) popAdvisor();
 				}
 				// part 2, find the actual data type.
 				if (url != null)
@@ -763,7 +773,9 @@ public class SimplePageBean {
 			return "cancel";
 		}
 
+		boolean pushed = false;
 		try {
+			pushed = pushAdvisor();
 			contentHostingService.checkResource(id);
 		} catch (PermissionException e) {
 			return "permission-exception";
@@ -772,6 +784,8 @@ public class SimplePageBean {
 			return "cancel";
 		} catch (TypeException e) {
 			return "type-exception";
+		}finally {
+			if(pushed) popAdvisor();
 		}
 
 		Long itemId = (Long)toolSession.getAttribute(LESSONBUILDER_ITEMID);
@@ -787,17 +801,17 @@ public class SimplePageBean {
 
 		SimplePageItem i;
 		if (itemId != null && itemId != -1) {
-		    i = findItem(itemId);
-		    i.setSakaiId(id);
-		    if (mimeType != null)
-			i.setHtml(mimeType);
-		    i.setName(name != null ? name : split[split.length - 1]);
-		    clearImageSize(i);
+			i = findItem(itemId);
+			i.setSakaiId(id);
+			if (mimeType != null)
+				i.setHtml(mimeType);
+			i.setName(name != null ? name : split[split.length - 1]);
+			clearImageSize(i);
 		} else {
- 	            i = appendItem(id, (name != null ? name : split[split.length - 1]), type);
-		    if (mimeType != null) {
-			i.setHtml(mimeType);
-		    }
+			i = appendItem(id, (name != null ? name : split[split.length - 1]), type);
+			if (mimeType != null) {
+				i.setHtml(mimeType);
+			}
 		}
 		i.setSameWindow(false);
 		update(i);
@@ -832,16 +846,41 @@ public class SimplePageBean {
 	}
 
 	/**
-	 * User can edit if he has site.upd or simplepage.upd. These do database queries, so 
-	 * try to save the results, rather than calling them many times on a page.
+	 * Returns 0 if user has site.upd or simplepage.upd.
+	 * Returns 1 if user is page owner
+	 * Returns 2 otherwise
+	 * @return
+	 */
+	public int getEditPrivs() {
+		if(editPrivs != null) {
+			return editPrivs;
+		}
+		
+		editPrivs = 2;
+		String ref = "/site/" + toolManager.getCurrentPlacement().getContext();
+		boolean ok = securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_UPDATE, ref);
+		if(ok) editPrivs = 0;
+		
+		if(editPrivs != 0 && UserDirectoryService.getCurrentUser().getId()
+									.equals(getCurrentPage().getOwner())) {
+			editPrivs = 1;
+		}
+		
+		
+		return editPrivs;
+	}
+	
+	/**
+	 * Returns true if user has site.upd, simplepage.upd, or is page owner.
+	 * False otherwise.
 	 * @return
 	 */
 	public boolean canEditPage() {
-		if (okToEditPage != null)
-		    return (boolean)okToEditPage;
-		String ref = "/site/" + toolManager.getCurrentPlacement().getContext();
-		okToEditPage = securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_UPDATE, ref);
-		return (boolean)okToEditPage;
+		if(getEditPrivs() <= 1) {
+			return true;
+		}else {
+			return false;
+		}
 	}
 
 	public boolean canReadPage() {
@@ -1246,6 +1285,12 @@ public class SimplePageBean {
 		if (l != previousPageId) {
 			currentPage = simplePageToolDao.getPage(l);
 			String siteId = toolManager.getCurrentPlacement().getContext();
+			
+			// get a rare error here, trying to debug it
+			if(currentPage == null || currentPage.getSiteId() == null) {
+				System.out.println("Long Passed: " + l);
+			}
+			
 			// page should always be in this site, or someone is gaming us
 			if (!currentPage.getSiteId().equals(siteId))
 			    throw new PermissionException(getCurrentUserId(), "set page", Long.toString(l));
@@ -1548,6 +1593,10 @@ public class SimplePageBean {
 
 		Long parent = page.getPageId();
 		Long topParent = page.getTopParent();
+		
+		// Allows students to make subpages of Student Content pages
+		String owner = page.getOwner();
+		Boolean groupOwned = page.isGroupOwned();
 
 		if (topParent == null) {
 			topParent = parent;
@@ -1557,6 +1606,8 @@ public class SimplePageBean {
 		SimplePage subpage = null;
 		if (makeNewPage) {
 		    subpage = simplePageToolDao.makePage(toolId, toolManager.getCurrentPlacement().getContext(), title, parent, topParent);
+		    subpage.setOwner(owner);
+		    subpage.setGroupOwned(groupOwned);
 		    saveItem(subpage);
 		    selectedEntity = String.valueOf(subpage.getPageId());
 		} else {
@@ -2040,6 +2091,7 @@ public class SimplePageBean {
 	       case SimplePageItem.PAGE:
 		   return getLBItemGroups(i); // for all native LB objects
 	       default:
+	       case SimplePageItem.STUDENT_CONTENT:
 	    	   return null;
 	       }
 	   }
@@ -2081,52 +2133,66 @@ public class SimplePageBean {
     // getItemGroups version for resources, since we don't have
     // an interface object
        public Collection<String>getResourceGroups (SimplePageItem i, boolean nocache) {
-	   Collection<String> ret = null;
+    	   SecurityAdvisor advisor = null;
+    	   try {
+    		   if(getCurrentPage().getOwner() != null) {
+    			   advisor = new SecurityAdvisor() {
+						public SecurityAdvice isAllowed(String userId, String function, String reference) {
+							return SecurityAdvice.ALLOWED;
+						}
+					};
+					securityService.pushAdvisor(advisor);
+    		   }
+    	   
+    		   Collection<String> ret = null;
 
-	   ContentResource resource = null;
-	   try {
-	       resource = contentHostingService.getResource(i.getSakaiId());
-	   } catch (Exception ignore) {
-	       return null;
-	   }
-	   
-	   Collection<String>groups = null;
-	   AccessMode access = resource.getAccess();
-	   boolean inheritingPubView =  contentHostingService.isInheritingPubView(i.getSakaiId());
-	   if(AccessMode.INHERITED.equals(access) || inheritingPubView) {
-	       access = resource.getInheritedAccess();
-	       // inherited means that we can't set it locally
-	       // an inherited value of site is OK
-	       // anything else can't be changed, so we set inherited
-	       if (AccessMode.SITE.equals(access) && ! inheritingPubView)
-		   inherited = false;
-	       else
-		   inherited = true;
-	       if (AccessMode.GROUPED.equals(access))
-		   groups = resource.getInheritedGroups();
-	   } else {
-	       // we can always change local modes, even if they are public
-	       inherited = false;
-	       if (AccessMode.GROUPED.equals(access))
-		   groups = resource.getGroups();
-	   }
-
-	   if (groups != null) {
-	       ret = new ArrayList<String>();
-	       for (String group: groups) {
-		   int n = group.indexOf("/group/");
-		   ret.add(group.substring(n+7));
-	       }
-	   }
-
-	   if (!nocache) {
-	       if (ret == null)
-		   groupCache.put(i.getSakaiId(), "*", DEFAULT_EXPIRATION);
-	       else
-		   groupCache.put(i.getSakaiId(), ret, DEFAULT_EXPIRATION);
-	   }
-
-	   return ret;
+    		   ContentResource resource = null;
+    		   try {
+    			   resource = contentHostingService.getResource(i.getSakaiId());
+    		   } catch (Exception ignore) {
+    			   return null;
+    		   }
+    		   
+    		   Collection<String>groups = null;
+    		   AccessMode access = resource.getAccess();
+    		   boolean inheritingPubView =  contentHostingService.isInheritingPubView(i.getSakaiId());
+    		   if(AccessMode.INHERITED.equals(access) || inheritingPubView) {
+    			   access = resource.getInheritedAccess();
+    			   // inherited means that we can't set it locally
+    			   // an inherited value of site is OK
+    			   // anything else can't be changed, so we set inherited
+    			   if (AccessMode.SITE.equals(access) && ! inheritingPubView)
+    				   inherited = false;
+    			   else
+    				   inherited = true;
+    			   if (AccessMode.GROUPED.equals(access))
+    				   groups = resource.getInheritedGroups();
+    		   } else {
+    			   // we can always change local modes, even if they are public
+    			   inherited = false;
+    			   if (AccessMode.GROUPED.equals(access))
+    				   groups = resource.getGroups();
+    		   }
+    		   
+    		   if (groups != null) {
+    			   ret = new ArrayList<String>();
+    			   for (String group: groups) {
+    				   int n = group.indexOf("/group/");
+    				   ret.add(group.substring(n+7));
+    			   }
+    		   }
+    		   
+    		   if (!nocache) {
+    			   if (ret == null)
+    				   groupCache.put(i.getSakaiId(), "*", DEFAULT_EXPIRATION);
+    			   else
+    				   groupCache.put(i.getSakaiId(), ret, DEFAULT_EXPIRATION);
+    		   }
+    		   
+    		   return ret;
+    	   }finally {
+    		   if(advisor != null) securityService.popAdvisor(advisor);
+    	   }
        }
 
     // no obvious need to cache
@@ -2211,7 +2277,9 @@ public class SimplePageBean {
 	   ContentResourceEdit resource = null;
 	   List<String>ret = null;
 
+	   boolean pushed = false;
 	   try {
+		   pushed = pushAdvisor();
 	       resource = contentHostingService.editResource(i.getSakaiId());
 
 	       if (AccessMode.GROUPED.equals(resource.getInheritedAccess())) {
@@ -2243,7 +2311,8 @@ public class SimplePageBean {
 	       return null;
 	   } finally {
 	       if (resource != null)
-		   contentHostingService.cancelResource(resource);
+	    	   contentHostingService.cancelResource(resource);
+	       if(pushed) popAdvisor();
 	   }
 
 	   return ret;
@@ -3225,43 +3294,69 @@ public class SimplePageBean {
      */
 
 	public String getYoutubeKey(SimplePageItem i) {
+		System.out.println("FINDING YOUTUBE KEY");
+		
 		String sakaiId = i.getSakaiId();
 
-		// find the resource
-		ContentResource resource = null;
+		SecurityAdvisor advisor = null;
 		try {
-		    resource = contentHostingService.getResource(sakaiId);
-		} catch (Exception ignore) {
-		    return null;
-		}
-
-		// make sure it's a URL
-		if (resource == null ||
-		    !resource.getResourceType().equals("org.sakaiproject.content.types.urlResource") ||
-		    !resource.getContentType().equals("text/url")) {
-		    return null;
-		}
-
-		// get the actual URL
-		String URL = null;
-		try {
-		    URL = new String(resource.getContent());
-		} catch (Exception ignore) {
-		    return null;
-		}
-		if (URL == null) {
-		    return null;
-		}
-
-		// see if it has a Youtube ID
-		if (URL.startsWith("http://www.youtube.com/") || URL.startsWith("http://youtube.com/")) {
-			Matcher match = YOUTUBE_PATTERN.matcher(URL);
-			if (match.find()) {
-				return match.group().substring(2);
+			if(getCurrentPage().getOwner() != null) {
+				// Need to allow access into owner's home directory
+				advisor = new SecurityAdvisor() {
+					public SecurityAdvice isAllowed(String userId, String function, String reference) {
+						System.out.println("Function2: " + function);
+						if("content.read".equals(function) || "content.hidden".equals(function)) {
+							System.out.println("Returning Okay");
+							return SecurityAdvice.ALLOWED;
+						}else {
+							System.out.println("Return not okay");
+							return SecurityAdvice.PASS;
+						}
+					}
+				};
+				securityService.pushAdvisor(advisor);
 			}
-   		}
+			// find the resource
+			ContentResource resource = null;
+			try {
+				resource = contentHostingService.getResource(sakaiId);
+			} catch (Exception ignore) {
+				return null;
+			}
+			
+			// 	make sure it's a URL
+			if (resource == null ||
+					!resource.getResourceType().equals("org.sakaiproject.content.types.urlResource") ||
+					!resource.getContentType().equals("text/url")) {
+				return null;
+			}
+			
+			// 	get the actual URL
+			String URL = null;
+			try {
+				URL = new String(resource.getContent());
+			} catch (Exception ignore) {
+				return null;
+			}
+			if (URL == null) {
+				return null;
+			}
+			
+			// 	see if it has a Youtube ID
+			if (URL.startsWith("http://www.youtube.com/") || URL.startsWith("http://youtube.com/")) {
+				Matcher match = YOUTUBE_PATTERN.matcher(URL);
+				if (match.find()) {
+					return match.group().substring(2);
+				}
+			}
+			
+		}catch(Exception ex) {
+			ex.printStackTrace();
+		}finally {
+			if(advisor != null) securityService.popAdvisor(advisor);
+		}
 		
-		// no
+		// 	no
 		return null;
 	}
 
@@ -3389,7 +3484,14 @@ public class SimplePageBean {
 
 	public String getCollectionId(boolean urls) {
 	    String siteId = getCurrentPage().getSiteId();
-	    String collectionId = contentHostingService.getSiteCollection(siteId);
+	    
+	    String pageOwner = getCurrentPage().getOwner();
+	    String collectionId;
+	    if (pageOwner == null) {
+	    	collectionId = contentHostingService.getSiteCollection(siteId);
+	    }else {
+	    	collectionId = "/user/" + pageOwner + "/stuff4/";
+	    }
 
 	    // folder we really want
 	    String folder = collectionId + Validator.escapeResourceName(getPageTitle()) + "/";
@@ -3428,7 +3530,7 @@ public class SimplePageBean {
 		    edit.getPropertiesEdit().addProperty(ResourceProperties.PROP_DISPLAY_NAME, "urls");
 		else
 		    edit.getPropertiesEdit().addProperty(ResourceProperties.PROP_DISPLAY_NAME, Validator.escapeResourceName(getPageTitle()));
-
+		
 		contentHostingService.commitCollection(edit);
 		return folder; // worked. use it
 	    } catch (Exception ignore) {};
@@ -3464,158 +3566,178 @@ public class SimplePageBean {
     // called by dialog to add inline multimedia item, or update existing
     // item if itemid is specified
 	public void addMultimedia() {
-
-	    if (!itemOk(itemId))
-		return;
-	    if (!canEditPage())
-		return;
-
-	    String name = null;
-	    String sakaiId = null;
-	    String mimeType = null;
-	    MultipartFile file = null;
-
-	    if (multipartMap.size() > 0) {
-		// user specified a file, create it
-		file = multipartMap.values().iterator().next();
-		if (file.isEmpty())
-		    file = null;
-	    }
-
-	    if (file != null) {
-		String collectionId = getCollectionId(false);
-		// user specified a file, create it
-		name = file.getOriginalFilename();
-		if (name == null || name.length() == 0)
-		    name = file.getName();
-		int i = name.lastIndexOf("/");
-		if (i >= 0)
-		    name = name.substring(i+1);
-		String base = name;
-		String extension = "";
-		i = name.lastIndexOf(".");
-		if (i > 0) {
-		    base = name.substring(0, i);
-		    extension = name.substring(i+1);
-		}
-		    
-		mimeType = file.getContentType();
+		SecurityAdvisor advisor = null;
 		try {
-		    ContentResourceEdit res = contentHostingService.addResource(collectionId, 
-							  Validator.escapeResourceName(base),
-							  Validator.escapeResourceName(extension),
-							  MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
-		    res.setContentType(mimeType);
-		    res.setContent(file.getInputStream());
-		    try {
-			contentHostingService.commitResource(res,  NotificationService.NOTI_NONE);
-			// there's a bug in the kernel that can cause
-			// a null pointer if it can't determine the encoding
-			// type. Since we want this code to work on old
-			// systems, work around it.
-		    } catch (java.lang.NullPointerException e) {
-			setErrMessage(messageLocator.getMessage("simplepage.resourcepossibleerror"));
-		    }
-		    sakaiId = res.getId();
-
-	    } catch (org.sakaiproject.exception.OverQuotaException ignore) {
-		setErrMessage(messageLocator.getMessage("simplepage.overquota"));
-		return;
-	    } catch (Exception e) {
-		setErrMessage(messageLocator.getMessage("simplepage.resourceerror").replace("{}", e.toString()));
-		log.error("addMultimedia error 1 " + e);
-		return;
-	    };
-	    } else if (mmUrl != null && !mmUrl.trim().equals("")) {
-		// user specified a URL, create the item
-		String url = mmUrl.trim();
-		if (!url.startsWith("http:") &&
-		    !url.startsWith("https:")) {
-		    if (!url.startsWith("//"))
-			url = "//" + url;
-		    url = "http:" + url;
+			if(getCurrentPage().getOwner() != null) {
+				advisor = new SecurityAdvisor() {
+					public SecurityAdvice isAllowed(String userId, String function, String reference) {
+							return SecurityAdvice.ALLOWED;
+					}
+				};
+				securityService.pushAdvisor(advisor);
+			}
+			if (!itemOk(itemId))
+				return;
+			if (!canEditPage())
+				return;
+			
+			String name = null;
+			String sakaiId = null;
+			String mimeType = null;
+			MultipartFile file = null;
+			
+			if (multipartMap.size() > 0) {
+				// 	user specified a file, create it
+				file = multipartMap.values().iterator().next();
+				if (file.isEmpty())
+					file = null;
+			}
+			
+			if (file != null) {
+				String collectionId = getCollectionId(false);
+				System.out.println("CollectionID: " + collectionId);
+				// 	user specified a file, create it
+				name = file.getOriginalFilename();
+				if (name == null || name.length() == 0)
+					name = file.getName();
+				int i = name.lastIndexOf("/");
+				if (i >= 0)
+					name = name.substring(i+1);
+				String base = name;
+				String extension = "";
+				i = name.lastIndexOf(".");
+				if (i > 0) {
+					base = name.substring(0, i);
+					extension = name.substring(i+1);
+				}
+				
+				mimeType = file.getContentType();
+				try {
+					ContentResourceEdit res = contentHostingService.addResource(collectionId, 
+							  	Validator.escapeResourceName(base),
+							  	Validator.escapeResourceName(extension),
+							  	MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
+					res.setContentType(mimeType);
+					res.setContent(file.getInputStream());
+					try {
+						contentHostingService.commitResource(res,  NotificationService.NOTI_NONE);
+						// 	there's a bug in the kernel that can cause
+						// 	a null pointer if it can't determine the encoding
+						// 	type. Since we want this code to work on old
+						// 	systems, work around it.
+					} catch (java.lang.NullPointerException e) {
+						setErrMessage(messageLocator.getMessage("simplepage.resourcepossibleerror"));
+					}
+					sakaiId = res.getId();
+					
+				} catch (org.sakaiproject.exception.OverQuotaException ignore) {
+					setErrMessage(messageLocator.getMessage("simplepage.overquota"));
+					return;
+				} catch (Exception e) {
+					setErrMessage(messageLocator.getMessage("simplepage.resourceerror").replace("{}", e.toString()));
+					log.error("addMultimedia error 1 " + e);
+					return;
+				};
+			} else if (mmUrl != null && !mmUrl.trim().equals("")) {
+				// 	user specified a URL, create the item
+				String url = mmUrl.trim();
+				if (!url.startsWith("http:") &&
+						!url.startsWith("https:")) {
+					if (!url.startsWith("//"))
+						url = "//" + url;
+					url = "http:" + url;
+				}
+				
+				name = url;
+				String base = url;
+				String extension = "";
+				int i = url.lastIndexOf("/");
+				if (i < 0) i = 0;
+				i = url.lastIndexOf(".", i);
+				if (i > 0) {
+					extension = url.substring(i);
+					base = url.substring(0,i);
+				}
+				
+				String collectionId;
+				SimplePage page = getCurrentPage();
+				
+				collectionId = getCollectionId(true);
+				
+				System.out.println("CollectionID2: " + collectionId);
+				try {
+					// 	urls aren't something people normally think of as resources. Let's hide them
+					ContentResourceEdit res = contentHostingService.addResource(collectionId, 
+							Validator.escapeResourceName(base),
+							Validator.escapeResourceName(extension),
+							MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
+					res.setContentType("text/url");
+					res.setResourceType("org.sakaiproject.content.types.urlResource");
+					res.setContent(url.getBytes());
+					contentHostingService.commitResource(res, NotificationService.NOTI_NONE);
+					sakaiId = res.getId();
+				} catch (org.sakaiproject.exception.OverQuotaException ignore) {
+					setErrMessage(messageLocator.getMessage("simplepage.overquota"));
+					return;
+				} catch (Exception e) {
+					setErrMessage(messageLocator.getMessage("simplepage.resourceerror").replace("{}", e.toString()));
+					log.error("addMultimedia error 2 " + e);
+					return;
+				};
+				// 	connect to url and get mime type
+				mimeType = getTypeOfUrl(url);
+				
+			} else
+				// 	nothing to do
+				return;
+			
+			// 	itemId tells us whether it's an existing item
+			// 	isMultimedia tells us whether resource or multimedia
+			// 	sameWindow is only passed for existing items of type HTML/XHTML
+			//   	for new items it should be set true for HTML/XTML, false otherwise
+			//   	for existing items it should be set to the passed value for HTML/XMTL, false otherwise
+			//   	it is ignored for isMultimedia, as those are always displayed inline in the current page
+			
+			SimplePageItem item = null;
+			if (itemId == -1 && isMultimedia) {
+				int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
+				item = simplePageToolDao.makeItem(getCurrentPageId(), seq, SimplePageItem.MULTIMEDIA, sakaiId, name);
+			} else if (itemId == -1) {
+				int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
+				item = simplePageToolDao.makeItem(getCurrentPageId(), seq, SimplePageItem.RESOURCE, sakaiId, name);
+			} else {
+				item = findItem(itemId);
+				if (item == null)
+					return;
+				item.setSakaiId(sakaiId);
+				item.setName(name);
+			}
+			
+			if (mimeType != null) {
+				item.setHtml(mimeType);
+			} else {
+				item.setHtml(null);
+			}
+			
+			// 	if this is an existing item and a resource, leave it alone
+			// 	otherwise initialize to false
+			if (isMultimedia || itemId == -1)
+				item.setSameWindow(false);
+			
+			clearImageSize(item);
+			try {
+				if (itemId == -1)
+					saveItem(item);
+				else
+					update(item);
+			} catch (Exception e) {
+				// 	saveItem and update produce the errors
+			}
+		}catch(Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			if(advisor != null) securityService.popAdvisor(advisor);
 		}
-
-		name = url;
-		String base = url;
-		String extension = "";
-		int i = url.lastIndexOf("/");
-		if (i < 0) i = 0;
-		i = url.lastIndexOf(".", i);
-		if (i > 0) {
-		    extension = url.substring(i);
-		    base = url.substring(0,i);
-		}
-
-		String collectionId = getCollectionId(true);
-		try {
-		    // urls aren't something people normally think of as resources. Let's hide them
-		    ContentResourceEdit res = contentHostingService.addResource(collectionId, 
-						  Validator.escapeResourceName(base),
-						  Validator.escapeResourceName(extension),
-						  MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
-		    res.setContentType("text/url");
-		    res.setResourceType("org.sakaiproject.content.types.urlResource");
-		    res.setContent(url.getBytes());
-		    contentHostingService.commitResource(res, NotificationService.NOTI_NONE);
-		    sakaiId = res.getId();
-		} catch (org.sakaiproject.exception.OverQuotaException ignore) {
-		    setErrMessage(messageLocator.getMessage("simplepage.overquota"));
-		    return;
-		} catch (Exception e) {
-		    setErrMessage(messageLocator.getMessage("simplepage.resourceerror").replace("{}", e.toString()));
-		    log.error("addMultimedia error 2 " + e);
-		    return;
-		};
-		// connect to url and get mime type
-		mimeType = getTypeOfUrl(url);
-
-	    } else
-		// nothing to do
-		return;
-		
-	    // itemId tells us whether it's an existing item
-	    // isMultimedia tells us whether resource or multimedia
-	    // sameWindow is only passed for existing items of type HTML/XHTML
-	    //   for new items it should be set true for HTML/XTML, false otherwise
-	    //   for existing items it should be set to the passed value for HTML/XMTL, false otherwise
-	    //   it is ignored for isMultimedia, as those are always displayed inline in the current page
-
-	    SimplePageItem item = null;
-	    if (itemId == -1 && isMultimedia) {
-		int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
-		item = simplePageToolDao.makeItem(getCurrentPageId(), seq, SimplePageItem.MULTIMEDIA, sakaiId, name);
-	    } else if (itemId == -1) {
-		int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
-		item = simplePageToolDao.makeItem(getCurrentPageId(), seq, SimplePageItem.RESOURCE, sakaiId, name);
-	    } else {
-		item = findItem(itemId);
-		if (item == null)
-		    return;
-		item.setSakaiId(sakaiId);
-		item.setName(name);
-	    }
-
-	    if (mimeType != null) {
-		item.setHtml(mimeType);
-	    } else {
-		item.setHtml(null);
-	    }
-
-	    // if this is an existing item and a resource, leave it alone
-	    // otherwise initialize to false
-	    if (isMultimedia || itemId == -1)
-		item.setSameWindow(false);
-
-	    clearImageSize(item);
-	    try {
-		if (itemId == -1)
-		    saveItem(item);
-		else
-		    update(item);
-	    } catch (Exception e) {
-		// saveItem and update produce the errors
-	    }
 	}
 
 	public boolean deleteRecursive(File path) throws FileNotFoundException{
@@ -3726,19 +3848,32 @@ public class SimplePageBean {
 		    String siteId = getCurrentPage().getSiteId();
 		    String collectionId = getCollectionId(true);
 
+		    SecurityAdvisor advisor = null;
 		    try {
-			ContentResourceEdit res = contentHostingService.addResource(collectionId,Validator.escapeResourceName("Youtube video " + key),Validator.escapeResourceName("swf"),MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
-			res.setContentType("text/url");
-			res.setResourceType("org.sakaiproject.content.types.urlResource");
-			res.setContent(url.getBytes());
-			contentHostingService.commitResource(res, NotificationService.NOTI_NONE);
-			item.setSakaiId(res.getId());
+		    	if(getCurrentPage().getOwner() != null) {
+					advisor = new SecurityAdvisor() {
+						public SecurityAdvice isAllowed(String userId, String function, String reference) {
+							return SecurityAdvice.ALLOWED;
+						}
+					};
+					securityService.pushAdvisor(advisor);
+				}
+		    	
+		    	ContentResourceEdit res = contentHostingService.addResource(collectionId,Validator.escapeResourceName("Youtube video " + key),Validator.escapeResourceName("swf"),MAXIMUM_ATTEMPTS_FOR_UNIQUENESS);
+		    	res.setContentType("text/url");
+		    	res.setResourceType("org.sakaiproject.content.types.urlResource");
+		    	res.setContent(url.getBytes());
+		    	contentHostingService.commitResource(res, NotificationService.NOTI_NONE);
+		    	item.setSakaiId(res.getId());
+		    	
 		    } catch (org.sakaiproject.exception.OverQuotaException ignore) {
-			setErrMessage(messageLocator.getMessage("simplepage.overquota"));
+		    	setErrMessage(messageLocator.getMessage("simplepage.overquota"));
 		    } catch (Exception e) {
-			setErrMessage(messageLocator.getMessage("simplepage.resourceerror").replace("{}", e.toString()));
-			log.error("addMultimedia error 3 " + e);
-		    };
+		    	setErrMessage(messageLocator.getMessage("simplepage.resourceerror").replace("{}", e.toString()));
+		    	log.error("addMultimedia error 3 " + e);
+		    }finally {
+		    	if(advisor != null) securityService.popAdvisor(advisor);
+		    }
 		}
 
 		// even if there's some oddity with URLs, we do these updates
@@ -3823,8 +3958,8 @@ public class SimplePageBean {
 	
 	public void addCommentsSection() {
 		if(canEditPage()) {
-			SimplePageItem item = appendItem("", "Comment Section", SimplePageItem.COMMENTS);
-			item.setDescription("Comment Section");
+			SimplePageItem item = appendItem("", messageLocator.getMessage("simplepage.comments-section"), SimplePageItem.COMMENTS);
+			item.setDescription(messageLocator.getMessage("simplepage.comments-section"));
 			update(item);
 			
 			// Must clear the cache so that the new item appears on the page
@@ -3927,5 +4062,35 @@ public class SimplePageBean {
 		
 		setErrMessage(messageLocator.getMessage("simplepage.comment-permissions-error"));
 		return "failure";
+	}
+	
+	public void addStudentContentSection() {
+		if(canEditPage()) {
+			SimplePageItem item = appendItem("", messageLocator.getMessage("simplepage.student-content"), SimplePageItem.STUDENT_CONTENT);
+			item.setDescription(messageLocator.getMessage("simplepage.student-content"));
+			update(item);
+			
+			// Must clear the cache so that the new item appears on the page
+			itemsCache.remove(getCurrentPage().getPageId());
+		}else {
+			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
+		}
+	}
+	
+	private boolean pushAdvisor() {
+		if(getCurrentPage().getOwner() != null) {
+			securityService.pushAdvisor(new SecurityAdvisor() {
+				public SecurityAdvice isAllowed(String userId, String function, String reference) {
+					return SecurityAdvice.ALLOWED;
+				}
+			});
+			return true;
+		}else {
+			return false;
+		}
+	}
+	
+	private void popAdvisor() {
+		securityService.popAdvisor();
 	}
 }

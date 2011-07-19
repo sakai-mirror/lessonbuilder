@@ -42,7 +42,7 @@ public class GeneralViewParameters extends SimpleViewParameters {
 	private String recheck = "";
 	private String backPath = "";
 	
-	public boolean addComments = false;
+	public int addTool = -1;
 	public boolean postedComment = false;
 
 	public GeneralViewParameters() {

@@ -30,7 +30,6 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.NonUniqueObjectException;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
@@ -49,6 +48,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageItemImpl;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntryImpl;
 import org.sakaiproject.tool.api.ToolManager;
+import org.sakaiproject.user.cover.UserDirectoryService;
 import org.springframework.dao.DataAccessException;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
@@ -83,6 +83,30 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 			ref = "";
 		}
 		return securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_UPDATE, ref);
+	}
+	
+	public boolean canEditPage(long pageId) {
+		boolean canEdit = canEditPage();
+		if(!canEdit) {
+			SimplePage page = getPage(pageId);
+			if(UserDirectoryService.getCurrentUser().getId()
+					.equals(page.getOwner())) {
+				canEdit = true;
+			}
+		}
+		
+		return canEdit;
+	}
+	
+	public boolean canEditPage(String owner) {
+		boolean canEdit = canEditPage();
+		if(owner != null && !canEdit) {
+			if(owner.equals(UserDirectoryService.getCurrentUser().getId())) {
+				canEdit = true;
+			}
+		}
+		
+		return canEdit;
 	}
 
 	public void setSecurityService(SecurityService service) {
@@ -252,9 +276,21 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	}
 
 	public boolean saveItem(Object o, List<String>elist, String nowriteerr, boolean requiresEditPermission) {
-		if (!(o instanceof SimplePageLogEntry || (!requiresEditPermission || canEditPage()))) {
-		    elist.add(nowriteerr);
-		    return false;
+		
+		/*
+		 * This checks a lot of conditions:
+		 * 1) If o is SimplePageItem or SimplePage, it makes sure it gets the right page and checks the
+		 *    permissions on it.
+		 * 2) If it's a log entry, it lets it go.
+		 * 3) If requiresEditPermission is set to false, it lets it go.
+		 * 
+		 * Essentially, if any of those say that the edit is fine, it won't throw the error.
+		 */
+		if(!(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
+				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
+				&& !(o instanceof SimplePageLogEntry) && requiresEditPermission) {
+			elist.add(nowriteerr);
+			return false;
 		}
 
 		if (o instanceof SimplePageItem) {
@@ -294,7 +330,15 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	}
 
 	public boolean deleteItem(Object o) {
-		if (!canEditPage()) {
+		/*
+		 * If o is SimplePageItem or SimplePage, it makes sure it gets the right page and checks the
+		 * permissions on it.
+		 * 
+		 * Essentially, if any of those say that the edit is fine, it won't throw the error.
+		 */
+		if(!(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
+				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))) {
+
 			return false;
 		}
 
@@ -330,9 +374,20 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	}
 
 	public boolean update(Object o, List<String>elist, String nowriteerr, boolean requiresEditPermission) {
-		if (!(o instanceof SimplePageLogEntry || canEditPage() || !requiresEditPermission)) {
-		    elist.add(nowriteerr);
-		    return false;
+		/*
+		 * This checks a lot of conditions:
+		 * 1) If o is SimplePageItem or SimplePage, it makes sure it gets the right page and checks the
+		 *    permissions on it.
+		 * 2) If it's a log entry, it lets it go.
+		 * 3) If requiresEditPermission is set to false, it lets it go.
+		 * 
+		 * Essentially, if any of those say that the edit is fine, it won't throw the error.
+		 */
+		if(!(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
+				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
+				&& !(o instanceof SimplePageLogEntry) && requiresEditPermission) {
+			elist.add(nowriteerr);
+			return false;
 		}
 		
 		if (o instanceof SimplePageItem) {

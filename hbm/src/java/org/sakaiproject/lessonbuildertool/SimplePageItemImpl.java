@@ -47,6 +47,7 @@ public class SimplePageItemImpl implements SimplePageItem  {
 	public static final int MULTIMEDIA = 7;
 	public static final int FORUM = 8;
 	public static final int COMMENTS = 9;
+	public static final int STUDENT_CONTENT = 10;
 
     // must agree with definition in hbm file
 	public static final int MAXNAME = 100;

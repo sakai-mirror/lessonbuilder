@@ -181,7 +181,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 	}
 
-	// problem is it need to work with a null argument
+	// problem is it needs to work with a null argument
 	public static String getOrig(Length l) {
 		if (lengthOk(l))
 			return l.number + l.unit;
@@ -265,10 +265,39 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	// nothing is specified
 
 	public void fillComponents(UIContainer tofill, ViewParameters viewParams, ComponentChecker checker) {
+		GeneralViewParameters params = (GeneralViewParameters) viewParams;
+		
+		// security model:
+		// canEditPage and canReadPage are normal Sakai privileges. They apply
+		// to all
+		// pages in the site.
+		// However when presented with a page, we need to make sure it's
+		// actually in
+		// this site, or users could get to pages in other sites. That's done
+		// by updatePageObject. The model is that producers always work on the
+		// current page, and updatePageObject makes sure that is in the current
+		// site.
+		// At that point we can safely use canEditPage.
 
+		// somewhat misleading. sendingPage specifies the page we're supposed to
+		// go to
+		if (params.getSendingPage() != -1) {
+			// will fail if page not in this site
+			// security then depends upon making sure that we only deal with
+			// this page
+			try {
+				simplePageBean.updatePageObject(params.getSendingPage());
+			} catch (Exception e) {
+				log.warn("ShowPage permission exception " + e);
+				UIOutput.make(tofill, "error-div");
+				UIOutput.make(tofill, "error", messageLocator.getMessage("simplepage.not_available"));
+				return;
+			}
+		}
+		
+		
 		boolean canEditPage = simplePageBean.canEditPage();
 		boolean canReadPage = simplePageBean.canReadPage();
-		GeneralViewParameters params = (GeneralViewParameters) viewParams;
 
 		if (!canReadPage) {
 			// this code is intended for the situation where site permissions
@@ -294,8 +323,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			return;
 		}
 
-		if (params.addComments) {
+		if (params.addTool == SimplePageItem.COMMENTS) {
 			simplePageBean.addCommentsSection();
+		}else if(params.addTool == SimplePageItem.STUDENT_CONTENT) {
+			simplePageBean.addStudentContentSection();
 		}
 
 		// error from previous operation
@@ -345,34 +376,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			Arrays.sort(multimediaTypes);
 		}
 
-		// security model:
-		// canEditPage and canReadPage are normal Sakai privileges. They apply
-		// to all
-		// pages in the site.
-		// However when presented with a page, we need to make sure it's
-		// actually in
-		// this site, or users could get to pages in other sites. That's done
-		// by updatePageObject. The model is that producers always work on the
-		// current page, and updatePageObject makes sure that is in the current
-		// site.
-		// At that point we can safely use canEditPage.
-
-		// somewhat misleading. sendingPage specifies the page we're supposed to
-		// go to
-		if (params.getSendingPage() != -1) {
-			// will fail if page not in this site
-			// security then depends upon making sure that we only deal with
-			// this page
-			try {
-				simplePageBean.updatePageObject(params.getSendingPage());
-			} catch (Exception e) {
-				log.warn("ShowPage permission exception " + e);
-				UIOutput.make(tofill, "error-div");
-				UIOutput.make(tofill, "error", messageLocator.getMessage("simplepage.not_available"));
-				return;
-			}
-		}
-
 		// remember that page tool was reset, so we need to give user the option
 		// of going to the last page from the previous session
 		SimplePageToolDao.PageData lastPage = simplePageBean.toolWasReset();
@@ -380,6 +383,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		// if starting the tool, sendingpage isn't set. the following call
 		// will give us the top page.
 		SimplePage currentPage = simplePageBean.getCurrentPage();
+		
 		// now we need to find our own item, for access checks, etc.
 		SimplePageItem pageItem = null;
 		if (currentPage != null) {
@@ -867,7 +871,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 					// here goes. dispatch on the type and produce the right tag
 					// type,
-					// followed by the hidden INPUT tags with informatio for the
+					// followed by the hidden INPUT tags with information for the
 					// edit dialog
 					if (simplePageBean.isImageType(i)) {
 
@@ -900,6 +904,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						}
 
 					} else if ((youtubeKey = simplePageBean.getYoutubeKey(i)) != null) {
+						System.out.println("Found");
 						String youtubeUrl = "http://www.youtube.com/v/" + youtubeKey + "?version=3";
 						// this is very odd. The official youtube embedding uses
 						// <OBJECT> with
@@ -1291,6 +1296,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			createSubpageDialog(tofill, currentPage);
 		}
 
+		createDialogs(tofill, currentPage, pageItem);
+	}
+	
+	public void createDialogs(UIContainer tofill, SimplePage currentPage, SimplePageItem pageItem) {
+		
 		createEditItemDialog(tofill, currentPage, pageItem);
 		createAddMultimediaDialog(tofill, currentPage);
 		createEditMultimediaDialog(tofill, currentPage);
@@ -1365,53 +1375,57 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		} else if (i.getType() == SimplePageItem.PAGE) {
 			SimplePage p = simplePageToolDao.getPage(Long.valueOf(i.getSakaiId()));
 
-			GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, p.getPageId());
-			eParams.setItemId(i.getId());
-			// nextpage indicates whether it should be pushed onto breadcrumbs
-			// or replace the top item
-			if (i.getNextPage()) {
-				eParams.setPath("next");
-			} else {
-				eParams.setPath("push");
-			}
-			boolean isbutton = false;
-			// button says to display the link as a button. use navIntrTool,
-			// which is standard
-			// Sakai CSS that generates the type of button used in toolbars. We
-			// have to override
-			// with background:transparent or we get remnants of the gray
-			if ("button".equals(i.getFormat())) {
-				isbutton = true;
-				UIOutput span = UIOutput.make(container, ID + "-button-span");
-				ID = ID + "-button";
-				if (!i.isRequired()) {
-					span.decorate(new UIFreeAttributeDecorator("class", "navIntraTool buttonItem"));
+			if(p != null) {
+				GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, p.getPageId());
+				eParams.setItemId(i.getId());
+				// nextpage indicates whether it should be pushed onto breadcrumbs
+				// or replace the top item
+				if (i.getNextPage()) {
+					eParams.setPath("next");
+				} else {
+					eParams.setPath("push");
 				}
-				isbutton = true;
-			}
-
-			UILink link;
-			if (available) {
-				link = UIInternalLink.make(container, ID, eParams);
-				if (i.isPrerequisite()) {
-					simplePageBean.checkItemPermissions(i, true);
+				boolean isbutton = false;
+				// button says to display the link as a button. use navIntrTool,
+				// which is standard
+				// Sakai CSS that generates the type of button used in toolbars. We
+				// have to override
+				// with background:transparent or we get remnants of the gray
+				if ("button".equals(i.getFormat())) {
+					isbutton = true;
+					UIOutput span = UIOutput.make(container, ID + "-button-span");
+					ID = ID + "-button";
+					if (!i.isRequired()) {
+						span.decorate(new UIFreeAttributeDecorator("class", "navIntraTool buttonItem"));
+					}
+					isbutton = true;
 				}
-				// at this point we know the page isn't available, i.e. user
-				// hasn't
-				// met all the prerequistes. Normally we give them a nonworking
-				// grayed out link. But if they are the author, we want to
-				// give them a real link. Otherwise if it's a subpage they have
-				// no way to get to it (currently -- we'll fix that)
-				// but we make it look like it's disabled so they can see what
-				// students see
-			} else if (canEditPage) {
-				link = UIInternalLink.make(container, ID, eParams);
-				fakeDisableLink(link, messageLocator);
-			} else {
-				link = UILink.make(container, ID);
-				disableLink(link, messageLocator);
+				
+				UILink link;
+				if (available) {
+					link = UIInternalLink.make(container, ID, eParams);
+					if (i.isPrerequisite()) {
+						simplePageBean.checkItemPermissions(i, true);
+					}
+					// at this point we know the page isn't available, i.e. user
+					// hasn't
+					// met all the prerequistes. Normally we give them a nonworking
+					// grayed out link. But if they are the author, we want to
+					// give them a real link. Otherwise if it's a subpage they have
+					// no way to get to it (currently -- we'll fix that)
+					// but we make it look like it's disabled so they can see what
+					// students see
+				} else if (canEditPage) {
+					link = UIInternalLink.make(container, ID, eParams);
+					fakeDisableLink(link, messageLocator);
+				} else {
+					link = UILink.make(container, ID);
+					disableLink(link, messageLocator);
+				}
+			}else {
+				log.warn("Lesson Builder Item #" + i.getId() + " does not have an associated page.");
+				return false;
 			}
-
 		} else if (i.getType() == SimplePageItem.ASSIGNMENT) {
 			if (available) {
 				if (i.isPrerequisite()) {
@@ -1616,27 +1630,34 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		createToolBarLink(EditPageProducer.VIEW_ID, toolBar, "add-text", "simplepage.text", currentPage, "simplepage.text.tooltip").setItemId(null);
 
+		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-multimedia", "simplepage.multimedia", true, currentPage, "simplepage.multimedia.tooltip");
+		
 		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-resource", "simplepage.resource", false, currentPage, "simplepage.resource.tooltip");
 
 		UILink subpagelink = UIInternalLink.makeURL(toolBar, "subpage-link", "#");
 		subpagelink.decorate(new UITooltipDecorator(messageLocator.getMessage("simplepage.subpage")));
 		subpagelink.linktext = new UIBoundString(messageLocator.getMessage("simplepage.subpage"));
 
-		createToolBarLink(AssignmentPickerProducer.VIEW_ID, toolBar, "add-assignment", "simplepage.assignment", currentPage, "simplepage.assignment");
-
-		createToolBarLink(QuizPickerProducer.VIEW_ID, toolBar, "add-quiz", "simplepage.quiz", currentPage, "simplepage.quiz");
-
-		createToolBarLink(ForumPickerProducer.VIEW_ID, toolBar, "add-forum", "simplepage.forum", currentPage, "simplepage.forum");
-
-		createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar, "add-multimedia", "simplepage.multimedia", true, currentPage, "simplepage.multimedia.tooltip");
-
-		createToolBarLink(PermissionsHelperProducer.VIEW_ID, toolBar, "permissions", "simplepage.permissions", currentPage, "simplepage.permissions.tooltip");
-
-		GeneralViewParameters eParams = new GeneralViewParameters(VIEW_ID);
-		eParams.addComments = true;
-		UIInternalLink.make(toolBar, "add-comments", messageLocator.getMessage("simplepage.comments"), eParams);
-
 		UILink.make(toolBar, "help", messageLocator.getMessage("simplepage.help"), getLocalizedURL("general.html"));
+
+		// Don't show these tools on a student page.
+		if(currentPage.getOwner() == null) {
+			createToolBarLink(AssignmentPickerProducer.VIEW_ID, toolBar, "add-assignment", "simplepage.assignment", currentPage, "simplepage.assignment");
+			
+			createToolBarLink(QuizPickerProducer.VIEW_ID, toolBar, "add-quiz", "simplepage.quiz", currentPage, "simplepage.quiz");
+			
+			createToolBarLink(ForumPickerProducer.VIEW_ID, toolBar, "add-forum", "simplepage.forum", currentPage, "simplepage.forum");
+			
+			createToolBarLink(PermissionsHelperProducer.VIEW_ID, toolBar, "permissions", "simplepage.permissions", currentPage, "simplepage.permissions.tooltip");
+			
+			GeneralViewParameters eParams = new GeneralViewParameters(VIEW_ID);
+			eParams.addTool = SimplePageItem.COMMENTS;
+			UIInternalLink.make(toolBar, "add-comments", messageLocator.getMessage("simplepage.comments"), eParams);
+			
+			eParams = new GeneralViewParameters(VIEW_ID);
+			eParams.addTool = SimplePageItem.STUDENT_CONTENT;
+			UIInternalLink.make(toolBar, "add-content", messageLocator.getMessage("simplepage.add-content"), eParams);
+		}
 	}
 
 	private GeneralViewParameters createToolBarLink(String viewID, UIContainer tofill, String ID, String message, SimplePage currentPage, String tooltip) {
