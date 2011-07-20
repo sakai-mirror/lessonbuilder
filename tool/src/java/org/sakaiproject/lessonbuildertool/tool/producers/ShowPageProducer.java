@@ -59,6 +59,7 @@ import org.sakaiproject.event.cover.UsageSessionService;
 import org.sakaiproject.lessonbuildertool.SimplePage;
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
+import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.service.LessonEntity;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
@@ -323,10 +324,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			return;
 		}
 
-		if (params.addTool == SimplePageItem.COMMENTS) {
+		if (params.addTool == GeneralViewParameters.COMMENTS) {
 			simplePageBean.addCommentsSection();
-		}else if(params.addTool == SimplePageItem.STUDENT_CONTENT) {
+		}else if(params.addTool == GeneralViewParameters.STUDENT_CONTENT) {
 			simplePageBean.addStudentContentSection();
+		}else if(params.addTool == GeneralViewParameters.STUDENT_PAGE) {
+			simplePageBean.createStudentPage(params.studentItemId);
+			canEditPage = simplePageBean.canEditPage();
+			System.out.println("Updated Edit:" + canEditPage);
 		}
 
 		// error from previous operation
@@ -395,7 +400,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		// another site
 		// actually this normally happens if the page doesn't exist and we don't
 		// have permission to create it
-		if (currentPage == null || pageItem == null || Long.valueOf(pageItem.getSakaiId()) != currentPage.getPageId()) {
+		if (currentPage == null || pageItem == null || (pageItem.getType() != SimplePageItem.STUDENT_CONTENT &&Long.valueOf(pageItem.getSakaiId()) != currentPage.getPageId())) {
 			log.warn("ShowPage item not in page");
 			UIOutput.make(tofill, "error-div");
 			UIOutput.make(tofill, "error", messageLocator.getMessage("simplepage.not_available"));
@@ -435,7 +440,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		// path is the breadcrumbs. Push, pop or reset depending upon path=
 		// programmer documentation.
-		String newPath = simplePageBean.adjustPath(params.getPath(), currentPage.getPageId(), pageItem.getId(), pageItem.getName());
+		String title;
+		if(pageItem.getType() != SimplePageItem.STUDENT_CONTENT) {
+			title = pageItem.getName();
+		}else {
+			title = currentPage.getTitle();
+		}
+		String newPath = simplePageBean.adjustPath(params.getPath(), currentPage.getPageId(), pageItem.getId(), title);
 		simplePageBean.adjustBackPath(params.getBackPath(), currentPage.getPageId(), pageItem.getId(), pageItem.getName());
 
 		// potentially need time zone for setting release date
@@ -462,7 +473,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			createToolBar(tofill, currentPage);
 			UIOutput.make(tofill, "edit-title").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.editTitle-tooltip")));
 
-			if (pageItem.getPageId() == 0) {// top level page
+			if (pageItem.getPageId() == 0) { // top level page
 				UIOutput.make(tofill, "remove-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page-tooltip")));
 				UIOutput.make(tofill, "new-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-page-tooltip")));
 				UIOutput.make(tofill, "import-cc").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
@@ -626,7 +637,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				// the moment it's
 				// everything that isn't inline.
 
-				boolean listItem = !(i.getType() == SimplePageItem.TEXT || i.getType() == SimplePageItem.MULTIMEDIA || i.getType() == SimplePageItem.COMMENTS);
+				boolean listItem = !(i.getType() == SimplePageItem.TEXT || i.getType() == SimplePageItem.MULTIMEDIA
+						|| i.getType() == SimplePageItem.COMMENTS || i.getType() == SimplePageItem.STUDENT_CONTENT);
 				// (i.getType() == SimplePageItem.PAGE &&
 				// "button".equals(i.getFormat())))
 
@@ -819,7 +831,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					// the best
 					// HTML for displaying the particular type of object. We've
 					// added complexities
-					// over time as we get more expeerience with different
+					// over time as we get more experience with different
 					// object types and browsers.
 
 					String itemGroupString = simplePageBean.getItemGroupString(i, null, true);
@@ -1201,6 +1213,33 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					((SakaiFCKTextEvolver) richTextEvolver).evolveTextInput(fckInput, "" + commentsCount);
 
 					UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
+				}else if(i.getType() == SimplePageItem.STUDENT_CONTENT) {
+					UIOutput.make(tableRow, "studentSpan");
+					UIOutput.make(tableRow, "studentDiv");
+					
+					List<SimpleStudentPage> studentPages = simplePageToolDao.findStudentPages(i.getId());
+					
+					for(SimpleStudentPage page : studentPages) {
+						UIBranchContainer row = UIBranchContainer.make(tableRow, "studentRow:");
+						UIOutput.make(row, "studentCell");
+						
+						GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, page.getPageId());
+						eParams.setItemId(i.getId());
+						eParams.setPath("push");
+						UIInternalLink.make(row, "studentLink", page.getTitle(), eParams);
+					}
+					
+					UIOutput.make(tableRow, "linkRow");
+					UIOutput.make(tableRow, "linkCell");
+					
+					GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID);
+					eParams.addTool = GeneralViewParameters.STUDENT_PAGE;
+					eParams.studentItemId = i.getId();
+					UIInternalLink.make(tableRow, "linkLink", messageLocator.getMessage("simplepage.add-page"), eParams);
+					
+					if(canEditPage) {
+						UIOutput.make(tableRow, "student-td");
+					}
 				} else {
 					// remaining type must be a block of HTML
 					UIOutput.make(tableRow, "itemSpan");
@@ -1651,11 +1690,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			createToolBarLink(PermissionsHelperProducer.VIEW_ID, toolBar, "permissions", "simplepage.permissions", currentPage, "simplepage.permissions.tooltip");
 			
 			GeneralViewParameters eParams = new GeneralViewParameters(VIEW_ID);
-			eParams.addTool = SimplePageItem.COMMENTS;
+			eParams.addTool = GeneralViewParameters.COMMENTS;
 			UIInternalLink.make(toolBar, "add-comments", messageLocator.getMessage("simplepage.comments"), eParams);
 			
 			eParams = new GeneralViewParameters(VIEW_ID);
-			eParams.addTool = SimplePageItem.STUDENT_CONTENT;
+			eParams.addTool = GeneralViewParameters.STUDENT_CONTENT;
 			UIInternalLink.make(toolBar, "add-content", messageLocator.getMessage("simplepage.add-content"), eParams);
 		}
 	}

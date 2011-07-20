@@ -17,6 +17,7 @@
          <generator class="native"/>
       </id>
 
+	<property name="itemId" type="long" not-null="true" />
 	<property name="pageId" type="long" not-null="true" />
 	<property name="title" type="string" length="100" not-null="true" />
 	<property name="owner" type="string" length="36" not-null="true" />

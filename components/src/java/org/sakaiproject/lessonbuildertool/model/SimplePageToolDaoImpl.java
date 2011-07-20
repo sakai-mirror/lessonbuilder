@@ -47,6 +47,8 @@ import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.SimplePageItemImpl;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntryImpl;
+import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
+import org.sakaiproject.lessonbuildertool.SimpleStudentPageImpl;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.user.cover.UserDirectoryService;
 import org.springframework.dao.DataAccessException;
@@ -214,6 +216,37 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		
 		if(list.size() > 0) {
 			return list.get(0);
+		}else {
+			return null;
+		}
+	}
+	
+	public SimpleStudentPage findStudentPage(long itemId, String owner) {
+		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("itemId", itemId))
+			.add(Restrictions.eq("owner", owner));
+		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
+		
+		if(list.size() > 0) {
+			return list.get(0);
+		}else {
+			return null;
+		}
+	}
+	
+	public List<SimpleStudentPage> findStudentPages(long itemId) {
+		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("itemId", itemId));
+		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
+		
+		return list;
+	}
+	
+	public SimplePageItem findItemFromStudentPage(long pageId) {
+		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("pageId", pageId));
+	
+		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
+	
+		if(list.size() > 0) {
+			return findItem(list.get(0).getItemId());
 		}else {
 			return null;
 		}
@@ -521,6 +554,10 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 
 	public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID, boolean html) {
 		return new SimplePageCommentImpl(itemId, pageId, author, comment, UUID, html);
+	}
+	
+	public SimpleStudentPage makeStudentPage(long itemId, long pageId, String title, String author, boolean groupOwned) {
+		return new SimpleStudentPageImpl(itemId, pageId, title, author, groupOwned);
 	}
 	
 	public SimplePageItem copyItem(SimplePageItem old) {

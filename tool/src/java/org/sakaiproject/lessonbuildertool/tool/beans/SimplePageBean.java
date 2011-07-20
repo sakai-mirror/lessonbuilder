@@ -53,7 +53,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
-import org.sakaiproject.authz.api.SecurityAdvisor.SecurityAdvice;
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentCollectionEdit;
@@ -75,6 +74,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.SimplePageGroup;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
+import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 import org.sakaiproject.lessonbuildertool.cc.CartridgeLoader;
 import org.sakaiproject.lessonbuildertool.cc.Parser;
 import org.sakaiproject.lessonbuildertool.cc.PrintHandler;
@@ -120,7 +120,7 @@ import uk.org.ponder.rsf.components.UIInternalLink;
 //    generating a single page. The bean has common application logic. The producers are pretty much just UI.
 //    The DAO is low-level data access. This is everything else. The producers call this bean, and not the 
 //    DAO directly. This layer sticks caches on top of the data access, and provides more complex logic. Security
-//    is primarily in the DAO, but the DAO only checks permissions. We have to make sure we only acccess pages
+//    is primarily in the DAO, but the DAO only checks permissions. We have to make sure we only access pages
 //    and items in our site
 //       Most of the caches are local. Since this bean is request-scope they are recreated for each request.
 //    Thus we don't have to worry about timing out the entries.
@@ -128,7 +128,7 @@ import uk.org.ponder.rsf.components.UIInternalLink;
 //    UI often has to update attributes of a specific item. For that use, there are some item-specific variables
 //    in the bean. They are only meaningful during item operations, when itemId will show which item is involved.
 // While the bean is used by all the producers, the caching was designed specifically for ShowPageProducer.
-// That's because it is used a lot more often than the others. ShowPageProducer should do all data acess through
+// That's because it is used a lot more often than the others. ShowPageProducer should do all data access through
 // the methods here that cache. There is also caching by hibernate. However this code is cheaper, partly because
 // it doesn't have to do synchronization (since it applies just to processing one transaction).
 
@@ -944,9 +944,10 @@ public class SimplePageBean {
 		    i.setPrerequisite(false);
 		    checkControlGroup(i, false);
 		}
+		
+		
 		b = simplePageToolDao.deleteItem(i);
-
-
+		
 		if (b) {
 			List<SimplePageItem> list = getItemsOnPage(getCurrentPageId());
 			for (SimplePageItem item : list) {
@@ -966,25 +967,26 @@ public class SimplePageBean {
     // not clear whether it's worth caching this. The first time it's called for a site
     // the pages are fetched. Beyond that it's a linear search of pages that are in memory
     // ids are sakai.assignment.grades, sakai.samigo, sakai.mneme, sakai.forums, sakai.jforum.tool
-        public String getCurrentTool(String commonToolId) {
-	    Site site = getCurrentSite();
-	    ToolConfiguration tool = site.getToolForCommonId(commonToolId);
-	    if (tool == null)
-		return null;
-	    return tool.getId();
+	public String getCurrentTool(String commonToolId) {
+		Site site = getCurrentSite();
+		ToolConfiguration tool = site.getToolForCommonId(commonToolId);
+		if (tool == null)
+			return null;
+		return tool.getId();
 	}
 
-        public String getCurrentToolTitle(String commonToolId) {
-	    Site site = getCurrentSite();
-	    ToolConfiguration tool = site.getToolForCommonId(commonToolId);
-	    if (tool == null)
-		return null;
-	    return tool.getTitle();
+	public String getCurrentToolTitle(String commonToolId) {
+		Site site = getCurrentSite();
+		ToolConfiguration tool = site.getToolForCommonId(commonToolId);
+		if (tool == null)
+			return null;
+		return tool.getTitle();
 	}
 
 	private Site getCurrentSite() {
 		if (currentSite != null) // cached value
 			return currentSite;
+		
 		try {
 			currentSite = siteService.getSite(toolManager.getCurrentPlacement().getContext());
 		} catch (Exception impossible) {
@@ -999,10 +1001,10 @@ public class SimplePageBean {
 
     //  If the current page is a LB page, and it has more than one
     //  "next" link on it, show no next. If there's more than one
-    //  next, this is probably a page with a branching queston, in
+    //  next, this is probably a page with a branching question, in
     //  which case there really isn't a single next.
 
-    // If the current page s a LB page, and it is not finished (i.e.
+    // If the current page is a LB page, and it is not finished (i.e.
     // there are required items not done), there is no next, or next
     // is grayed out.
     
@@ -1027,81 +1029,78 @@ public class SimplePageBean {
     // return: new item on same level, null if none, the item arg if need to go up a level
     //   java really needs to be able to return more than one thing, item == item is being
     //   used as a flag to return up a level
-        public SimplePageItem findNextPage(SimplePageItem item) {
-	    if (item.getType() == SimplePageItem.PAGE) {
-		Long pageId = Long.valueOf(item.getSakaiId());
-		List<SimplePageItem> items = getItemsOnPage(pageId);
-		int nexts = 0;
-		SimplePageItem nextPage = null;
-		for (SimplePageItem i: items) {
-		    if (i.getType() == SimplePageItem.PAGE && i.getNextPage()) {
-			nextPage = i;
-			nexts++;
-		    }
+	public SimplePageItem findNextPage(SimplePageItem item) {
+		if (item.getType() == SimplePageItem.PAGE) {
+			Long pageId = Long.valueOf(item.getSakaiId());
+			List<SimplePageItem> items = getItemsOnPage(pageId);
+			int nexts = 0;
+			SimplePageItem nextPage = null;
+			for (SimplePageItem i: items) {
+				if (i.getType() == SimplePageItem.PAGE && i.getNextPage()) {
+					nextPage = i;
+					nexts++;
+				}
+			}
+			// if next, use it; no next if not ready
+			if (nexts == 1) {
+				if (isItemAvailable(nextPage, pageId))
+					return nextPage;
+				return null;
+			}
+			// more than one, presumably you're intended to pick one of them, and
+			// there is no generic next
+			if (nexts > 1) {
+				return null;
+			}
+
+			// if this is a next page, if there's no explicIt next it's
+			// not clear that it makes sense to go anywhere. it's kind of
+			// detached from its parent
+			if (item.getNextPage())
+				return null;
+
+			// here for a page with no explicit next. Treat like any other item
+			// except that we need to compute path op. Page must be complete or we
+			// would have returned null.
+
 		}
-		// if next, use it; no next if not ready
-		if (nexts == 1) {
-		    if (isItemAvailable(nextPage, pageId))
-			return nextPage;
-		    return null;
-		}
-		// more than one, presumably you're intended to pick one of them, and
-		// there is no generic next
-		if (nexts > 1) {
-		    return null;
-		}
 
-		// if this is a next page, if there's no explict next it's
-		// not clear that it makes sense to go anywhere. it's kind of
-		// detached from its parent
-		if (item.getNextPage())
-		    return null;
+		// this should be a top level page. We're not currently doing next for that.
+		// we have to trap it because now and then we have items with bogus 0 page ID, so we
+		// could get a spurious next item
+		if (item.getPageId() == 0L)
+			return null;
 
-		// here for a page with no explicit next. Treat like any other item
-		// except that we need to compute pathop. Page must be complete or we
-		// would have returned null.
+		// see if there's an actual next we can go to, otherwise calling page
+		SimplePageItem nextItem = simplePageToolDao.findNextItemOnPage(item.getPageId(), item.getSequence());
 
-
-	    }
-
-	    // this should be a top level page. We're not currently doing next for that.
-	    // we have to trap it because now and then we have items with bogus 0 page ID, so we
-	    // could get a spurious nextitem
-	    if (item.getPageId() == 0L)
-		return null;
-
-	    // see if there's an actual next we can go to, otherwise calling page
-	    SimplePageItem nextItem = simplePageToolDao.findNextItemOnPage(item.getPageId(), item.getSequence());
-
-	    // skip items which won't show becauser user isn't in the group
+		// skip items which won't show because user isn't in the group
 		while (nextItem != null && !isItemVisible(nextItem)) {
 			nextItem = simplePageToolDao.findNextItemOnPage(nextItem.getPageId(), nextItem.getSequence());		
 		}
 
-	    boolean available = false;
-	    if (nextItem != null) {
+		boolean available = false;
+		if (nextItem != null) {
 
-		int itemType = nextItem.getType();
-		if (itemType == SimplePageItem.ASSIGNMENT ||
-		    itemType == SimplePageItem.ASSESSMENT ||
-		    itemType == SimplePageItem.FORUM ||
-		    itemType == SimplePageItem.PAGE ||
-		    itemType == SimplePageItem.RESOURCE && nextItem.isSameWindow()) {
-		    // it's easy if the next item is available. If it's not, then
-		    // we need to see if everything other than this item is done and
-		    // this one is required. In that case the issue must be that this
-		    // one isn't finished yet. Let's assume the user is going to finish
-		    // this one. We'll verify that when he actually does the next;
-		    if (isItemAvailable(nextItem, item.getPageId()) ||
-			item.isRequired() && wouldItemBeAvailable(item, item.getPageId()))
-			return nextItem;
-		    
+			int itemType = nextItem.getType();
+			if (itemType == SimplePageItem.ASSIGNMENT ||
+					itemType == SimplePageItem.ASSESSMENT ||
+					itemType == SimplePageItem.FORUM ||
+					itemType == SimplePageItem.PAGE ||
+					itemType == SimplePageItem.RESOURCE && nextItem.isSameWindow()) {
+				// it's easy if the next item is available. If it's not, then
+				// we need to see if everything other than this item is done and
+				// this one is required. In that case the issue must be that this
+				// one isn't finished yet. Let's assume the user is going to finish
+				// this one. We'll verify that when he actually does the next;
+				if (isItemAvailable(nextItem, item.getPageId()) ||
+						item.isRequired() && wouldItemBeAvailable(item, item.getPageId()))
+					return nextItem;
+			}
 		}
-	    }
 
-	    // otherwise return to calling page
-	    return item; // special flag
-
+		// otherwise return to calling page
+		return item; // special flag
 	}
 
     // corresponding code for outputting the link
@@ -1184,61 +1183,61 @@ public class SimplePageBean {
     // prune both path and back path when we return to an item that's already on them to avoid
     // loops of various kinds.
 
-        public void addPrevLink(UIContainer tofill, SimplePageItem item) {
-	    List<PathEntry> backPath = (List<PathEntry>)sessionManager.getCurrentToolSession().getAttribute(LESSONBUILDER_BACKPATH);
-	    List<PathEntry> path = (List<PathEntry>)sessionManager.getCurrentToolSession().getAttribute(LESSONBUILDER_PATH);
+	public void addPrevLink(UIContainer tofill, SimplePageItem item) {
+		List<PathEntry> backPath = (List<PathEntry>)sessionManager.getCurrentToolSession().getAttribute(LESSONBUILDER_BACKPATH);
+		List<PathEntry> path = (List<PathEntry>)sessionManager.getCurrentToolSession().getAttribute(LESSONBUILDER_PATH);
 
-	    // current item is last on path, so need one before that
-	    if (backPath == null || backPath.size() < 2)
-		return;
+		// current item is last on path, so need one before that
+		if (backPath == null || backPath.size() < 2)
+			return;
 
-	    PathEntry prevEntry = backPath.get(backPath.size()-2);
-	    SimplePageItem prevItem = findItem(prevEntry.pageItemId);
+		PathEntry prevEntry = backPath.get(backPath.size()-2);
+		SimplePageItem prevItem = findItem(prevEntry.pageItemId);
 
-	    GeneralViewParameters view = new GeneralViewParameters();
-	    int itemType = prevItem.getType();
-	    if (itemType == SimplePageItem.PAGE) {
-		view.setSendingPage(Long.valueOf(prevItem.getSakaiId()));
-		view.viewID = ShowPageProducer.VIEW_ID;
-		// are we returning to a page? If so use existing path entry
-		int lastEntry = -1;
-		int i = 0;
-		long prevItemId = prevEntry.pageItemId;
-		for (PathEntry entry: path) {
-		    if (entry.pageItemId == prevItemId)
-			lastEntry = i;
-		    i++;
+		GeneralViewParameters view = new GeneralViewParameters();
+		int itemType = prevItem.getType();
+		if (itemType == SimplePageItem.PAGE) {
+			view.setSendingPage(Long.valueOf(prevItem.getSakaiId()));
+			view.viewID = ShowPageProducer.VIEW_ID;
+			// are we returning to a page? If so use existing path entry
+			int lastEntry = -1;
+			int i = 0;
+			long prevItemId = prevEntry.pageItemId;
+			for (PathEntry entry: path) {
+				if (entry.pageItemId == prevItemId)
+					lastEntry = i;
+				i++;
+			}
+			if (lastEntry >= 0)
+				view.setPath(Integer.toString(lastEntry));
+			else if (item.getType() == SimplePageItem.PAGE)
+				view.setPath("next");  // page to page, just a next
+			else
+				view.setPath("push");  // item to page, have to push the page
+		} else if (itemType == SimplePageItem.RESOURCE) { // must be a samepage resource
+			view.setSendingPage(Long.valueOf(item.getPageId()));
+			view.setSource(prevItem.getItemURL());
+			view.viewID = ShowItemProducer.VIEW_ID;
+		} else {
+			view.setSendingPage(Long.valueOf(item.getPageId()));
+			LessonEntity lessonEntity = null;
+			switch (prevItem.getType()) {
+			case SimplePageItem.ASSIGNMENT:
+				lessonEntity = assignmentEntity.getEntity(prevItem.getSakaiId()); break;
+			case SimplePageItem.ASSESSMENT:
+				view.setClearAttr("LESSONBUILDER_RETURNURL_SAMIGO");
+				lessonEntity = quizEntity.getEntity(prevItem.getSakaiId()); break;
+			case SimplePageItem.FORUM:
+				lessonEntity = forumEntity.getEntity(prevItem.getSakaiId()); break;
+			}
+			view.setSource((lessonEntity==null)?"dummy":lessonEntity.getUrl());
+			if (item.getType() == SimplePageItem.PAGE)
+				view.setPath("pop");  // now on a page, have to pop it off
+			view.viewID = ShowItemProducer.VIEW_ID;
 		}
-		if (lastEntry >= 0)
-		    view.setPath(Integer.toString(lastEntry));
-		else if (item.getType() == SimplePageItem.PAGE)
-		    view.setPath("next");  // page to page, just a next
-		else
-		    view.setPath("push");  // item to page, have to push the page
-	    } else if (itemType == SimplePageItem.RESOURCE) { // must be a samepage resource
-		view.setSendingPage(Long.valueOf(item.getPageId()));
-		view.setSource(prevItem.getItemURL());
-		view.viewID = ShowItemProducer.VIEW_ID;
-	    } else {
-		view.setSendingPage(Long.valueOf(item.getPageId()));
-		LessonEntity lessonEntity = null;
-		switch (prevItem.getType()) {
-		case SimplePageItem.ASSIGNMENT:
-		    lessonEntity = assignmentEntity.getEntity(prevItem.getSakaiId()); break;
-		case SimplePageItem.ASSESSMENT:
-		    view.setClearAttr("LESSONBUILDER_RETURNURL_SAMIGO");
-		    lessonEntity = quizEntity.getEntity(prevItem.getSakaiId()); break;
-		case SimplePageItem.FORUM:
-		    lessonEntity = forumEntity.getEntity(prevItem.getSakaiId()); break;
-		}
-		view.setSource((lessonEntity==null)?"dummy":lessonEntity.getUrl());
-		if (item.getType() == SimplePageItem.PAGE)
-		    view.setPath("pop");  // now on a page, have to pop it off
-		view.viewID = ShowItemProducer.VIEW_ID;
-	    }
-	    view.setItemId(prevItem.getId());
-	    view.setBackPath("pop");
-	    UIInternalLink.make(tofill, "prev", messageLocator.getMessage("simplepage.back"), view);
+		view.setItemId(prevItem.getId());
+		view.setBackPath("pop");
+		UIInternalLink.make(tofill, "prev", messageLocator.getMessage("simplepage.back"), view);
 	}
 
 	public String getCurrentSiteId() {
@@ -1251,11 +1250,11 @@ public class SimplePageBean {
 
     // recall that code typically operates on a "current page." See below for
     // the code that sets a new current page. We also have a current item, which
-    // is the item defining the page. I.e. if the page is a subpage of anotehr
+    // is the item defining the page. I.e. if the page is a subpage of another
     // one, this is the item on the parent page pointing to this page.  If it's
     // a top-level page, it's a dummy item.  The item is needed in order to do
     // access checks. Whether an item is required, etc, is stored in the item.
-    // in theory a page could be caled from several other pages, with different
+    // in theory a page could be called from several other pages, with different
     // access control parameters. So we need to know the actual item on the page
     // page from which this page was called.
 
@@ -1263,23 +1262,24 @@ public class SimplePageBean {
     // in several places. In theory each one could have different status of availability
     // so we need to know which in order to check availability
 	public void updatePageItem(long item) throws PermissionException {
-	    SimplePageItem i = findItem(item);
-	    if (i != null) {
-		if ((long)currentPageId != (long)Long.valueOf(i.getSakaiId())) {
-		    log.warn("updatePageItem permission failure " + i + " " + Long.valueOf(i.getSakaiId()) + " " + currentPageId);
-		    throw new PermissionException(getCurrentUserId(), "set item", Long.toString(item));
+		System.out.println("UPDATE Page Item: " + item);
+		SimplePageItem i = findItem(item);
+		if (i != null) {
+			if (i.getType() != SimplePageItem.STUDENT_CONTENT && (long)currentPageId != (long)Long.valueOf(i.getSakaiId())) {
+				log.warn("updatePageItem permission failure " + i + " " + Long.valueOf(i.getSakaiId()) + " " + currentPageId);
+				throw new PermissionException(getCurrentUserId(), "set item", Long.toString(item));
+			}
 		}
-	    }
 
-	    currentPageItemId = item;
-	    sessionManager.getCurrentToolSession().setAttribute("current-pagetool-item", item);
+		currentPageItemId = item;
+		sessionManager.getCurrentToolSession().setAttribute("current-pagetool-item", item);
 	}
 
     // update our concept of the current page. it is imperative to make sure the page is in
     // the current site, or people could hack on other people's pages
 
     // if you call updatePageObject, consider whether you need to call updatePageItem as well
-    // this combines two functions, so maybe not, but any time you're goign to a new page 
+    // this combines two functions, so maybe not, but any time you're going to a new page 
     // you should do both. Make sure all Producers set the page to the one they will work on
 	public void updatePageObject(long l) throws PermissionException {
 		if (l != previousPageId) {
@@ -1303,12 +1303,12 @@ public class SimplePageBean {
     // if tool was reset, return last page from previous session, so we can give the user
     // a chance to go back
 	public SimplePageToolDao.PageData toolWasReset() {
-	    if (sessionManager.getCurrentToolSession().getAttribute("current-pagetool-page") == null) {
-		// no page in session, which means it was reset
-		String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
-		return simplePageToolDao.findMostRecentlyVisitedPage(getCurrentUserId(), toolId);
-	    } else
-		return null;
+		if (sessionManager.getCurrentToolSession().getAttribute("current-pagetool-page") == null) {
+			// no page in session, which means it was reset
+			String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
+			return simplePageToolDao.findMostRecentlyVisitedPage(getCurrentUserId(), toolId);
+		} else
+			return null;
 	}
 
     // ought to be simple, but this is typically called at the beginning of a producer, when
@@ -1326,36 +1326,42 @@ public class SimplePageBean {
 		// Let's go back to where we were last time.
 		Long l = (Long) sessionManager.getCurrentToolSession().getAttribute("current-pagetool-page");
 		if (l != null && l != 0) {
-		    try {
-			updatePageObject(l);
-			Long i = (Long) sessionManager.getCurrentToolSession().getAttribute("current-pagetool-item");
-			if (i != null && i != 0)
-			    updatePageItem(i);
-		    } catch (PermissionException e) {
-			log.warn("getCurrentPageId Permission failed setting to item in toolsession");
-			return 0;
-		    }
-		    return l;
+			try {
+				System.out.println("A1");
+				updatePageObject(l);
+				System.out.println("A2");
+				Long i = (Long) sessionManager.getCurrentToolSession().getAttribute("current-pagetool-item");
+				System.out.println("A3");
+				if (i != null && i != 0)
+					System.out.println("A4");
+				updatePageItem(i);
+				System.out.println("A5");
+			} catch (PermissionException e) {
+				System.out.println("A6");
+				log.warn("getCurrentPageId Permission failed setting to item in toolsession");
+				return 0;
+			}
+			return l;
 		} else {
 			// No recent activity. Let's go to the top level page.
 			l = simplePageToolDao.getTopLevelPageId(((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId());
 
 			if (l != null) {
-			    try {
-				updatePageObject(l);
-				// this should exist except if the page was created by old code
-				SimplePageItem i = simplePageToolDao.findTopLevelPageItemBySakaiId(String.valueOf(l));
-				if (i == null) {
-				    // and dummy item, the site is the notional top level page
-				    i = simplePageToolDao.makeItem(0, 0, SimplePageItem.PAGE, l.toString(), currentPage.getTitle());
-				    saveItem(i);
+				try {
+					updatePageObject(l);
+					// this should exist except if the page was created by old code
+					SimplePageItem i = simplePageToolDao.findTopLevelPageItemBySakaiId(String.valueOf(l));
+					if (i == null) {
+						// and dummy item, the site is the notional top level page
+						i = simplePageToolDao.makeItem(0, 0, SimplePageItem.PAGE, l.toString(), currentPage.getTitle());
+						saveItem(i);
+					}
+					updatePageItem(i.getId());
+				} catch (PermissionException e) {
+					log.warn("getCurrentPageId Permission failed setting to page in toolsession");
+					return 0;
 				}
-				updatePageItem(i.getId());
-			    } catch (PermissionException e) {
-				log.warn("getCurrentPageId Permission failed setting to page in toolsession");
-				return 0;
-			    }
-			    return l;
+				return l;
 			} else {
 				// No page found. Let's make a new one.
 				String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
@@ -1363,20 +1369,21 @@ public class SimplePageBean {
 																			// during creation
 				SimplePage page = simplePageToolDao.makePage(toolId, toolManager.getCurrentPlacement().getContext(), title, null, null);
 				if (!saveItem(page)) {
-				    currentPage = null;
-				    return 0;
+					currentPage = null;
+					return 0;
 				}
+				
 				try {
-				    updatePageObject(page.getPageId());
-				    l = page.getPageId();
+					updatePageObject(page.getPageId());
+					l = page.getPageId();
 
-				    // and dummy item, the site is the notional top level page
-				    SimplePageItem i = simplePageToolDao.makeItem(0, 0, SimplePageItem.PAGE, l.toString(), title);
-				    saveItem(i);
-				    updatePageItem(i.getId());
+					// and dummy item, the site is the notional top level page
+					SimplePageItem i = simplePageToolDao.makeItem(0, 0, SimplePageItem.PAGE, l.toString(), title);
+					saveItem(i);
+					updatePageItem(i.getId());
 				} catch (PermissionException e) {
-				    log.warn("getCurrentPageId Permission failed setting to new page");
-				    return 0;
+					log.warn("getCurrentPageId Permission failed setting to new page");
+					return 0;
 				}
 				return l;
 			}
@@ -1388,28 +1395,43 @@ public class SimplePageBean {
 	public SimplePageItem getCurrentPageItem(Long itemId)  {
 		// if itemId is known, this is easy. but check to make sure it's
 	        // actually this page, to prevent the user gaming us
+		
+		System.out.println("ITEM ID: " + itemId);
 		if (itemId == null || itemId == -1) 
-		    itemId = currentPageItemId;
-	        if (itemId != null && itemId != -1) {
-		    SimplePageItem ret = findItem(itemId);
-		    if (ret != null && ret.getSakaiId().equals(Long.toString(getCurrentPageId()))) {
-			try {
-			    updatePageItem(ret.getId());
-			} catch (PermissionException e) {
-			    log.warn("getCurrentPageItem Permission failed setting to specified item");
-			    return null;
+			itemId = currentPageItemId;
+		
+		System.out.println("ITEM ID2: " + itemId);
+		if (itemId != null && itemId != -1) {
+			SimplePageItem ret = findItem(itemId);
+			System.out.println("B1");
+			if (ret != null && (ret.getSakaiId().equals(Long.toString(getCurrentPageId())) || ret.getType() == SimplePageItem.STUDENT_CONTENT)) {
+				System.out.println("B2");
+				try {
+					updatePageItem(ret.getId());
+				} catch (PermissionException e) {
+					log.warn("getCurrentPageItem Permission failed setting to specified item");
+					return null;
+				}
+				return ret;
+			} else {
+				System.out.println("B3");
+				return null;
 			}
-			return ret;
-		    } else 
-			return null;
 		}
 		// else must be a top level item
+		System.out.println("Current Page Id: " + getCurrentPageId());
+		SimplePage page = simplePageToolDao.getPage(getCurrentPageId());
+		
 		SimplePageItem ret = simplePageToolDao.findTopLevelPageItemBySakaiId(Long.toString(getCurrentPageId()));
+		
+		if(ret == null && page.getOwner() != null) {
+			ret = simplePageToolDao.findItemFromStudentPage(page.getPageId());
+		}
 		try {
-		    updatePageItem(ret.getId());
+			updatePageItem(ret.getId());
 		} catch (PermissionException e) {
-		    log.warn("getCurrentPageItem Permission failed setting to top level page in tool session");
-		    return null;
+			log.warn("getCurrentPageItem Permission failed setting to top level page in tool session");
+			return null;
 		}
 		return ret;
 	}
@@ -1419,7 +1441,8 @@ public class SimplePageBean {
     // returns string version of the new path
 
 	public String adjustPath(String op, Long pageId, Long pageItemId, String title) {
-
+		System.out.println("BREAD:" + op + " " + pageId + " " + pageItemId + " " + title);
+		
 		List<PathEntry> path = (List<PathEntry>)sessionManager.getCurrentToolSession().getAttribute(LESSONBUILDER_PATH);
 
 		// if no current path, op doesn't matter. we can just do the current page
@@ -3165,6 +3188,13 @@ public class SimplePageBean {
 	 */
 	public boolean isPageComplete(long itemId) {
 	    
+		// Make sure student content objects aren't treated like pages.
+		// TODO: Put in requirements
+		if(findItem(itemId).getType() == SimplePageItem.STUDENT_CONTENT) {
+			return true;
+		}
+		
+		
 		List<SimplePageItem> items = getItemsOnPage(Long.valueOf(findItem(itemId).getSakaiId()));
 
 		for (SimplePageItem item : items) {
@@ -4065,7 +4095,7 @@ public class SimplePageBean {
 	}
 	
 	public void addStudentContentSection() {
-		if(canEditPage()) {
+		if(getCurrentPage().getOwner() == null && canEditPage()) {
 			SimplePageItem item = appendItem("", messageLocator.getMessage("simplepage.student-content"), SimplePageItem.STUDENT_CONTENT);
 			item.setDescription(messageLocator.getMessage("simplepage.student-content"));
 			update(item);
@@ -4074,6 +4104,49 @@ public class SimplePageBean {
 			itemsCache.remove(getCurrentPage().getPageId());
 		}else {
 			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
+		}
+	}
+	
+	public boolean createStudentPage(long itemId) {
+		SimplePage curr = getCurrentPage();
+		User user = UserDirectoryService.getCurrentUser();
+		
+		// Need to make sure the section exists
+		SimplePageItem containerItem = simplePageToolDao.findItem(itemId);
+		
+		// We want to make sure each student only has one top level page per section.
+		SimpleStudentPage page = simplePageToolDao.findStudentPage(itemId, user.getId());
+		System.out.println("Page: " + page);
+		if(page == null && containerItem != null && containerItem.getType() == SimplePageItem.STUDENT_CONTENT) {
+			// First create object in lesson_builder_pages.
+			SimplePage newPage = simplePageToolDao.makePage(curr.getToolId(), curr.getSiteId(),user.getDisplayName(),
+					curr.getPageId(), (curr.getTopParent() == null? curr.getPageId() : curr.getTopParent()));
+			newPage.setOwner(user.getId());
+			newPage.setGroupOwned(false);
+			saveItem(newPage, false);
+			
+			// Then attach the lesson_builder_student_pages item.
+			page = simplePageToolDao.makeStudentPage(itemId, newPage.getPageId(), user.getDisplayName(), user.getId(), false);
+			saveItem(page, false);
+			
+			try {
+				updatePageItem(containerItem.getId());
+				updatePageObject(newPage.getPageId());
+				adjustPath("push", newPage.getPageId(), containerItem.getId(), newPage.getTitle());
+			}catch(Exception ex) {
+				setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
+				return false;
+			}
+			
+			// Reset the edit cache so that they can actually edit their page.
+			editPrivs = 1;
+			
+			return true;
+		}else if(page != null) { 
+			setErrMessage(messageLocator.getMessage("simplepage.page-exists"));
+			return false;
+		}else{
+			return false;
 		}
 	}
 	

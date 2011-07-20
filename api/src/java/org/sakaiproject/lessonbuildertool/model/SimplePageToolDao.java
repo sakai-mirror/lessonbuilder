@@ -30,6 +30,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.SimplePageGroup;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
+import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 
 public interface SimplePageToolDao {
 
@@ -73,6 +74,18 @@ public interface SimplePageToolDao {
 	public SimplePageComment findCommentById(long commentId);
 	
 	public SimplePageComment findCommentByUUID(String commentUUID);
+	
+	public SimpleStudentPage findStudentPage(long itemId, String owner);
+	
+	public List<SimpleStudentPage> findStudentPages(long itemId);
+	
+	/**
+	 * Finds the SimplePageItem based on the pageId of a page created
+	 * in the Student Content tool.
+	 * @param pageId ID of the student SimplePage object
+	 * @return SimplePageItem of the collection that this page belongs to.
+	 */
+	public SimplePageItem findItemFromStudentPage(long pageId);
 	
     // find the item corresponding to a top level page. the page id is
     // stored as the sakaiId of the item, which is the reason for the method name
@@ -136,6 +149,8 @@ public interface SimplePageToolDao {
     
     public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID, boolean html);
 
+    public SimpleStudentPage makeStudentPage(long itemId, long pageId, String title, String author, boolean groupOwned);
+    
     public SimplePageItem copyItem(SimplePageItem old);
 
 }
