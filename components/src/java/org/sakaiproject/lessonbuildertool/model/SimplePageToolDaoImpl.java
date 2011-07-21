@@ -233,6 +233,17 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		}
 	}
 	
+	public SimpleStudentPage findStudentPage(long id) {
+		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("id", id));
+		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
+		
+		if(list.size() > 0) {
+			return list.get(0);
+		}else {
+			return null;
+		}
+	}
+	
 	public List<SimpleStudentPage> findStudentPages(long itemId) {
 		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("itemId", itemId));
 		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
@@ -497,11 +508,22 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		}
 	}
 
-	public SimplePageLogEntry getLogEntry(String userId, long itemId) {
-		DetachedCriteria d = DetachedCriteria.forClass(SimplePageLogEntry.class).add(Restrictions.eq("userId", userId)).add(Restrictions.eq("itemId", itemId));
+	public SimplePageLogEntry getLogEntry(String userId, long itemId, Long studentPageId) {
+		if(studentPageId.equals(-1L)) studentPageId = null;
+		
+		DetachedCriteria d = DetachedCriteria.forClass(SimplePageLogEntry.class).add(Restrictions.eq("userId", userId))
+				.add(Restrictions.eq("itemId", itemId));
+		
+		if(studentPageId != null) {
+			d.add(Restrictions.eq("studentPageId", studentPageId));
+		}else {
+			d.add(Restrictions.isNull("studentPageId"));
+		}
 
 		List l = getHibernateTemplate().findByCriteria(d);
 
+		System.out.println("LOOKUP: " + userId + " -- " + itemId + " -- " + studentPageId + " ---- " + l.size());
+		
 		if (l != null && l.size() > 0) {
 			return (SimplePageLogEntry) l.get(0);
 		} else {
@@ -548,8 +570,8 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
     }
 
 
-	public SimplePageLogEntry makeLogEntry(String userId, long itemId) {
-		return new SimplePageLogEntryImpl(userId, itemId);
+	public SimplePageLogEntry makeLogEntry(String userId, long itemId, Long studentPageId) {
+		return new SimplePageLogEntryImpl(userId, itemId, studentPageId);
 	}
 
 	public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID, boolean html) {

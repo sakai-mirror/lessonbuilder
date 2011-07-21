@@ -59,6 +59,7 @@ import org.sakaiproject.event.cover.UsageSessionService;
 import org.sakaiproject.lessonbuildertool.SimplePage;
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
+import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
 import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.service.LessonEntity;
@@ -526,12 +527,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 
 		// note page accessed. the code checks to see whether all the required
-		// items on it
-		// have been finished, and if so marks it complete, else just updates
-		// access date
-		// save the path because if user goes to it later we want to restore the
+		// items on it have been finished, and if so marks it complete, else just updates
+		// access date save the path because if user goes to it later we want to restore the
 		// breadcrumbs
-		simplePageBean.track(pageItem.getId(), newPath);
+		if(pageItem.getType() != SimplePageItem.STUDENT_CONTENT) {
+			simplePageBean.track(pageItem.getId(), newPath);
+		}else {
+			simplePageBean.track(pageItem.getId(), newPath, currentPage.getPageId());
+		}
 
 		UIOutput.make(tofill, "pagetitle", currentPage.getTitle());
 
@@ -845,7 +848,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					// the best
 					// HTML for displaying the particular type of object. We've
 					// added complexities
-					// over time as we get more expeerience with different
+					// over time as we get more experience with different
 					// object types and browsers.
 
 					StringTokenizer token = new StringTokenizer(i.getSakaiId(), ".");
@@ -1167,7 +1170,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					// end of multimedia object
 
 				} else if (i.getType() == SimplePageItem.COMMENTS) {
-					// Load later using AJAX
+					// Load later using AJAX and CommentsProducer
 
 					UIOutput.make(tableRow, "commentsSpan");
 
@@ -1218,6 +1221,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					List<SimpleStudentPage> studentPages = simplePageToolDao.findStudentPages(i.getId());
 					
 					for(SimpleStudentPage page : studentPages) {
+						SimplePageLogEntry entry = simplePageBean.getLogEntry(i.getId(), page.getPageId());
 						UIBranchContainer row = UIBranchContainer.make(tableRow, "studentRow:");
 						UIOutput.make(row, "studentCell");
 						
@@ -1225,6 +1229,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						eParams.setItemId(i.getId());
 						eParams.setPath("push");
 						UIInternalLink.make(row, "studentLink", page.getTitle(), eParams);
+						
+						if(entry == null) {
+							UIOutput.make(row, "newPageImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-page")));
+						}
 					}
 					
 					UIOutput.make(tableRow, "linkRow");
@@ -1297,7 +1305,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					UIVerbatim.make(tofill, "hidden-text", messageLocator.getMessage("simplepage.pagehidden.text"));
 
 					showBreak = true;
-					// similarly warn them in it isn't released yet
+					// similarly warn them if it isn't released yet
 				} else if (currentPage.getReleaseDate() != null && currentPage.getReleaseDate().after(new Date())) {
 					DateFormat df = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, M_locale);
 					TimeZone tz = timeService.getLocalTimeZone();
@@ -1337,7 +1345,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	}
 	
 	public void createDialogs(UIContainer tofill, SimplePage currentPage, SimplePageItem pageItem) {
-		
 		createEditItemDialog(tofill, currentPage, pageItem);
 		createAddMultimediaDialog(tofill, currentPage);
 		createEditMultimediaDialog(tofill, currentPage);
@@ -1371,8 +1378,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	 * @param simplePageToolDao
 	 * @return Whether or not this item is available.
 	 */
-	protected static boolean makeLink(UIContainer container, String ID, SimplePageItem i, SimplePageBean simplePageBean, SimplePageToolDao simplePageToolDao, MessageLocator messageLocator, boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {
-
+	protected static boolean makeLink(UIContainer container, String ID, SimplePageItem i, SimplePageBean simplePageBean, SimplePageToolDao simplePageToolDao, MessageLocator messageLocator,
+			boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {
 		String URL = "";
 		boolean available = simplePageBean.isItemAvailable(i);
 
@@ -1704,7 +1711,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		return params;
 	}
 
-	private FilePickerViewParameters createFilePickerToolBarLink(String viewID, UIContainer tofill, String ID, String message, boolean resourceType, SimplePage currentPage, String tooltip) {
+	private FilePickerViewParameters createFilePickerToolBarLink(String viewID, UIContainer tofill, String ID,
+			String message, boolean resourceType, SimplePage currentPage, String tooltip) {
+		
 		FilePickerViewParameters fileparams = new FilePickerViewParameters();
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(resourceType);
@@ -2221,7 +2230,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 
 		UIOutput.make(container, "status-td");
-		UIOutput.make(container, imageId).decorate(new UIFreeAttributeDecorator("src", imagePath)).decorate(new UIFreeAttributeDecorator("alt", imageAlt)).decorate(new UITooltipDecorator(imageAlt));
+		UIOutput.make(container, imageId).decorate(new UIFreeAttributeDecorator("src", imagePath))
+				.decorate(new UIFreeAttributeDecorator("alt", imageAlt)).decorate(new UITooltipDecorator(imageAlt));
 	}
 
 	private String getLocalizedURL(String fileName) {

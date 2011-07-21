@@ -77,6 +77,8 @@ public interface SimplePageToolDao {
 	
 	public SimpleStudentPage findStudentPage(long itemId, String owner);
 	
+	public SimpleStudentPage findStudentPage(long id);
+	
 	public List<SimpleStudentPage> findStudentPages(long itemId);
 	
 	/**
@@ -125,8 +127,13 @@ public interface SimplePageToolDao {
     // list of all pages in the site, not just top level
 	public List<SimplePage> getSitePages(String siteId);
 
-    // log entry for a specific item. There can only be one.
-	public SimplePageLogEntry getLogEntry(String userId, long itemId);
+	/**
+	 * studentPageId is only to be used if it is a student-made page.  It corresponds to the <b>pageId</b>
+	 * found in either lesson_builder_student_pages or lesson_builder_pages.
+	 * 
+	 * There should only be one log entry for each combination.
+	 */
+	public SimplePageLogEntry getLogEntry(String userId, long itemId, Long studentPageId);
 
     // users with log entries showing item complete
 	public List<String> findUserWithCompletePages(Long itemId);
@@ -145,7 +152,7 @@ public interface SimplePageToolDao {
 
     public SimplePageGroup makeGroup(String itemId, String groupId, String groups);
 
-    public SimplePageLogEntry makeLogEntry(String userId, long itemId);
+    public SimplePageLogEntry makeLogEntry(String userId, long itemId, Long studentPageId);
     
     public SimplePageComment makeComment(long itemId, long pageId, String author, String comment, String UUID, boolean html);
 

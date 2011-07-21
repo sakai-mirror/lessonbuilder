@@ -249,13 +249,16 @@ function resizeiframe(id) {
 					<td rsf:id="studentSpan" role="gridcell">
 						<div class="studentDiv">
 							<table border="1">
-								<tr><th><span rsf:id="msg=simplepage.student"></span></th></tr>
+								<tr>
+									<th style="text-align:center;" colspan="4"><span rsf:id="msg=simplepage.student"></span></th>
+								</tr>
 								<tr rsf:id="studentRow:">
 									<td rsf:id="studentCell"><a href="#" rsf:id="studentLink"></a></td>
+									<td><img src="$context/images/new-page.png" rsf:id="newPageImg"></img></td>
 								</tr>
 								
 								<tr rsf:id="linkRow">
-									<td rsf:id="linkCell"><a href="#" rsf:id="linkLink"></a></td>
+									<td rsf:id="linkCell" style="text-align:center;" colspan="4"><a href="#" rsf:id="linkLink"></a></td>
 								</tr>
 							</table>
 						</div>
