@@ -734,7 +734,6 @@ public class SimplePageBean {
 			}
 			Reference ref = (Reference) refs.get(0);
 			id = ref.getId();
-			System.out.println("ID: " + id);
 
 			name = ref.getProperties().getProperty("DAV:displayname");
 
@@ -922,11 +921,6 @@ public class SimplePageBean {
 		return items;
 	}
 
-	/**
-	 * Removes the item from the page, doesn't actually delete it.
-	 * 
-	 * @return
-	 */
 	public String deleteItem()  {
 		if (!itemOk(itemId))
 		    return "permission-failed";
@@ -1030,7 +1024,7 @@ public class SimplePageBean {
     //   java really needs to be able to return more than one thing, item == item is being
     //   used as a flag to return up a level
 	public SimplePageItem findNextPage(SimplePageItem item) {
-		if (item.getType() == SimplePageItem.PAGE) {
+		if(item.getType() == SimplePageItem.PAGE) {
 			Long pageId = Long.valueOf(item.getSakaiId());
 			List<SimplePageItem> items = getItemsOnPage(pageId);
 			int nexts = 0;
@@ -1063,6 +1057,8 @@ public class SimplePageBean {
 			// except that we need to compute path op. Page must be complete or we
 			// would have returned null.
 
+		}else if(item.getType() == SimplePageItem.STUDENT_CONTENT) {
+			return null;
 		}
 
 		// this should be a top level page. We're not currently doing next for that.
@@ -1218,6 +1214,16 @@ public class SimplePageBean {
 			view.setSendingPage(Long.valueOf(item.getPageId()));
 			view.setSource(prevItem.getItemURL());
 			view.viewID = ShowItemProducer.VIEW_ID;
+		}else if(itemType == SimplePageItem.STUDENT_CONTENT) {
+			view.setSendingPage(prevEntry.pageId);
+			view.setItemId(prevEntry.pageItemId);
+			view.viewID =ShowPageProducer.VIEW_ID;
+			
+			if(item.getType() == SimplePageItem.PAGE) {
+				view.setPath("pop");
+			}else {
+				view.setPath("next");
+			}
 		} else {
 			view.setSendingPage(Long.valueOf(item.getPageId()));
 			LessonEntity lessonEntity = null;
@@ -1262,7 +1268,6 @@ public class SimplePageBean {
     // in several places. In theory each one could have different status of availability
     // so we need to know which in order to check availability
 	public void updatePageItem(long item) throws PermissionException {
-		System.out.println("UPDATE Page Item: " + item);
 		SimplePageItem i = findItem(item);
 		if (i != null) {
 			if (i.getType() != SimplePageItem.STUDENT_CONTENT && (long)currentPageId != (long)Long.valueOf(i.getSakaiId())) {
@@ -1327,17 +1332,11 @@ public class SimplePageBean {
 		Long l = (Long) sessionManager.getCurrentToolSession().getAttribute("current-pagetool-page");
 		if (l != null && l != 0) {
 			try {
-				System.out.println("A1");
 				updatePageObject(l);
-				System.out.println("A2");
 				Long i = (Long) sessionManager.getCurrentToolSession().getAttribute("current-pagetool-item");
-				System.out.println("A3");
 				if (i != null && i != 0)
-					System.out.println("A4");
-				updatePageItem(i);
-				System.out.println("A5");
+					updatePageItem(i);
 			} catch (PermissionException e) {
-				System.out.println("A6");
 				log.warn("getCurrentPageId Permission failed setting to item in toolsession");
 				return 0;
 			}
@@ -1396,16 +1395,12 @@ public class SimplePageBean {
 		// if itemId is known, this is easy. but check to make sure it's
 	        // actually this page, to prevent the user gaming us
 		
-		System.out.println("ITEM ID: " + itemId);
 		if (itemId == null || itemId == -1) 
 			itemId = currentPageItemId;
 		
-		System.out.println("ITEM ID2: " + itemId);
 		if (itemId != null && itemId != -1) {
 			SimplePageItem ret = findItem(itemId);
-			System.out.println("B1");
 			if (ret != null && (ret.getSakaiId().equals(Long.toString(getCurrentPageId())) || ret.getType() == SimplePageItem.STUDENT_CONTENT)) {
-				System.out.println("B2");
 				try {
 					updatePageItem(ret.getId());
 				} catch (PermissionException e) {
@@ -1414,12 +1409,10 @@ public class SimplePageBean {
 				}
 				return ret;
 			} else {
-				System.out.println("B3");
 				return null;
 			}
 		}
 		// else must be a top level item
-		System.out.println("Current Page Id: " + getCurrentPageId());
 		SimplePage page = simplePageToolDao.getPage(getCurrentPageId());
 		
 		SimplePageItem ret = simplePageToolDao.findTopLevelPageItemBySakaiId(Long.toString(getCurrentPageId()));
@@ -1678,75 +1671,73 @@ public class SimplePageBean {
 		return "success";
 	}
 
-        public String deletePages() {
-	    if (!canEditPage())
-		return "permission-failed";
+	public String deletePages() {
+	    if (getEditPrivs() != 0)
+	    	return "permission-failed";
 
 	    String siteId = toolManager.getCurrentPlacement().getContext();
 
 	    for (int i = 0; i < selectedEntities.length; i++) {
-		SimplePage target = simplePageToolDao.getPage(Long.valueOf(selectedEntities[i]));
-		if (target != null) {
-		    if (!target.getSiteId().equals(siteId)) {
-			return "permission-failed";
-		    }
+	    	SimplePage target = simplePageToolDao.getPage(Long.valueOf(selectedEntities[i]));
+	    	if (target != null) {
+	    		if (!target.getSiteId().equals(siteId)) {
+	    			return "permission-failed";
+	    		}
+	    		
+	    		// delete all the items on the page
+	    		List<SimplePageItem> items = getItemsOnPage(target.getPageId());
+	    		for (SimplePageItem item: items) {
+	    			// if access controlled, clear it before deleting item
+	    			if (item.isPrerequisite()) {
+	    				item.setPrerequisite(false);
+	    				checkControlGroup(item, false);
+	    			}
+	    			simplePageToolDao.deleteItem(item);
+	    		}
 
-		    // delete all the items on the page
-		    List<SimplePageItem> items = getItemsOnPage(target.getPageId());
-		    for (SimplePageItem item: items) {
-			// if access controlled, clear it before deleting item
-			if (item.isPrerequisite()) {
-			    item.setPrerequisite(false);
-			    checkControlGroup(item, false);
-			}
-			simplePageToolDao.deleteItem(item);
-		    }
-
-		    // remove from gradebook
-		    gradebookIfc.removeExternalAssessment(siteId, "lesson-builder:" + target.getPageId());
+	    		// remove from gradebook
+	    		gradebookIfc.removeExternalAssessment(siteId, "lesson-builder:" + target.getPageId());
 		    
-		    // remove fake item if it's top level. We won't see it if it's still active
-		    // so this means the user has removed it in site info
-		    SimplePageItem item = simplePageToolDao.findTopLevelPageItemBySakaiId(selectedEntities[i]);
-		    if (item != null)
-			simplePageToolDao.deleteItem(item);			
+	    		// remove fake item if it's top level. We won't see it if it's still active
+	    		// so this means the user has removed it in site info
+	    		SimplePageItem item = simplePageToolDao.findTopLevelPageItemBySakaiId(selectedEntities[i]);
+	    		if (item != null)
+	    			simplePageToolDao.deleteItem(item);			
 
-		    // currently the UI doesn't allow you to kill top level pages until they have been
-		    // removed by site info, so we don't have to hack on the site pages
+	    		// currently the UI doesn't allow you to kill top level pages until they have been
+	    		// removed by site info, so we don't have to hack on the site pages
 
-		    // remove page
-		    simplePageToolDao.deleteItem(target);
-		}
+	    		// remove page
+	    		simplePageToolDao.deleteItem(target);
+	    	}
 	    }
 	    return "success";
-
 	}
 
     //  remove a top-level page from the left margin. Does not actually delete it.
     //  this and addpages checks only edit page permission. should it check site.upd?
-        public String removePage() {
-	    if (!canEditPage())
-		return "permission-failed";
+	public String removePage() {
+		if (getEditPrivs() != 0)
+			return "permission-failed";
 
-	    Site site = getCurrentSite();
-	    SimplePage page = getCurrentPage();
-	    SitePage sitePage = site.getPage(page.getToolId());
-	    if (sitePage == null) {
-		log.error("removePage can't find site page for " + page.getPageId());
-		return "no-such-page";
-	    }
+		Site site = getCurrentSite();
+		SimplePage page = getCurrentPage();
+		SitePage sitePage = site.getPage(page.getToolId());
+		if (sitePage == null) {
+			log.error("removePage can't find site page for " + page.getPageId());
+			return "no-such-page";
+		}
 	    
-	    site.removePage(sitePage);
+		site.removePage(sitePage);
 
-	    try {
-		siteService.save(site);
-	    } catch (Exception e) {
-		log.error("removePage unable to save site " + e);
-	    }
+		try {
+			siteService.save(site);
+		} catch (Exception e) {
+			log.error("removePage unable to save site " + e);
+		}
 
-	    EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.remove", "/lessonbuilder/page/" + page.getPageId(), true));
-	    return "success";
-
+		EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.remove", "/lessonbuilder/page/" + page.getPageId(), true));
+		return "success";
 	}
 
     // called from "save" in main edit item dialog
@@ -2560,37 +2551,39 @@ public class SimplePageBean {
 		Placement placement = toolManager.getCurrentPlacement();
 		SimplePage page = getCurrentPage();
 		SimplePageItem pageItem = getCurrentPageItem(null);
-
-		// update gradebook link if necessary
-		Double currentPoints = page.getGradebookPoints();
-		Double newPoints = null;
-		boolean needRecompute = false;
 		Site site = getCurrentSite();
-
-		if (points != null) {
-		    try {
-			newPoints = Double.parseDouble(points);
-			if (newPoints == 0.0)
-			    newPoints = null;
-		    } catch (Exception ignore) {
-			newPoints = null;
-		    }
+		boolean needRecompute = false;
+		
+		if(page.getOwner() == null && getEditPrivs() == 0) {
+			// update gradebook link if necessary
+			Double currentPoints = page.getGradebookPoints();
+			Double newPoints = null;
+			
+			if (points != null) {
+				try {
+					newPoints = Double.parseDouble(points);
+					if (newPoints == 0.0)
+						newPoints = null;
+				} catch (Exception ignore) {
+					newPoints = null;
+				}
+			}
+			// adjust gradebook entry
+			if (newPoints == null && currentPoints != null) {
+				gradebookIfc.removeExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId());
+			} else if (newPoints != null && currentPoints == null) {
+				gradebookIfc.addExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId(), null,
+						       	pageTitle, newPoints, null, "Lesson Builder");
+				needRecompute = true;
+			} else if (currentPoints != null && 
+					(!currentPoints.equals(newPoints) || !pageTitle.equals(page.getTitle()))) {
+				gradebookIfc.updateExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId(), null,
+							  	pageTitle, newPoints, null);
+				if (currentPoints != newPoints)
+					needRecompute = true;
+			}
+			page.setGradebookPoints(newPoints);
 		}
-		// adjust gradebook entry
-		if (newPoints == null && currentPoints != null) {
-		    gradebookIfc.removeExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId());
-		} else if (newPoints != null && currentPoints == null) {
-		    gradebookIfc.addExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId(), null,
-						       pageTitle, newPoints, null, "Lesson Builder");
-		    needRecompute = true;
-		} else if (currentPoints != null && 
-			   (!currentPoints.equals(newPoints) || !pageTitle.equals(page.getTitle()))) {
-		    gradebookIfc.updateExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId(), null,
-							  pageTitle, newPoints, null);
-		    if (currentPoints != newPoints)
-			needRecompute = true;
-		}
-		page.setGradebookPoints(newPoints);
 
 		if (pageTitle != null && pageItem.getPageId() == 0) {
 			try {
@@ -2643,8 +2636,11 @@ public class SimplePageBean {
 		}
 		
 		if(pageTitle != null) {
-			pageItem.setName(pageTitle);
-			update(pageItem);
+			if(pageItem.getType() != SimplePageItem.STUDENT_CONTENT) {
+				pageItem.setName(pageTitle);
+				update(pageItem);
+			}
+			
 			adjustPath("", pageItem.getPageId(), pageItem.getId(), pageTitle);
 		}
 
@@ -3324,8 +3320,6 @@ public class SimplePageBean {
      */
 
 	public String getYoutubeKey(SimplePageItem i) {
-		System.out.println("FINDING YOUTUBE KEY");
-		
 		String sakaiId = i.getSakaiId();
 
 		SecurityAdvisor advisor = null;
@@ -3334,12 +3328,9 @@ public class SimplePageBean {
 				// Need to allow access into owner's home directory
 				advisor = new SecurityAdvisor() {
 					public SecurityAdvice isAllowed(String userId, String function, String reference) {
-						System.out.println("Function2: " + function);
 						if("content.read".equals(function) || "content.hidden".equals(function)) {
-							System.out.println("Returning Okay");
 							return SecurityAdvice.ALLOWED;
 						}else {
-							System.out.println("Return not okay");
 							return SecurityAdvice.PASS;
 						}
 					}
@@ -3625,7 +3616,6 @@ public class SimplePageBean {
 			
 			if (file != null) {
 				String collectionId = getCollectionId(false);
-				System.out.println("CollectionID: " + collectionId);
 				// 	user specified a file, create it
 				name = file.getOriginalFilename();
 				if (name == null || name.length() == 0)
@@ -3694,7 +3684,6 @@ public class SimplePageBean {
 				
 				collectionId = getCollectionId(true);
 				
-				System.out.println("CollectionID2: " + collectionId);
 				try {
 					// 	urls aren't something people normally think of as resources. Let's hide them
 					ContentResourceEdit res = contentHostingService.addResource(collectionId, 
@@ -3782,7 +3771,6 @@ public class SimplePageBean {
 	}
 
 	public void importCc() {
-	    System.out.println("importCc");
 	    if (!canEditPage())
 		return;
 
@@ -4116,8 +4104,8 @@ public class SimplePageBean {
 		
 		// We want to make sure each student only has one top level page per section.
 		SimpleStudentPage page = simplePageToolDao.findStudentPage(itemId, user.getId());
-		System.out.println("Page: " + page);
-		if(page == null && containerItem != null && containerItem.getType() == SimplePageItem.STUDENT_CONTENT) {
+		
+		if(page == null && containerItem != null && containerItem.getType() == SimplePageItem.STUDENT_CONTENT && canReadPage()) {
 			// First create object in lesson_builder_pages.
 			SimplePage newPage = simplePageToolDao.makePage(curr.getToolId(), curr.getSiteId(),user.getDisplayName(),
 					curr.getPageId(), (curr.getTopParent() == null? curr.getPageId() : curr.getTopParent()));

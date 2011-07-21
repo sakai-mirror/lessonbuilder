@@ -236,3 +236,7 @@ a.edit-movie:link,a.edit-movie:visited{
     background-color: #ebebeb;
     padding: 2px 8px 2px 8px;
 }
+
+.noDisplay {
+	display:none;
+}

@@ -90,13 +90,18 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		}
 		
 		boolean canEditPage = simplePageBean.canEditPage();
+		boolean editable = false;
 		
 		if(comments.size() <= 5 || params.showAllComments) {
 			for(int i = 0; i < comments.size(); i++) {
-				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i), canEditPage), params);
+				boolean canEdit = simplePageBean.canModifyComment(comments.get(i), canEditPage);
+				
+				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEdit, params);
 				if(!highlighted) {
 					highlighted = (params.postedComment == comments.get(i).getId());
 				}
+				
+				if(!editable) editable = canEdit;
 			}
 		}else {
 			UIBranchContainer container = UIBranchContainer.make(tofill, "commentDiv:");
@@ -109,10 +114,13 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			
 			// Show 5 most recent comments
 			for(int i = comments.size()-5; i < comments.size(); i++) {
-				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, simplePageBean.canModifyComment(comments.get(i), canEditPage), params);
+				boolean canEdit = simplePageBean.canModifyComment(comments.get(i), canEditPage);
+				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEdit, params);
 				if(!highlighted) {
 					highlighted = (params.postedComment == comments.get(i).getId());
 				}
+				
+				if(!editable) editable = canEdit;
 			}
 		}
 		
@@ -123,6 +131,8 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		if(anonymous && simplePageBean.canEditPage()) {
 			UIOutput.make(tofill, "anonymousAlert");
+		}else if(editable) {
+			UIOutput.make(tofill, "editAlert");
 		}
 	}
 	

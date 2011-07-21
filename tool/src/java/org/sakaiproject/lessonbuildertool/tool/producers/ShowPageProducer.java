@@ -331,7 +331,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}else if(params.addTool == GeneralViewParameters.STUDENT_PAGE) {
 			simplePageBean.createStudentPage(params.studentItemId);
 			canEditPage = simplePageBean.canEditPage();
-			System.out.println("Updated Edit:" + canEditPage);
 		}
 
 		// error from previous operation
@@ -916,7 +915,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						}
 
 					} else if ((youtubeKey = simplePageBean.getYoutubeKey(i)) != null) {
-						System.out.println("Found");
 						String youtubeUrl = "http://www.youtube.com/v/" + youtubeKey + "?version=3";
 						// this is very odd. The official youtube embedding uses
 						// <OBJECT> with
@@ -1347,7 +1345,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		createNewPageDialog(tofill, currentPage, pageItem);
 		createRemovePageDialog(tofill, currentPage, pageItem);
 		createImportCcDialog(tofill);
-		createYoutubeDialog(tofill);
+		createYoutubeDialog(tofill, currentPage);
 		createMovieDialog(tofill, currentPage);
 		createCommentsDialog(tofill);
 	}
@@ -1741,8 +1739,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		GeneralViewParameters view = new GeneralViewParameters(PagePickerProducer.VIEW_ID);
 		view.setSendingPage(currentPage.getPageId());
 
-		UIInternalLink.make(form, "subpage-choose", messageLocator.getMessage("simplepage.choose_existing_page"), view);
-
+		if(currentPage.getOwner() == null) {
+			UIInternalLink.make(form, "subpage-choose", messageLocator.getMessage("simplepage.choose_existing_page"), view);
+		}
+		
 		UIBoundBoolean.make(form, "subpage-next", "#{simplePageBean.subpageNext}", false);
 		UIBoundBoolean.make(form, "subpage-button", "#{simplePageBean.subpageButton}", false);
 
@@ -1762,6 +1762,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(form, "description-label", messageLocator.getMessage("simplepage.description_label"));
 		UIInput.make(form, "description", "#{simplePageBean.description}");
 
+		UIOutput changeDiv = UIOutput.make(form, "changeDiv");
+		if(currentPage.getOwner() != null) changeDiv.decorate(new UIStyleDecorator("noDisplay"));
+		
 		GeneralViewParameters params = new GeneralViewParameters();
 		params.setSendingPage(currentPage.getPageId());
 		params.viewID = AssignmentPickerProducer.VIEW_ID;
@@ -1813,6 +1816,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		UIInput.make(form, "item-id", "#{simplePageBean.itemId}");
 
+		UIOutput permDiv = UIOutput.make(form, "permDiv");
+		if(currentPage.getOwner() != null) permDiv.decorate(new UIStyleDecorator("noDisplay"));
+		
 		UIBoundBoolean.make(form, "item-required2", "#{simplePageBean.subrequirement}", false);
 
 		UIBoundBoolean.make(form, "item-required", "#{simplePageBean.required}", false);
@@ -1892,8 +1898,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		fileparams.setSender(currentPage.getPageId());
 		fileparams.setResourceType(true);
 		fileparams.viewID = ResourcePickerProducer.VIEW_ID;
+		
 		UILink link = UIInternalLink.make(form, "mm-choose", messageLocator.getMessage("simplepage.choose_existing"), fileparams);
-
+		
 		// createFilePickerToolBarLink(ResourcePickerProducer.VIEW_ID, toolBar,
 		// "add-resource", "simplepage.resource", false, currentPage,
 		// "simplepage.resource.tooltip");
@@ -2033,7 +2040,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UICommand.make(form, "edit-multimedia-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
-	private void createYoutubeDialog(UIContainer tofill) {
+	private void createYoutubeDialog(UIContainer tofill, SimplePage currentPage) {
 		UIOutput.make(tofill, "youtube-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_youtubelink")));
 
 		UIForm form = UIForm.make(tofill, "youtube-form");
@@ -2046,6 +2053,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UICommand.make(form, "delete-youtube-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteYoutubeItem}");
 		UICommand.make(form, "update-youtube", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateYoutube}");
 		UICommand.make(form, "cancel-youtube", messageLocator.getMessage("simplepage.cancel"), null);
+		
+		if(currentPage.getOwner() == null) {
+			UIOutput.make(form, "editgroups-youtube");
+		}
 	}
 
 	private void createMovieDialog(UIContainer tofill, SimplePage currentPage) {
@@ -2098,6 +2109,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIBoundBoolean.make(form, "page-prerequisites", "#{simplePageBean.prerequisite}", (pageItem.isPrerequisite()));
 		}
 
+		UIOutput gradeBook = UIOutput.make(form, "gradebookDiv");
+		if(page.getOwner() != null) gradeBook.decorate(new UIStyleDecorator("noDisplay"));
+		
 		UIOutput.make(form, "page-gradebook");
 		Double points = page.getGradebookPoints();
 		String pointString = "";

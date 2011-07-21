@@ -367,25 +367,27 @@ function resizeiframe(id) {
 							</textarea>
 						</p>
 
-						<p class="shorttext required" id="change-assignment-p">
-						  <a href="#" rsf:id="change-assignment" id="change-assignment"><span rsf:id="msg.simplepage.change_assignment"></span></a>
-					        </p>
+						<div rsf:id="changeDiv">
+							<p class="shorttext required" id="change-assignment-p">
+								<a href="#" rsf:id="change-assignment" id="change-assignment"><span rsf:id="msg.simplepage.change_assignment"></span></a>
+							</p>
 
-						<p class="shorttext required" id="change-forum-p">
-						  <a href="#" rsf:id="change-forum" id="change-forum"><span rsf:id="msg=simplepage.change_forum"></span></a>
-					        </p>
+							<p class="shorttext required" id="change-forum-p">
+								<a href="#" rsf:id="change-forum" id="change-forum"><span rsf:id="msg=simplepage.change_forum"></span></a>
+							</p>
 
-						<p class="shorttext required" id="change-quiz-p">
-						  <a href="#" rsf:id="change-quiz" id="change-quiz"><span rsf:id="msg.simplepage.change_quiz"></span></a>
-					        </p>
+							<p class="shorttext required" id="change-quiz-p">
+								<a href="#" rsf:id="change-quiz" id="change-quiz"><span rsf:id="msg.simplepage.change_quiz"></span></a>
+							</p>
 
-						<p class="shorttext required" id="change-resource-p">
-						  <a href="#" rsf:id="change-resource" id="change-resource"><span rsf:id="msg.simplepage.change_resource"></span></a>
-					        </p>
+							<p class="shorttext required" id="change-resource-p">
+								<a href="#" rsf:id="change-resource" id="change-resource"><span rsf:id="msg.simplepage.change_resource"></span></a>
+							</p>
 
-						<p class="shorttext required" id="change-page-p">
-						  <a href="#" rsf:id="change-page" id="change-page"><span rsf:id="msg.simplepage.change_page"></span></a>
-					        </p>
+							<p class="shorttext required" id="change-page-p">
+								<a href="#" rsf:id="change-page" id="change-page"><span rsf:id="msg.simplepage.change_page"></span></a>
+							</p>
+					    </div>
 
 						<p class="shorttext required" id="edit-item-object-p">
 						  <a href="#" rsf:id="edit-item-object" id="edit-item-object"><span rsf:id="edit-item-text" id="edit-item-text"></span></a>
@@ -410,7 +412,7 @@ function resizeiframe(id) {
 					
 					<input type="hidden" rsf:id="item-id" id="item-id" />
 					
-					<div class="border2">
+					<div rsf:id="permDiv" class="border2">
 						<input type="checkbox" name="item-prerequisites" id="item-prerequisites" rsf:id="item-prerequisites" />
 						<label for="item-prerequisites"><span rsf:id="msg=simplepage.prerequisites_label"></span></label>
 						<br />
@@ -629,11 +631,12 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 
 					</div>
 						
-					<input type="checkbox" name="page-gradebook" id="page-gradebook" rsf:id="page-gradebook" />
-					<label for="page-gradebook"><span rsf:id="msg=simplepage.page.gradebook"></span></label>
-					<input type="text" name="page-points" id="page-points" rsf:id="page-points" />
-					<label for="page-points"><span rsf:id="msg=simplepage.points"></span></label>
-
+					<div rsf:id="gradeBookDiv">
+						<input type="checkbox" name="page-gradebook" id="page-gradebook" rsf:id="page-gradebook" />
+						<label for="page-gradebook"><span rsf:id="msg=simplepage.page.gradebook"></span></label>
+						<input type="text" name="page-points" id="page-points" rsf:id="page-points" />
+						<label for="page-points"><span rsf:id="msg=simplepage.points"></span></label>
+					</div>
 					<br />
 				
 
@@ -712,7 +715,7 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 						  <label rsf:id="description4-label" for="alt">Page Title</label><br />
 						  <textarea name="description4" rsf:id="description4" id="description4" rows="5" class="edit-multimedia-input" ></textarea>
 						</p>
-						<p id="editgroups-youtube">
+						<p rsf:id="editgroups-youtube" id="editgroups-youtube">
 						  <a href="#"><span rsf:id="msg=simplepage.edit-group"></span></a>
 						</p>
 					</div>
