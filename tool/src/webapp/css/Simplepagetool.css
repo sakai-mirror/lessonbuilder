@@ -240,3 +240,7 @@ a.edit-movie:link,a.edit-movie:visited{
 .noDisplay {
 	display:none;
 }
+.imgCell {
+	height:16px;
+	width:16px;
+}

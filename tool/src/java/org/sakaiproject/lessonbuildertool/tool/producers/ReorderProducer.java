@@ -86,6 +86,14 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 		if (simplePageBean.canEditPage()) {
 			SimplePage page = simplePageBean.getCurrentPage();
 			List<SimplePageItem> items = simplePageToolDao.findItemsOnPage(page.getPageId());
+			
+			// Some items are tacked onto the end automatically by setting the sequence to
+			// something less than or equal to 0.  This takes them out of the Reorder tool.
+			System.out.println("SEQ:" + items.get(0).getSequence());
+			while(items.size() > 0 && items.get(0).getSequence() <= 0) {
+				System.out.println("Removed");
+				items.remove(0);
+			}
 
 			UIOutput.make(tofill, "intro", messageLocator.getMessage("simplepage.reorder_header"));
 			UIOutput.make(tofill, "instructions", messageLocator.getMessage("simplepage.reorder_instructions"));

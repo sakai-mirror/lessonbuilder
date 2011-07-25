@@ -131,7 +131,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		if(anonymous && simplePageBean.canEditPage()) {
 			UIOutput.make(tofill, "anonymousAlert");
-		}else if(editable) {
+		}else if(editable && simplePageBean.getEditPrivs() != 0) {
 			UIOutput.make(tofill, "editAlert");
 		}
 	}

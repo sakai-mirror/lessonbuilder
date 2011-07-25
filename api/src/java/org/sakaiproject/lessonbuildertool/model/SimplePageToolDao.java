@@ -75,9 +75,13 @@ public interface SimplePageToolDao {
 	
 	public SimplePageComment findCommentByUUID(String commentUUID);
 	
+	public SimplePageItem findCommentsToolBySakaiId(String sakaiId);
+	
 	public SimpleStudentPage findStudentPage(long itemId, String owner);
 	
 	public SimpleStudentPage findStudentPage(long id);
+	
+	public SimpleStudentPage findStudentPageByPageId(long pageId);
 	
 	public List<SimpleStudentPage> findStudentPages(long itemId);
 	

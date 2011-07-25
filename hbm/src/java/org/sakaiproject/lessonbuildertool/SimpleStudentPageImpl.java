@@ -1,12 +1,18 @@
 package org.sakaiproject.lessonbuildertool;
 
+import java.util.Date;
+
 public class SimpleStudentPageImpl implements SimpleStudentPage {
 	private long id; // Basic ID
+	private Date lastUpdated;
 	private long itemId; // ItemId of the section this page belongs to
 	private long pageId; // ID of row in lesson_builder_pages
 	private String title; // Title of page
 	private String owner; // Owner of page
 	private boolean groupOwned; // Whether or not the owner is a group
+	private Long commentsSection; // ID of the comments section associated with this page,
+								  // if one exists.
+	private Date lastCommentChange;
 	
 	public SimpleStudentPageImpl() { }
 	
@@ -16,6 +22,7 @@ public class SimpleStudentPageImpl implements SimpleStudentPage {
 		this.title = title;
 		this.owner = owner;
 		this.groupOwned = groupOwned;
+		this.commentsSection = null;
 	}
 	
 	public long getId() {
@@ -23,6 +30,13 @@ public class SimpleStudentPageImpl implements SimpleStudentPage {
 	}
 	public void setId(long id) {
 		this.id = id;
+	}
+	
+	public Date getLastUpdated() {
+		return lastUpdated;
+	}
+	public void setLastUpdated(Date lastUpdated) {
+		this.lastUpdated = lastUpdated;
 	}
 	
 	public long getItemId() {
@@ -58,5 +72,19 @@ public class SimpleStudentPageImpl implements SimpleStudentPage {
 	}
 	public void setGroupOwned(boolean go) {
 		this.groupOwned = go;
+	}
+	
+	public Long getCommentsSection() {
+		return commentsSection;
+	}
+	public void setCommentsSection(Long commentsSection) {
+		this.commentsSection = commentsSection;
+	}
+	
+	public Date getLastCommentChange() {
+		return lastCommentChange;
+	}
+	public void setLastCommentChange(Date lastCommentChange) {
+		this.lastCommentChange = lastCommentChange;
 	}
 }

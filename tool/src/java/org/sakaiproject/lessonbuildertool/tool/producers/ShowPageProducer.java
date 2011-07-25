@@ -577,6 +577,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		// items to show
 		List<SimplePageItem> itemList = (List<SimplePageItem>) simplePageBean.getItemsOnPage(currentPage.getPageId());
+		
+		// Move all items with sequence <= 0 to the end of the list.
+		// Count is necessary to guarantee we don't infinite loop over a
+		// list that only has items with sequence <= 0.
+		int count = 1;
+		while(itemList.size() > count && itemList.get(0).getSequence() <= 0) {
+			itemList.add(itemList.remove(0));
+			count++;
+		}
 
 		// Make sure we only add the comments javascript file once,
 		// even if there are multiple comments tools on the page.
@@ -1232,6 +1241,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						
 						if(entry == null) {
 							UIOutput.make(row, "newPageImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-page")));
+						}
+						
+						if(entry == null || entry.getLastViewed().compareTo(page.getLastUpdated()) < 0) {
+							UIOutput.make(row, "newContentImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-content")));
+						}
+						
+						if(page.getLastCommentChange() != null && (entry == null || entry.getLastViewed().compareTo(page.getLastCommentChange()) < 0)) {
+							UIOutput.make(row, "newCommentsImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-comments")));
 						}
 					}
 					

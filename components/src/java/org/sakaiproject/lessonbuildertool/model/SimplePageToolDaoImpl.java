@@ -26,6 +26,9 @@ package org.sakaiproject.lessonbuildertool.model;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -120,8 +123,16 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	}
 
 	public List<SimplePageItem> findItemsOnPage(long pageId) {
-	    DetachedCriteria d = DetachedCriteria.forClass(SimplePageItem.class).add(Restrictions.eq("pageId", pageId)).addOrder(Order.asc("sequence"));
-		return getHibernateTemplate().findByCriteria(d);
+	    DetachedCriteria d = DetachedCriteria.forClass(SimplePageItem.class).add(Restrictions.eq("pageId", pageId));
+		List<SimplePageItem> list = getHibernateTemplate().findByCriteria(d);
+		
+		Collections.sort(list, new Comparator<SimplePageItem>() {
+			public int compare(SimplePageItem a, SimplePageItem b) {
+				return Integer.valueOf(a.getSequence()).compareTo(b.getSequence());
+			}
+		});
+		
+		return list;
 	}
 
 	public List<SimplePageItem> findItemsInSite(String siteId) {
@@ -221,6 +232,23 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		}
 	}
 	
+	public SimplePageItem findCommentsToolBySakaiId(String sakaiId) {
+		DetachedCriteria d = DetachedCriteria.forClass(SimplePageItem.class).add(Restrictions.eq("sakaiId", sakaiId));
+		List<SimplePageItem> list = getHibernateTemplate().findByCriteria(d);
+		
+		// We loop through and check type here in-case something else has the same
+		// sakaiId, and to prevent creating a new index for something that probably
+		// doesn't really need it.  There shouldn't be more than a couple of matches
+		// with different types.
+		for(SimplePageItem item : list) {
+			if(item.getType() == SimplePageItem.COMMENTS) {
+				return item;
+			}
+		}
+		
+		return null;
+	}
+	
 	public SimpleStudentPage findStudentPage(long itemId, String owner) {
 		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("itemId", itemId))
 			.add(Restrictions.eq("owner", owner));
@@ -235,6 +263,17 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	
 	public SimpleStudentPage findStudentPage(long id) {
 		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("id", id));
+		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
+		
+		if(list.size() > 0) {
+			return list.get(0);
+		}else {
+			return null;
+		}
+	}
+	
+	public SimpleStudentPage findStudentPageByPageId(long pageId) {
+		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("pageId", pageId));
 		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
 		
 		if(list.size() > 0) {
@@ -330,9 +369,9 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		 * 
 		 * Essentially, if any of those say that the edit is fine, it won't throw the error.
 		 */
-		if(!(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
+		if(requiresEditPermission && !(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
 				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
-				&& !(o instanceof SimplePageLogEntry) && requiresEditPermission) {
+				&& !(o instanceof SimplePageLogEntry)) {
 			elist.add(nowriteerr);
 			return false;
 		}
@@ -347,6 +386,11 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 
 		try {
 		    getHibernateTemplate().save(o);
+		    
+		    if(o instanceof SimplePageItem || o instanceof SimplePage) {
+		    	updateStudentPage(o);
+		    }
+		    
 		    return true;
 		} catch (org.springframework.dao.DataIntegrityViolationException e) {
 		    getCause(e, elist);
@@ -427,9 +471,9 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		 * 
 		 * Essentially, if any of those say that the edit is fine, it won't throw the error.
 		 */
-		if(!(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
+		if(requiresEditPermission && !(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
 				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
-				&& !(o instanceof SimplePageLogEntry) && requiresEditPermission) {
+				&& !(o instanceof SimplePageLogEntry)) {
 			elist.add(nowriteerr);
 			return false;
 		}
@@ -440,10 +484,27 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		} else if (o instanceof SimplePage) {
 		    SimplePage i = (SimplePage)o;
 		    EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.update", "/lessonbuilder/page/" + i.getPageId(), true));
-		} 
+		}
 
 		try {
-		    getHibernateTemplate().merge(o);
+			if(!(o instanceof SimplePageLogEntry)) {
+				getHibernateTemplate().merge(o);
+			}else {
+				// Updating seems to always update the timestamp on the log correctly,
+				// while merging doesn't always get it right.  However, it's possible that
+				// update will fail, so we do both, in order of preference.
+				try {
+					getHibernateTemplate().update(o);
+				}catch(DataAccessException ex) {
+					log.warn("Wasn't able to update log entry, timing might be a bit off.");
+					getHibernateTemplate().merge(o);
+				}
+			}
+		    
+		    if(o instanceof SimplePageItem || o instanceof SimplePage) {
+		    	updateStudentPage(o);
+		    }
+		    
 		    return true;
 		} catch (org.springframework.dao.DataIntegrityViolationException e) {
 		    getCause(e, elist);
@@ -521,8 +582,6 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		}
 
 		List l = getHibernateTemplate().findByCriteria(d);
-
-		System.out.println("LOOKUP: " + userId + " -- " + itemId + " -- " + studentPageId + " ---- " + l.size());
 		
 		if (l != null && l.size() > 0) {
 			return (SimplePageLogEntry) l.get(0);
@@ -602,5 +661,26 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		item.setSubrequirement(old.getSubrequirement());
 		item.setRequirementText(old.getRequirementText());
 		return item;
+	}
+	
+	private void updateStudentPage(Object o) {
+		SimplePage page;
+		
+		if(o instanceof SimplePageItem) {
+			SimplePageItem item = (SimplePageItem) o;
+			page = getPage(item.getPageId());
+		}else if(o instanceof SimplePage) {
+			page = (SimplePage) o;
+		}else {
+			return;
+		}
+		
+		if(page != null && page.getTopParent() != null) {
+			SimpleStudentPage studentPage = findStudentPage(page.getTopParent());
+			if(studentPage != null) {
+				studentPage.setLastUpdated(new Date());
+				quickUpdate(studentPage);
+			}
+		}
 	}
 }

@@ -540,7 +540,7 @@ public class SimplePageBean {
     // hibernate interposes something between us and saveItem, and that proxy gets an
     // error after saveItem does. Thus we never see any value that saveItem might 
     // return. Hence we pass saveItem a list to which it adds the error message. If
-    // there is a mesasge from saveItem take precedence over the message we detect here,
+    // there is a message from saveItem take precedence over the message we detect here,
     // since it's the root cause.
 	public boolean saveItem(Object i, boolean requiresEditPermission) {       
 		String err = null;
@@ -578,6 +578,9 @@ public class SimplePageBean {
 	}
 
     // see notes for saveupdate
+	
+	// requiresEditPermission determines whether simplePageToolDao should confirm
+	// edit permissions before making the update
 	boolean update(Object i, boolean requiresEditPermission) {       
 		String err = null;
 		List<String>elist = new ArrayList<String>();
@@ -914,9 +917,24 @@ public class SimplePageBean {
 		    return items;
 
 		items = simplePageToolDao.findItemsOnPage(pageid);
+		
+		// This code adds a global comments tool to the bottom of each
+		// student page, but only if there's something else on the page
+		// already.
+		if(items.size() > 0) {
+			SimplePage page = simplePageToolDao.getPage(pageid);
+			if(page.getOwner() != null) {
+				SimpleStudentPage student = simplePageToolDao.findStudentPage(page.getTopParent());
+				if(student != null && student.getCommentsSection() != null) {
+					items.add(0, simplePageToolDao.findItem(student.getCommentsSection()));
+				}
+			}
+		}
+		
 		for (SimplePageItem item: items) {
 		    itemCache.put(item.getId(), item);
 		}
+		
 		itemsCache.put(pageid, items);
 		return items;
 	}
@@ -2810,9 +2828,17 @@ public class SimplePageBean {
 		if (order == null) {
 			return "cancel";
 		}
+		
 		order = order.trim();
 
 		List<SimplePageItem> items = getItemsOnPage(getCurrentPageId());
+		
+		// Remove items that weren't ordered due to having sequences too low.
+		// Typically means they are tacked onto the end automatically.
+		while(items.size() > 0 && items.get(0).getSequence() <= 0) {
+			System.out.println("Removed");
+			items.remove(0);
+		}
 
 		String[] split = order.split(" ");
 
@@ -2822,6 +2848,7 @@ public class SimplePageBean {
 		for (int i = 0; i < split.length; i++) {
 			if (!used.add(Integer.valueOf(split[i]))) {
 				log.warn("reorder: duplicate value");
+				setErrMessage(messageLocator.getMessage("simplepage.reorder-duplicates"));
 				return "failed"; // it was already there. Oops.
 			}
 		}
@@ -2835,7 +2862,13 @@ public class SimplePageBean {
 				update(items.get(Integer.valueOf(split[i]) - 1));
 			}
 		}
+		
+		System.out.println("ORDER: " + order);
+		for(SimplePageItem i : items) {
+			System.out.println(i.getName() + " --- " + i.getSequence());
+		}
 
+		itemsCache.remove(getCurrentPage().getPageId());
 		return "success";
 	}
 
@@ -2896,6 +2929,7 @@ public class SimplePageBean {
 		String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
 		
 		System.out.println("StudentPageId: " + studentPageId);
+		System.out.println("Itemid: " + itemId);
 		
 		if (entry == null) {
 			System.out.println("Entry null");
@@ -3025,7 +3059,7 @@ public class SimplePageBean {
 		return false;
 	}
 		
-    // this is called in a loop to see whether items are avaiable. Since computing it can require
+    // this is called in a loop to see whether items are available. Since computing it can require
     // database transactions, we cache the results
 	public boolean isItemComplete(SimplePageItem item) {
 		if (!item.isRequired()) {
@@ -3259,8 +3293,8 @@ public class SimplePageBean {
 		}
 
 	    // authorized or maybe user is gaming us, or maybe next page code
-	    // sent them to something that isn't availbale.
-	    // as an optimization chek haslogentry first. That will be true if
+	    // sent them to something that isn't available.
+	    // as an optimization check haslogentry first. That will be true if
 	    // they have been here before. Saves us the trouble of doing full
 	    // access checking. Otherwise do a real check. That should only happen
 	    // for next page in odd situations.
@@ -4088,6 +4122,12 @@ public class SimplePageBean {
 			}
 		}
 		
+		if(getCurrentPage().getOwner() != null) {
+			SimpleStudentPage student = simplePageToolDao.findStudentPage(getCurrentPage().getTopParent());
+			student.setLastCommentChange(new Date());
+			update(student, false);
+		}
+		
 		return "added-comment";
 	}
 	
@@ -4150,14 +4190,23 @@ public class SimplePageBean {
 		if(page == null && containerItem != null && containerItem.getType() == SimplePageItem.STUDENT_CONTENT && canReadPage()) {
 			// First create object in lesson_builder_pages.
 			SimplePage newPage = simplePageToolDao.makePage(curr.getToolId(), curr.getSiteId(),user.getDisplayName(),
-					curr.getPageId(), (curr.getTopParent() == null? curr.getPageId() : curr.getTopParent()));
+					curr.getPageId(), null);
 			newPage.setOwner(user.getId());
 			newPage.setGroupOwned(false);
 			saveItem(newPage, false);
 			
 			// Then attach the lesson_builder_student_pages item.
 			page = simplePageToolDao.makeStudentPage(itemId, newPage.getPageId(), user.getDisplayName(), user.getId(), false);
+			
+			SimplePageItem commentsItem = simplePageToolDao.makeItem(-1, -1, SimplePageItem.COMMENTS, null, messageLocator.getMessage("simplepage.comments-section"));
+			saveItem(commentsItem, false);
+			
+			page.setCommentsSection(commentsItem.getId());
+			
 			saveItem(page, false);
+			
+			newPage.setTopParent(page.getId());
+			update(newPage, false);
 			
 			try {
 				updatePageItem(containerItem.getId());

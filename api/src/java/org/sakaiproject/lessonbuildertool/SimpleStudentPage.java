@@ -1,8 +1,13 @@
 package org.sakaiproject.lessonbuildertool;
 
+import java.util.Date;
+
 public interface SimpleStudentPage {
 	public long getId();
 	public void setId(long id);
+	
+	public Date getLastUpdated();
+	public void setLastUpdated(Date lastUpdated);
 	
 	public long getItemId();
 	public void setItemId(long itemId);
@@ -18,4 +23,10 @@ public interface SimpleStudentPage {
 	
 	public boolean getGroupOwned();
 	public void setGroupOwned(boolean go);
+	
+	public Long getCommentsSection();
+	public void setCommentsSection(Long commentsSection);
+	
+	public Date getLastCommentChange();
+	public void setLastCommentChange(Date lastCommentChange);
 }
