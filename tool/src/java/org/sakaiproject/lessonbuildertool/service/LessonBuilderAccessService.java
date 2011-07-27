@@ -193,8 +193,6 @@ public class LessonBuilderAccessService {
 			public void handleAccess(HttpServletRequest req, HttpServletResponse res, Reference ref,
 					Collection copyrightAcceptedRefs) throws EntityPermissionException, EntityNotDefinedException,
 					EntityAccessOverloadException, EntityCopyrightException {
-
-				System.out.println("Asking us to handle access " + ref.getId());
 				
 				// if the id is null, the request was for just ".../content"
 				String refId = ref.getId();
@@ -214,9 +212,6 @@ public class LessonBuilderAccessService {
 				String id = itemString.substring(i);
 				itemString = itemString.substring(0, i);
 				
-				System.out.println("ID: " + id);
-				System.out.println("ItemString: " + itemString);
-				
 				boolean pushedAdvisor = false;
 				SecurityAdvisor advisor = null;
 				
@@ -224,12 +219,9 @@ public class LessonBuilderAccessService {
 					if(id.startsWith("/user/")) {
 						advisor = new SecurityAdvisor() {
 							public SecurityAdvice isAllowed(String userId, String function, String reference) {
-								System.out.println("Function: " + function);
 								if("content.read".equals(function) || "content.hidden".equals(function)) {
-									System.out.println("Returning Okay");
 									return SecurityAdvice.ALLOWED;
 								}else {
-									System.out.println("Return not okay");
 									return SecurityAdvice.PASS;
 								}
 							}
@@ -282,7 +274,6 @@ public class LessonBuilderAccessService {
 						simplePageBean.setMemoryService(memoryService);
 						
 						if (!simplePageBean.isItemAvailable(item, item.getPageId())) {
-							System.out.println("Oops");
 							throw new EntityPermissionException(null, null, null);
 						}
 						
@@ -290,25 +281,18 @@ public class LessonBuilderAccessService {
 						
 					}
 					
-					System.out.println("Here1");
-					
 					ContentResource resource = null;
 					try {
 						resource = contentHostingService.getResource(id);
 					} catch (IdUnusedException e) {
-						System.out.println("here1");
 						throw new EntityNotDefinedException(e.getId());
 					} catch (PermissionException e) {
-						System.out.println("here2");
 						throw new EntityPermissionException(e.getUser(), e.getLock(), e.getResource());
 					} catch (TypeException e) {
-						System.out.println("here3");
 						throw new EntityNotDefinedException(id);
 					}
 					// no copyright enforcement, I don't think
-					
-					System.out.println("Here2");
-					
+
 					try {
 						long len = resource.getContentLength();
 						String contentType = resource.getContentType();
@@ -316,13 +300,9 @@ public class LessonBuilderAccessService {
 						// 	for url resource type, encode a redirect to the body URL
 						if (contentType.equalsIgnoreCase(ResourceProperties.TYPE_URL)) {
 							if (len < MAX_URL_LENGTH) {
-								System.out.println("Here3");
-								
 								byte[] content = resource.getContent();
 								if ((content == null) || (content.length == 0))
 									throw new IdUnusedException(ref.getReference());
-								
-								System.out.println("Here4");
 								
 								// 	An invalid URI format will get caught by the
 								// 	outermost catch block
@@ -330,15 +310,12 @@ public class LessonBuilderAccessService {
 								eventTrackingService.post(eventTrackingService.newEvent(ContentHostingService.EVENT_RESOURCE_READ,
 										resource.getReference(null), false));
 								res.sendRedirect(uri.toASCIIString());
-								System.out.println(uri.toASCIIString());
-								System.out.println("Here6");
 							} else
 								// 	we have a text/url mime type, but the body is too
 								// 	long to issue as a redirect
 								throw new EntityNotDefinedException(ref.getReference());
 
 						} else {
-							System.out.println("Here5");
 							
 							// 	use the last part, the file name part of the id, for
 							// 	the download file name
@@ -467,8 +444,7 @@ public class LessonBuilderAccessService {
 			// its own checks, and faculty may want to hide the area from normal
 			// access
 		}
-
-		System.out.println("IsAllowed: " + isAllowed);
+		
 		return isAllowed;
 	}
 

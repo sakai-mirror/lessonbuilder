@@ -303,9 +303,9 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	}
 
 	public SimplePageItem findTopLevelPageItemBySakaiId(String id) {
-	        DetachedCriteria d = DetachedCriteria.forClass(SimplePageItem.class).add(Restrictions.eq("sakaiId", id)).
-		    add(Restrictions.eq("pageId", 0L)).
-		    add(Restrictions.eq("type",SimplePageItem.PAGE));
+	        DetachedCriteria d = DetachedCriteria.forClass(SimplePageItem.class).add(Restrictions.eq("sakaiId", id))
+		    .add(Restrictions.eq("pageId", 0L))
+		    .add(Restrictions.eq("type",SimplePageItem.PAGE));
 
 		List<SimplePageItem> list = getHibernateTemplate().findByCriteria(d);
 
@@ -588,6 +588,16 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		} else {
 			return null;
 		}
+	}
+	
+	public List<SimplePageLogEntry> getStudentPageLogEntries(long itemId, String userId) {		
+		DetachedCriteria d = DetachedCriteria.forClass(SimplePageLogEntry.class).add(Restrictions.eq("userId", userId))
+				.add(Restrictions.eq("itemId", itemId))
+				.add(Restrictions.isNotNull("studentPageId"));
+
+		List<SimplePageLogEntry> entries = getHibernateTemplate().findByCriteria(d);
+		
+		return entries;
 	}
 
 	public List<String> findUserWithCompletePages(Long itemId){

@@ -248,15 +248,15 @@ function resizeiframe(id) {
 					
 					<td rsf:id="studentSpan" role="gridcell">
 						<div class="studentDiv">
-							<table border="1">
+							<table class="studentContentTable">
 								<tr>
 									<th style="text-align:center;" colspan="4"><span rsf:id="msg=simplepage.student"></span></th>
 								</tr>
 								<tr rsf:id="studentRow:">
+									<td class="imgCell"><img src="$context/images/new-page.png" rsf:id="newPageImg" class="imgCell"></img></td>
+									<td class="imgCell"><img src="$context/images/new-content.png" rsf:id="newContentImg" class="imgCell"></img></td>
+									<td rsf:id="commentsImgCell" class="imgCell"><img src="$context/images/new-comments.png" rsf:id="newCommentsImg" class="imgCell"></img></td>
 									<td rsf:id="studentCell"><a href="#" rsf:id="studentLink"></a></td>
-									<td class="imgCell"><img src="$context/images/new-page.png" rsf:id="newPageImg"></img></td>
-									<td class="imgCell"><img src="$context/images/new-content.png" rsf:id="newContentImg"></img></td>
-									<td class="imgCell"><img src="$context/images/new-comments.png" rsf:id="newCommentsImg"></img></td>
 								</tr>
 								
 								<tr rsf:id="linkRow">
@@ -264,6 +264,10 @@ function resizeiframe(id) {
 								</tr>
 							</table>
 						</div>
+						
+						<div style="display:none" rsf:id="studentId" class="student-id"></div>
+						<div style="display:none" rsf:id="studentAnon" class="studentAnon"></div>
+						<div style="display:none" rsf:id="studentComments" class="studentComments"></div>
 					</td>
 
 				</tr>
@@ -812,6 +816,33 @@ s							<option rsf:id="option:"><span rsf:id="optionText"></span></option>
 		
 					<input class="bold" type="submit" onclick="event.returnValue = checkCommentsForm(); return checkCommentsForm();" id="update-comments" rsf:id="update-comments" />
 					<input type="submit" rsf:id="cancel-comments" onclick="closeCommentsDialog(); return false" />
+
+				</form>
+			</div>
+			
+			<div id="student-dialog" rsf:id="student-dialog">
+				<form action="#" rsf:id="student-form">
+					<div class="border">
+						<input type="hidden" rsf:id="studentEditId" id="studentEditId" />
+						<div align="left">
+							<input type="checkbox" name="student-anonymous" id="student-anonymous" rsf:id="student-anonymous" />
+							<label for="student-anonymous"><span rsf:id="msg=simplepage.student-anonymous"></span></label><br />
+							
+							<input type="checkbox" name="student-comments" id="student-comments" rsf:id="student-comments" />
+							<label for="student-comments"><span rsf:id="msg=simplepage.student-comments"></span></label><br />
+						</div>
+					</div>
+					<br />
+
+					<div class="border2">
+						<div style="margin-top:5px; margin-bottom:5px;">
+							<b style="margin-left:50px;"><span rsf:id="msg=simplepage.delete"></span>:</b>
+							<input type="submit" style="margin-left:50px;" rsf:id="delete-student-item" />
+						</div>
+					</div>
+		
+					<input class="bold" type="submit" onclick="return true;" id="update-student" rsf:id="update-student" />
+					<input type="submit" rsf:id="cancel-student" onclick="closeStudentDialog(); return false" />
 
 				</form>
 			</div>

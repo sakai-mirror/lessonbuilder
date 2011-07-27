@@ -36,5 +36,8 @@
 	<property name="sameWindow" type="boolean" />
 	<property name="anonymous" type="boolean" />
 	<property name="groups" type="string" length="500" />
+	<property name="showComments" type="boolean" />
+
+
    </class>
 </hibernate-mapping>

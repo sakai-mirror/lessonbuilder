@@ -89,9 +89,7 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 			
 			// Some items are tacked onto the end automatically by setting the sequence to
 			// something less than or equal to 0.  This takes them out of the Reorder tool.
-			System.out.println("SEQ:" + items.get(0).getSequence());
 			while(items.size() > 0 && items.get(0).getSequence() <= 0) {
-				System.out.println("Removed");
 				items.remove(0);
 			}
 

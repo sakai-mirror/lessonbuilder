@@ -198,6 +198,8 @@ public class SimplePageBean {
 	public String formattedComment;
 	public String editId;
 	
+	public boolean comments;
+	
 	private String linkUrl;
 
 	private String height, width;
@@ -920,13 +922,16 @@ public class SimplePageBean {
 		
 		// This code adds a global comments tool to the bottom of each
 		// student page, but only if there's something else on the page
-		// already.
+		// already and the instructor has enabled the option.
 		if(items.size() > 0) {
 			SimplePage page = simplePageToolDao.getPage(pageid);
 			if(page.getOwner() != null) {
 				SimpleStudentPage student = simplePageToolDao.findStudentPage(page.getTopParent());
 				if(student != null && student.getCommentsSection() != null) {
-					items.add(0, simplePageToolDao.findItem(student.getCommentsSection()));
+					SimplePageItem item = simplePageToolDao.findItem(student.getItemId());
+					if(item != null && item.getShowComments() != null && item.getShowComments()) {
+						items.add(0, simplePageToolDao.findItem(student.getCommentsSection()));
+					}
 				}
 			}
 		}
@@ -1452,8 +1457,6 @@ public class SimplePageBean {
     // returns string version of the new path
 
 	public String adjustPath(String op, Long pageId, Long pageItemId, String title) {
-		System.out.println("BREAD:" + op + " " + pageId + " " + pageItemId + " " + title);
-		
 		List<PathEntry> path = (List<PathEntry>)sessionManager.getCurrentToolSession().getAttribute(LESSONBUILDER_PATH);
 
 		// if no current path, op doesn't matter. we can just do the current page
@@ -2835,9 +2838,11 @@ public class SimplePageBean {
 		
 		// Remove items that weren't ordered due to having sequences too low.
 		// Typically means they are tacked onto the end automatically.
-		while(items.size() > 0 && items.get(0).getSequence() <= 0) {
-			System.out.println("Removed");
-			items.remove(0);
+		for(int i = 0; i < items.size(); i++) {
+			if(items.get(i).getSequence() <= 0) {
+				items.remove(items.get(i));
+				i--;
+			}
 		}
 
 		String[] split = order.split(" ");
@@ -2861,11 +2866,6 @@ public class SimplePageBean {
 			if (old != i + 1) {
 				update(items.get(Integer.valueOf(split[i]) - 1));
 			}
-		}
-		
-		System.out.println("ORDER: " + order);
-		for(SimplePageItem i : items) {
-			System.out.println(i.getName() + " --- " + i.getSequence());
 		}
 
 		itemsCache.remove(getCurrentPage().getPageId());
@@ -2928,13 +2928,8 @@ public class SimplePageBean {
 		SimplePageLogEntry entry = getLogEntry(itemId, studentPageId);
 		String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
 		
-		System.out.println("StudentPageId: " + studentPageId);
-		System.out.println("Itemid: " + itemId);
-		
 		if (entry == null) {
-			System.out.println("Entry null");
 			entry = simplePageToolDao.makeLogEntry(userId, itemId, studentPageId);
-			System.out.println("ENTRY NULL2: " + (entry == null));
 			
 			if (path != null && studentPageId == null) {
 				boolean complete = isPageComplete(itemId);
@@ -2956,7 +2951,6 @@ public class SimplePageBean {
 			saveItem(entry);
 			logCache.put(itemId + "-" + studentPageId, entry);
 		} else {
-			System.out.println("Entry: " + entry.getId());
 			if (path != null && studentPageId == null) {
 				boolean wasComplete = entry.isComplete();
 				boolean complete = isPageComplete(itemId);
@@ -3008,7 +3002,7 @@ public class SimplePageBean {
 		
 		String lookup = itemId + "-" + studentPageId;
 		SimplePageLogEntry entry = logCache.get(lookup);
-		System.out.println("GET " + (itemId + "-" + studentPageId));
+
 		if (entry != null)
 		    return entry;
 		String userId = getCurrentUserId();
@@ -3016,15 +3010,9 @@ public class SimplePageBean {
 		    userId = ".anon";
 		entry = simplePageToolDao.getLogEntry(userId, itemId, studentPageId);
 		
-		System.out.println("Entry null: " + (entry==null));
 		
 		logCache.put(lookup, entry);
 		
-		if(logCache.get(lookup) != null) {
-			System.out.println("We're good.");
-		}else {
-			System.out.println("Not good.");
-		}
 		return entry;
 	}
 
@@ -4189,14 +4177,14 @@ public class SimplePageBean {
 		
 		if(page == null && containerItem != null && containerItem.getType() == SimplePageItem.STUDENT_CONTENT && canReadPage()) {
 			// First create object in lesson_builder_pages.
-			SimplePage newPage = simplePageToolDao.makePage(curr.getToolId(), curr.getSiteId(),user.getDisplayName(),
+			SimplePage newPage = simplePageToolDao.makePage(curr.getToolId(), curr.getSiteId(),messageLocator.getMessage("simplepage.student-content-page"),
 					curr.getPageId(), null);
 			newPage.setOwner(user.getId());
 			newPage.setGroupOwned(false);
 			saveItem(newPage, false);
 			
 			// Then attach the lesson_builder_student_pages item.
-			page = simplePageToolDao.makeStudentPage(itemId, newPage.getPageId(), user.getDisplayName(), user.getId(), false);
+			page = simplePageToolDao.makeStudentPage(itemId, newPage.getPageId(), messageLocator.getMessage("simplepage.student-content-page"), user.getId(), false);
 			
 			SimplePageItem commentsItem = simplePageToolDao.makeItem(-1, -1, SimplePageItem.COMMENTS, null, messageLocator.getMessage("simplepage.comments-section"));
 			saveItem(commentsItem, false);
@@ -4204,6 +4192,9 @@ public class SimplePageBean {
 			page.setCommentsSection(commentsItem.getId());
 			
 			saveItem(page, false);
+			
+			commentsItem.setSakaiId(String.valueOf(page.getId()));
+			update(commentsItem, false);
 			
 			newPage.setTopParent(page.getId());
 			update(newPage, false);
@@ -4229,6 +4220,18 @@ public class SimplePageBean {
 		}
 	}
 	
+	public HashMap<Long, SimplePageLogEntry> cacheStudentPageLogEntries(long itemId) {
+		List<SimplePageLogEntry> entries = simplePageToolDao.getStudentPageLogEntries(itemId, UserDirectoryService.getCurrentUser().getId());
+		
+		HashMap<Long, SimplePageLogEntry> map = new HashMap<Long, SimplePageLogEntry>();
+		for(SimplePageLogEntry entry : entries) {
+			logCache.put(entry.getItemId() + "-" + entry.getStudentPageId(), entry);
+			map.put(entry.getStudentPageId(), entry);
+		}
+		
+		return map;
+	}
+	
 	private boolean pushAdvisor() {
 		if(getCurrentPage().getOwner() != null) {
 			securityService.pushAdvisor(new SecurityAdvisor() {
@@ -4244,5 +4247,32 @@ public class SimplePageBean {
 	
 	private void popAdvisor() {
 		securityService.popAdvisor();
+	}
+	
+	public String updateStudent() {
+		if(canEditPage()) {
+			SimplePageItem page = findItem(itemId);
+			page.setAnonymous(anonymous);
+			page.setShowComments(comments);
+			update(page);
+			
+			// Update the comments tools to reflect any changes
+			if(comments) {
+				List<SimpleStudentPage> pages = simplePageToolDao.findStudentPages(itemId);
+				for(SimpleStudentPage p : pages) {
+					if(p.getCommentsSection() != null) {
+						SimplePageItem item = simplePageToolDao.findItem(p.getCommentsSection());
+						if(item.isAnonymous() != anonymous) {
+							item.setAnonymous(anonymous);
+							update(item);
+						}
+					}
+				}
+			}
+			return "success";
+		}else {
+			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
+			return "failure";
+		}
 	}
 }

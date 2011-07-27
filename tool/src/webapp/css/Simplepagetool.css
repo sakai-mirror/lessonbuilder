@@ -210,12 +210,18 @@ a.edit-movie:link,a.edit-movie:visited{
 	-moz-border-radius: 3px;
 	-webkit-border-radius: 3px;
 	border-radius: 3px;
+	padding-top:1px;
+	padding-bottom: 1px;
 }
 
 /* Commenter looking at their own comment */
 .personalComment {
 	background-color: white;
-	padding-top:1px;
+}
+/* Site Owner Comment */
+.ownerComment {
+	background-color: #CCCEED;
+	color: black;
 }
 
 .item-group-titles{
@@ -241,6 +247,10 @@ a.edit-movie:link,a.edit-movie:visited{
 	display:none;
 }
 .imgCell {
-	height:16px;
-	width:16px;
+	height:14px;
+	width:14px;
+}
+.studentContentTable {
+	border:none;
+	background-color:#e4edff;
 }

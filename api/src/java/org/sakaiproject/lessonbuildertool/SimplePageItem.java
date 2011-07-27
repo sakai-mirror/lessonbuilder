@@ -142,5 +142,8 @@ public interface SimplePageItem {
     public void setGroups(String groups);
 
     public String getGroups();
+    
+    public void setShowComments(Boolean showComments);
+    public Boolean getShowComments();
 
 }

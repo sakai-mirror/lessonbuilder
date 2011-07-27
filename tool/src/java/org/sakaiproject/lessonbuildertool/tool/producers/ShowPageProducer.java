@@ -44,6 +44,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
@@ -77,6 +78,7 @@ import org.sakaiproject.tool.api.Placement;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.cover.SessionManager;
+import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.user.cover.UserDirectoryService;
 import org.sakaiproject.util.ResourceLoader;
 
@@ -1204,7 +1206,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					if (canEditPage) {
 						UIOutput.make(tableRow, "comments-td");
 
-						UILink.make(tableRow, "edit-comments", messageLocator.getMessage("simplepage.editItem"), "").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.comments")));
+						UILink.make(tableRow, "edit-comments", messageLocator.getMessage("simplepage.editItem"), "")
+								.decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.comments")));
 
 						UIOutput.make(tableRow, "commentsId", String.valueOf(i.getId()));
 						UIOutput.make(tableRow, "commentsAnon", String.valueOf(i.isAnonymous()));
@@ -1227,41 +1230,91 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					UIOutput.make(tableRow, "studentSpan");
 					UIOutput.make(tableRow, "studentDiv");
 					
+					HashMap<Long, SimplePageLogEntry> cache = simplePageBean.cacheStudentPageLogEntries(i.getId());
 					List<SimpleStudentPage> studentPages = simplePageToolDao.findStudentPages(i.getId());
 					
+					boolean hasOwnPage = false;
+					String userId = UserDirectoryService.getCurrentUser().getId();
+					
+					HashMap<String, String> anonymousLookup = new HashMap<String, String>();
+					if(i.isAnonymous()) {
+						int counter = 1;
+						for(SimpleStudentPage page : studentPages) {
+							if(anonymousLookup.get(page.getOwner()) == null) {
+								anonymousLookup.put(page.getOwner(), messageLocator.getMessage("simplepage.anonymous") + " " + counter++);
+							}
+						}
+					}
+					
+					// Print each row in the table
 					for(SimpleStudentPage page : studentPages) {
-						SimplePageLogEntry entry = simplePageBean.getLogEntry(i.getId(), page.getPageId());
+						SimplePageLogEntry entry = cache.get(page.getPageId());
 						UIBranchContainer row = UIBranchContainer.make(tableRow, "studentRow:");
 						UIOutput.make(row, "studentCell");
 						
 						GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, page.getPageId());
 						eParams.setItemId(i.getId());
 						eParams.setPath("push");
-						UIInternalLink.make(row, "studentLink", page.getTitle(), eParams);
 						
+						String username = null;
+						
+						try {
+							username = i.isAnonymous()? anonymousLookup.get(page.getOwner()) : UserDirectoryService.getUser(page.getOwner()).getDisplayName();
+							
+							if(i.isAnonymous() && canEditPage) {
+								username += " (" + UserDirectoryService.getUser(page.getOwner()).getDisplayName() + ")";
+							}else if(i.isAnonymous() && page.getOwner().equals(userId)) {
+								username += " (" + messageLocator.getMessage("simplepage.comment-you") + ")";
+							}
+						} catch (UserNotDefinedException e) {
+							username = page.getTitle();
+						}
+						
+						UIInternalLink.make(row, "studentLink", username, eParams);
+						
+						// Never visited page
 						if(entry == null) {
 							UIOutput.make(row, "newPageImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-page")));
 						}
 						
+						// There's content they haven't seen
 						if(entry == null || entry.getLastViewed().compareTo(page.getLastUpdated()) < 0) {
 							UIOutput.make(row, "newContentImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-content")));
 						}
 						
+						// The comments tool exists, so we might have to show the icon
+						if(i.getShowComments() != null && i.getShowComments()) {
+							UIOutput.make(row, "commentsImgCell");
+						}
+						
+						// New comments have been added since they last viewed the page
 						if(page.getLastCommentChange() != null && (entry == null || entry.getLastViewed().compareTo(page.getLastCommentChange()) < 0)) {
 							UIOutput.make(row, "newCommentsImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-comments")));
 						}
+						
+						if(page.getOwner().equals(userId)) {
+							hasOwnPage = true;
+						}
 					}
 					
-					UIOutput.make(tableRow, "linkRow");
-					UIOutput.make(tableRow, "linkCell");
-					
-					GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID);
-					eParams.addTool = GeneralViewParameters.STUDENT_PAGE;
-					eParams.studentItemId = i.getId();
-					UIInternalLink.make(tableRow, "linkLink", messageLocator.getMessage("simplepage.add-page"), eParams);
+					if(!hasOwnPage) {
+						UIOutput.make(tableRow, "linkRow");
+						UIOutput.make(tableRow, "linkCell");
+						
+						GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID);
+						eParams.addTool = GeneralViewParameters.STUDENT_PAGE;
+						eParams.studentItemId = i.getId();
+						UIInternalLink.make(tableRow, "linkLink", messageLocator.getMessage("simplepage.add-page"), eParams);
+					}
 					
 					if(canEditPage) {
 						UIOutput.make(tableRow, "student-td");
+						UILink.make(tableRow, "edit-student", messageLocator.getMessage("simplepage.editItem"), "")
+								.decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.student")));
+						
+						UIOutput.make(tableRow, "studentId", String.valueOf(i.getId()));
+						UIOutput.make(tableRow, "studentAnon", String.valueOf(i.isAnonymous()));
+						UIOutput.make(tableRow, "studentComments", String.valueOf(i.getShowComments()));
 					}
 				} else {
 					// remaining type must be a block of HTML
@@ -1372,6 +1425,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		createYoutubeDialog(tofill, currentPage);
 		createMovieDialog(tofill, currentPage);
 		createCommentsDialog(tofill);
+		createStudentContentDialog(tofill);
 	}
 
 	public void setSimplePageBean(SimplePageBean simplePageBean) {
@@ -2191,6 +2245,21 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UICommand.make(form, "delete-comments-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
 		UICommand.make(form, "update-comments", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateComments}");
 		UICommand.make(form, "cancel-comments", messageLocator.getMessage("simplepage.cancel"), null);
+	}
+	
+	private void createStudentContentDialog(UIContainer tofill) {
+		UIOutput.make(tofill, "student-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_studentlink")));
+
+		UIForm form = UIForm.make(tofill, "student-form");
+
+		UIInput.make(form, "studentEditId", "#{simplePageBean.itemId}");
+
+		UIBoundBoolean.make(form, "student-anonymous", "#{simplePageBean.anonymous}");
+		UIBoundBoolean.make(form, "student-comments", "#{simplePageBean.comments}");
+
+		UICommand.make(form, "delete-student-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
+		UICommand.make(form, "update-student", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateStudent}");
+		UICommand.make(form, "cancel-student", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
 	/*

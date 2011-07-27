@@ -138,6 +138,8 @@ public interface SimplePageToolDao {
 	 * There should only be one log entry for each combination.
 	 */
 	public SimplePageLogEntry getLogEntry(String userId, long itemId, Long studentPageId);
+	
+	public List<SimplePageLogEntry> getStudentPageLogEntries(long itemId, String userId);
 
     // users with log entries showing item complete
 	public List<String> findUserWithCompletePages(Long itemId);

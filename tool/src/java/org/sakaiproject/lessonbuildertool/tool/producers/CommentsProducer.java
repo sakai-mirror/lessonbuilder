@@ -8,9 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
+import org.sakaiproject.lessonbuildertool.SimplePageItem;
+import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
-import org.sakaiproject.lessonbuildertool.tool.evolvers.SakaiFCKTextEvolver;
 import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.user.api.User;
@@ -18,17 +19,12 @@ import org.sakaiproject.user.cover.UserDirectoryService;
 
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.rsf.components.UIBranchContainer;
-import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIContainer;
-import uk.org.ponder.rsf.components.UIForm;
-import uk.org.ponder.rsf.components.UIInput;
 import uk.org.ponder.rsf.components.UIInternalLink;
-import uk.org.ponder.rsf.components.UILink;
 import uk.org.ponder.rsf.components.UIOutput;
 import uk.org.ponder.rsf.components.UIVerbatim;
 import uk.org.ponder.rsf.components.decorators.UIFreeAttributeDecorator;
 import uk.org.ponder.rsf.components.decorators.UIStyleDecorator;
-import uk.org.ponder.rsf.evolvers.TextInputEvolver;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCase;
 import uk.org.ponder.rsf.flow.jsfnav.NavigationCaseReporter;
 import uk.org.ponder.rsf.view.ComponentChecker;
@@ -45,6 +41,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	private SimplePageToolDao simplePageToolDao;
 	private HashMap<String, String> anonymousLookup = new HashMap<String, String>();
 	private String currentUserId;
+	private String owner = null;
 	
 	public String getViewID() {
 		return VIEW_ID;
@@ -52,6 +49,14 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	
 	public void fillComponents(UIContainer tofill, ViewParameters viewparams, ComponentChecker checker) {
 		CommentsViewParameters params = (CommentsViewParameters) viewparams;
+			
+		SimplePageItem commentsItem = simplePageToolDao.findItem(params.itemId);
+		if(commentsItem != null && commentsItem.getSakaiId() != null && !commentsItem.getSakaiId().equals("")) {
+			SimpleStudentPage studentPage = simplePageToolDao.findStudentPage(Long.valueOf(commentsItem.getSakaiId()));
+			if(studentPage != null) {
+				owner = studentPage.getOwner();
+			}
+		}
 		
 		if(params.deleteComment != null) {
 			simplePageBean.deleteComment(params.deleteComment);
@@ -73,7 +78,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			int i = 1;
 			for(SimplePageComment comment : comments) {
 				if(!anonymousLookup.containsKey(comment.getAuthor())) {
-					anonymousLookup.put(comment.getAuthor(), "Anonymous " + i);
+					anonymousLookup.put(comment.getAuthor(), messageLocator.getMessage("simplepage.anonymous") + " " + i);
 					i++;
 				}
 			}
@@ -89,7 +94,10 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			}
 		}
 		
-		boolean canEditPage = simplePageBean.canEditPage();
+		// We don't want page owners to edit comments on their page
+		// at the moment.  Perhaps add option?
+		boolean canEditPage = simplePageBean.getEditPrivs() == 0;
+		
 		boolean editable = false;
 		
 		if(comments.size() <= 5 || params.showAllComments) {
@@ -129,7 +137,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIOutput.make(tofill, "highlightScript");
 		}
 		
-		if(anonymous && simplePageBean.canEditPage()) {
+		if(anonymous && canEditPage) {
 			UIOutput.make(tofill, "anonymousAlert");
 		}else if(editable && simplePageBean.getEditPrivs() != 0) {
 			UIOutput.make(tofill, "editAlert");
@@ -153,9 +161,13 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		}else {
 			author = anonymousLookup.get(comment.getAuthor());
 			
+			if(comment.getAuthor().equals(owner)) {
+				author = messageLocator.getMessage("simplepage.comment-author-owner");
+			}
+			
 			if(author == null) author = "Anonymous User"; // Shouldn't ever occur
 			
-			if(simplePageBean.canEditPage()) {
+			if(simplePageBean.getEditPrivs() == 0) {
 				try {
 					User user = UserDirectoryService.getUser(comment.getAuthor());
 					author += " (" + user.getDisplayName() + ")";
@@ -172,6 +184,9 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		if(comment.getAuthor().equals(currentUserId)) {
 			authorOutput.decorate(new UIStyleDecorator("specialCommenter"));
 			authorOutput.decorate(new UIStyleDecorator("personalComment"));
+		}else if(comment.getAuthor().equals(owner)) {
+			authorOutput.decorate(new UIStyleDecorator("specialCommenter"));
+			authorOutput.decorate(new UIStyleDecorator("ownerComment"));
 		}
 		
 		String timeDifference = getTimeDifference(comment.getTimePosted().getTime());

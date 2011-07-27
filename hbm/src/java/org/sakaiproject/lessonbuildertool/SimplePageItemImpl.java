@@ -77,9 +77,9 @@ public class SimplePageItemImpl implements SimplePageItem  {
 	private boolean sameWindow; // Display resource inline rather than new window
 	
 	private boolean anonymous = false; // Should comments be anonymous
-
+	private Boolean showComments = false; // Should Student Pages have comment sections?
+	
 	private String groups;
-
 
 	public SimplePageItemImpl() {
 
@@ -384,6 +384,14 @@ public class SimplePageItemImpl implements SimplePageItem  {
 
 	public void setGroups(String g) {
 	    groups = g;
+	}
+	
+	public Boolean getShowComments() {
+		return showComments;
+	}
+	
+	public void setShowComments(Boolean showComments) {
+		this.showComments = showComments;
 	}
 
 }
