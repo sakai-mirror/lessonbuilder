@@ -175,6 +175,8 @@ public class SimplePageBean {
 	public String[] selectedGroups = new String[] {};
 
 	public String selectedQuiz = null;
+	
+	public long removeId;
 
 	private SimplePage currentPage;
 	private Long currentPageId = null;
@@ -199,6 +201,7 @@ public class SimplePageBean {
 	public String editId;
 	
 	public boolean comments;
+	public boolean forcedAnon;
 	
 	private String linkUrl;
 
@@ -1738,32 +1741,57 @@ public class SimplePageBean {
     //  remove a top-level page from the left margin. Does not actually delete it.
     //  this and addpages checks only edit page permission. should it check site.upd?
 	public String removePage() {
-		if (getEditPrivs() != 0)
+		if (getEditPrivs() != 0) {
 			return "permission-failed";
-
-		Site site = getCurrentSite();
-		SimplePage page = getCurrentPage();
-		SitePage sitePage = site.getPage(page.getToolId());
-		if (sitePage == null) {
-			log.error("removePage can't find site page for " + page.getPageId());
-			return "no-such-page";
 		}
-	    
-		site.removePage(sitePage);
-
-		try {
-			siteService.save(site);
-		} catch (Exception e) {
-			log.error("removePage unable to save site " + e);
+		
+		SimplePage page = simplePageToolDao.getPage(removeId);
+		
+		if(page.getOwner() == null) {
+			Site site = getCurrentSite();
+			SitePage sitePage = site.getPage(page.getToolId());
+			if (sitePage == null) {
+				log.error("removePage can't find site page for " + page.getPageId());
+				return "no-such-page";
+			}
+		
+			site.removePage(sitePage);
+		
+			try {
+				siteService.save(site);
+			} catch (Exception e) {
+				log.error("removePage unable to save site " + e);
+			}
+		
+			EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.remove", "/lessonbuilder/page/" + page.getPageId(), true));
+			return "success";
+		}else {
+			SimpleStudentPage studentPage = simplePageToolDao.findStudentPageByPageId(page.getPageId());
+			
+			if(studentPage != null) {
+				studentPage.setDeleted(true);
+				update(studentPage, false);
+				
+				String[] path = adjustPath("pop", null, null, null).split(",");
+				Long itemId = Long.valueOf(path[path.length-1]);
+				
+				try {
+					SimplePageItem item = simplePageToolDao.findItem(itemId);
+					updatePageObject(Long.valueOf(item.getSakaiId()));
+					updatePageItem(itemId);
+				} catch (PermissionException e) {
+					return "failure";
+				}
+				
+				return "success";
+			}else {
+				return "failure";
+			}
 		}
-
-		EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.remove", "/lessonbuilder/page/" + page.getPageId(), true));
-		return "success";
 	}
 
     // called from "save" in main edit item dialog
 	public String editItem() {
-
 		if (!itemOk(itemId))
 		    return "permission-failed";
 		if (!canEditPage())
@@ -4193,6 +4221,7 @@ public class SimplePageBean {
 			
 			saveItem(page, false);
 			
+			commentsItem.setAnonymous(containerItem.getForcedCommentsAnonymous());
 			commentsItem.setSakaiId(String.valueOf(page.getId()));
 			update(commentsItem, false);
 			
@@ -4254,6 +4283,7 @@ public class SimplePageBean {
 			SimplePageItem page = findItem(itemId);
 			page.setAnonymous(anonymous);
 			page.setShowComments(comments);
+			page.setForcedCommentsAnonymous(forcedAnon);
 			update(page);
 			
 			// Update the comments tools to reflect any changes
@@ -4262,8 +4292,8 @@ public class SimplePageBean {
 				for(SimpleStudentPage p : pages) {
 					if(p.getCommentsSection() != null) {
 						SimplePageItem item = simplePageToolDao.findItem(p.getCommentsSection());
-						if(item.isAnonymous() != anonymous) {
-							item.setAnonymous(anonymous);
+						if(item.isAnonymous() != forcedAnon) {
+							item.setAnonymous(forcedAnon);
 							update(item);
 						}
 					}

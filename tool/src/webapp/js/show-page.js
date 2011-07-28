@@ -194,10 +194,10 @@ $(function() {
 		return false;
 	});
 
-	$('#remove-page-submit').click(function() {
-		window.location.href= $("#remove-page-submit").attr("src");
-		return false;
-	});
+	//$('#remove-page-submit').click(function() {
+	//	window.location.href= $("#remove-page-submit").attr("src");
+	//	return false;
+	//});
 
 	var outerWidth = $('#outer').width();
 	if (outerWidth < 500) {
@@ -341,11 +341,33 @@ $(function() {
 			$("#student-comments").attr("checked", false);
 		}
 		
+		var forcedAnon = row.find(".forcedAnon").text();
+		if(forcedAnon == "true") {
+			$("#student-comments-anon").attr("checked", true);
+			$("#student-comments-anon").attr("defaultChecked", true)
+		}else {
+			$("#student-comments-anon").attr("checked", false);
+		}
+		
+		if(!$("#student-comments").attr("checked")) {
+			$("#student-comments-anon").attr("disabled", true).removeAttr("checked");
+		}else {
+			$("#student-comments-anon").removeAttr("disabled");
+		}
+		
 		var position = row.position();
 		$("#student-dialog").dialog("option", "position", [position.left, position.top]);
 		$('.hideOnDialog').hide();
 		$('#student-dialog').dialog('open');
 		return false;
+	});
+	
+	$("#student-comments").click(function() {
+		if(!$("#student-comments").attr("checked")) {
+			$("#student-comments-anon").attr("disabled", true).removeAttr("checked");
+		}else {
+			$("#student-comments-anon").removeAttr("disabled");
+		}
 	});
 
 	$("#editgroups-movie").click(function(){

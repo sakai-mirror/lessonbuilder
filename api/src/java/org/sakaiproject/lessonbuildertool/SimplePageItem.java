@@ -144,6 +144,11 @@ public interface SimplePageItem {
     public String getGroups();
     
     public void setShowComments(Boolean showComments);
+    
     public Boolean getShowComments();
+    
+    public void setForcedCommentsAnonymous(Boolean forcedCommentsAnonymous);
+    
+    public boolean getForcedCommentsAnonymous();
 
 }

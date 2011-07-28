@@ -10,9 +10,11 @@ public class SimpleStudentPageImpl implements SimpleStudentPage {
 	private String title; // Title of page
 	private String owner; // Owner of page
 	private boolean groupOwned; // Whether or not the owner is a group
-	private Long commentsSection; // ID of the comments section associated with this page,
-								  // if one exists.
-	private Date lastCommentChange;
+	
+	// ID of the comments section associated with this page, if one exists.
+	private Long commentsSection; 
+	private Date lastCommentChange; // Last time a comment was posted or edited.
+	private boolean deleted = false; // Shows whether or not this was deleted by the instructor.
 	
 	public SimpleStudentPageImpl() { }
 	
@@ -86,5 +88,15 @@ public class SimpleStudentPageImpl implements SimpleStudentPage {
 	}
 	public void setLastCommentChange(Date lastCommentChange) {
 		this.lastCommentChange = lastCommentChange;
+	}
+	
+	public boolean isDeleted() {
+		return deleted;
+	}
+	public void setDeleted(Boolean deleted) {
+		if(deleted == null) {
+			deleted = false;
+		}
+		this.deleted = deleted;
 	}
 }

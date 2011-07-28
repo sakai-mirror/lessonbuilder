@@ -90,6 +90,7 @@ import uk.org.ponder.rsf.components.UIBranchContainer;
 import uk.org.ponder.rsf.components.UICommand;
 import uk.org.ponder.rsf.components.UIComponent;
 import uk.org.ponder.rsf.components.UIContainer;
+import uk.org.ponder.rsf.components.UIELBinding;
 import uk.org.ponder.rsf.components.UIForm;
 import uk.org.ponder.rsf.components.UIInput;
 import uk.org.ponder.rsf.components.UIInternalLink;
@@ -299,7 +300,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 		}
 		
-		
 		boolean canEditPage = simplePageBean.canEditPage();
 		boolean canReadPage = simplePageBean.canReadPage();
 
@@ -437,7 +437,16 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			p.setItemId(lastPage.itemId);
 			// reset the path to the saved one
 			p.setPath("log");
-			UIInternalLink.make(tofill, "refresh-link", lastPage.name, p);
+			
+			String name = lastPage.name;
+			
+			// Titles are set oddly by Student Content Pages
+			SimplePage lastPageObj = simplePageToolDao.getPage(lastPage.pageId);
+			if(lastPageObj.getOwner() != null) {
+				name = lastPageObj.getTitle();
+			}
+			
+			UIInternalLink.make(tofill, "refresh-link", name, p);
 		}
 
 		// path is the breadcrumbs. Push, pop or reset depending upon path=
@@ -476,9 +485,19 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIOutput.make(tofill, "edit-title").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.editTitle-tooltip")));
 
 			if (pageItem.getPageId() == 0) { // top level page
-				UIOutput.make(tofill, "remove-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page-tooltip")));
 				UIOutput.make(tofill, "new-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-page-tooltip")));
 				UIOutput.make(tofill, "import-cc").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
+			}
+			
+			// Checks to see that user can edit and that this is either a top level page,
+			// or a top level student page (not a subpage to a student page)
+			if(simplePageBean.getEditPrivs() == 0 && (pageItem.getPageId() == 0)) {
+				UIOutput.make(tofill, "remove-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page-tooltip")));
+			}else if(simplePageBean.getEditPrivs() == 0 && currentPage.getOwner() != null) {
+				SimpleStudentPage studentPage = simplePageToolDao.findStudentPage(currentPage.getTopParent());
+				if(studentPage != null && studentPage.getPageId() == currentPage.getPageId()) {
+					UIOutput.make(tofill, "remove-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page-tooltip")));
+				}
 			}
 
 			UIOutput.make(tofill, "dialogDiv");
@@ -1248,6 +1267,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					
 					// Print each row in the table
 					for(SimpleStudentPage page : studentPages) {
+						if(page.isDeleted()) continue;
+						
 						SimplePageLogEntry entry = cache.get(page.getPageId());
 						UIBranchContainer row = UIBranchContainer.make(tableRow, "studentRow:");
 						UIOutput.make(row, "studentCell");
@@ -1315,6 +1336,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						UIOutput.make(tableRow, "studentId", String.valueOf(i.getId()));
 						UIOutput.make(tableRow, "studentAnon", String.valueOf(i.isAnonymous()));
 						UIOutput.make(tableRow, "studentComments", String.valueOf(i.getShowComments()));
+						UIOutput.make(tableRow, "forcedAnon", String.valueOf(i.getForcedCommentsAnonymous()));
 					}
 				} else {
 					// remaining type must be a block of HTML
@@ -2223,13 +2245,11 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "remove-page-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page")));
 
 		UIForm form = UIForm.make(tofill, "remove-page-form");
+		form.addParameter(new UIELBinding("#{simplePageBean.removeId}", page.getPageId()));
+		//GeneralViewParameters params = new GeneralViewParameters(RemovePageProducer.VIEW_ID);
+		//UIInternalLink.make(form, "remove-page-submit", "", params).decorate(new UIFreeAttributeDecorator("value", messageLocator.getMessage("simplepage.remove")));
 
-		GeneralViewParameters params = new GeneralViewParameters(RemovePageProducer.VIEW_ID);
-		UIInternalLink.make(form, "remove-page-submit", "", params).decorate(new UIFreeAttributeDecorator("value", messageLocator.getMessage("simplepage.remove")));
-
-		// UICommand.make(form, "remove-page-submit",
-		// messageLocator.getMessage("simplepage.remove"),
-		// "#{simplePageBean.removePage}");
+		UICommand.make(form, "remove-page-submit", messageLocator.getMessage("simplepage.remove"), "#{simplePageBean.removePage}");
 		UICommand.make(form, "remove-page-cancel", messageLocator.getMessage("simplepage.cancel"), "#{simplePageBean.cancel}");
 	}
 
@@ -2256,6 +2276,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 		UIBoundBoolean.make(form, "student-anonymous", "#{simplePageBean.anonymous}");
 		UIBoundBoolean.make(form, "student-comments", "#{simplePageBean.comments}");
+		UIBoundBoolean.make(form, "student-comments-anon", "#{simplePageBean.forcedAnon}");
 
 		UICommand.make(form, "delete-student-item", messageLocator.getMessage("simplepage.delete"), "#{simplePageBean.deleteItem}");
 		UICommand.make(form, "update-student", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.updateStudent}");
@@ -2266,7 +2287,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	 * return true if the item is required and not completed, i.e. if we need to
 	 * update the status after the user views the item
 	 */
-
 	private Status handleStatusImage(UIContainer container, SimplePageItem i) {
 		if (i.getType() != SimplePageItem.TEXT && i.getType() != SimplePageItem.MULTIMEDIA) {
 			if (!i.isRequired()) {

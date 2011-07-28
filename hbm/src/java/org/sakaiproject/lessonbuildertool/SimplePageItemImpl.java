@@ -77,7 +77,8 @@ public class SimplePageItemImpl implements SimplePageItem  {
 	private boolean sameWindow; // Display resource inline rather than new window
 	
 	private boolean anonymous = false; // Should comments be anonymous
-	private Boolean showComments = false; // Should Student Pages have comment sections?
+	private boolean showComments = false; // Should Student Pages have comment sections?
+	private boolean forcedCommentsAnonymous = false;
 	
 	private String groups;
 
@@ -391,7 +392,23 @@ public class SimplePageItemImpl implements SimplePageItem  {
 	}
 	
 	public void setShowComments(Boolean showComments) {
+		if(showComments == null) {
+			showComments = false;
+		}
+		
 		this.showComments = showComments;
+	}
+	
+	public boolean getForcedCommentsAnonymous() {
+		return forcedCommentsAnonymous;
+	}
+	
+	public void setForcedCommentsAnonymous(Boolean forcedCommentsAnonymous) {
+		if(forcedCommentsAnonymous == null) {
+			forcedCommentsAnonymous = false;
+		}
+		
+		this.forcedCommentsAnonymous = forcedCommentsAnonymous;
 	}
 
 }

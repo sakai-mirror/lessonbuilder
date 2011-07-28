@@ -29,4 +29,7 @@ public interface SimpleStudentPage {
 	
 	public Date getLastCommentChange();
 	public void setLastCommentChange(Date lastCommentChange);
+	
+	public boolean isDeleted();
+	public void setDeleted(Boolean deleted);
 }

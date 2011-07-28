@@ -137,9 +137,11 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIOutput.make(tofill, "highlightScript");
 		}
 		
-		if(anonymous && canEditPage) {
+		if(anonymous && canEditPage && comments.size() > 0) {
+			// Tells the admin that they can see the names, but everyone else can't
 			UIOutput.make(tofill, "anonymousAlert");
 		}else if(editable && simplePageBean.getEditPrivs() != 0) {
+			// Warns user that they only have 30 mins to edit.
 			UIOutput.make(tofill, "editAlert");
 		}
 	}

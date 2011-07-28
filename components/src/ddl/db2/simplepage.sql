@@ -8,7 +8,7 @@
 create index lesson_builder_student_pages_pageId on lesson_builder_student_pages(pageId);
 create index lesson_builder_student_pages_itemId on lesson_builder_student_pages(itemId);
 create index lesson_builder_log_index on lesson_builder_log(userId,itemId, studentPageId);
-create index lesson_builder_student_pages_index on lesson_builder_student_pages(itemId, owner);
+create index lesson_builder_student_pages_index on lesson_builder_student_pages(itemId, owner, deleted);
 create index lesson_builder_comments_uuid on lesson_builder_comments(UUID);
 create index lesson_builder_comments_author on lesson_builder_comments(pageId, author);
 create index lesson_builder_comments_itemid on lesson_builder_comments(itemId);

@@ -251,7 +251,7 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	
 	public SimpleStudentPage findStudentPage(long itemId, String owner) {
 		DetachedCriteria d = DetachedCriteria.forClass(SimpleStudentPage.class).add(Restrictions.eq("itemId", itemId))
-			.add(Restrictions.eq("owner", owner));
+			.add(Restrictions.eq("owner", owner)).add(Restrictions.eq("deleted", false));
 		List<SimpleStudentPage> list = getHibernateTemplate().findByCriteria(d);
 		
 		if(list.size() > 0) {
@@ -420,13 +420,13 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 	public boolean deleteItem(Object o) {
 		/*
 		 * If o is SimplePageItem or SimplePage, it makes sure it gets the right page and checks the
-		 * permissions on it.
+		 * permissions on it. If the item isn't SimplePageItem or SimplePage, it lets it go.
 		 * 
 		 * Essentially, if any of those say that the edit is fine, it won't throw the error.
 		 */
 		if(!(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
-				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))) {
-
+				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
+				&& (o instanceof SimplePage || o instanceof SimplePageItem)) {
 			return false;
 		}
 
