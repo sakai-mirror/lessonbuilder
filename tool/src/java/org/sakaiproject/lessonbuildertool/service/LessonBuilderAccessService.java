@@ -51,6 +51,7 @@ import org.sakaiproject.exception.ServerOverloadException;
 import org.sakaiproject.exception.TypeException;
 import org.sakaiproject.lessonbuildertool.LessonBuilderAccessAPI;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
+import org.sakaiproject.lessonbuildertool.SimplePage;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.memory.api.Cache;
@@ -174,6 +175,7 @@ public class LessonBuilderAccessService {
 		accessCache = null;
 	}
 
+
 	// references are currently of the form /access/lessonbuilder/item/NNN
 	// however the Reference has an id of /item/NNN
 	// understand /access/lessonbuilder/item/MMM/group/NNNN/name.html
@@ -186,7 +188,6 @@ public class LessonBuilderAccessService {
 	// item number they have access to, they can access any item they're allowed
 	// to read. There's no obvious way
 	// to do better without a *LOT* of work
-
 	public HttpAccess getHttpAccess() {
 		return new HttpAccess() {
 
@@ -249,6 +250,9 @@ public class LessonBuilderAccessService {
 					// key into access cache
 					String accessKey = itemString + ":" + sessionManager.getCurrentSessionUserId();
 					
+// need page to find site id
+		SimplePage currentPage = simplePageToolDao.getPage(item.getPageId());
+
 					if (item.isPrerequisite() && !"true".equals((String) accessCache.get(accessKey))) {
 
 						// computing requirements is so messy that it's worth
@@ -272,7 +276,8 @@ public class LessonBuilderAccessService {
 						simplePageBean.setAssignmentEntity(assignmentEntity);
 						simplePageBean.setGradebookIfc(gradebookIfc);
 						simplePageBean.setMemoryService(memoryService);
-						
+						simplePageBean.setCurrentSiteId(currentPage.getSiteId());
+
 						if (!simplePageBean.isItemAvailable(item, item.getPageId())) {
 							throw new EntityPermissionException(null, null, null);
 						}

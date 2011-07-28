@@ -48,14 +48,32 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.StringTokenizer;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Set;
+import java.util.HashSet;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.DateFormat;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.FileOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
+
 import org.sakaiproject.authz.cover.AuthzGroupService;
 import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentCollectionEdit;
+
+import org.sakaiproject.content.api.ContentEntity;
+
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.ContentResource;
 import org.sakaiproject.content.api.ContentResourceEdit;
@@ -63,7 +81,11 @@ import org.sakaiproject.content.api.FilePickerHelper;
 import org.sakaiproject.content.api.GroupAwareEntity.AccessMode;
 import org.sakaiproject.entity.api.Reference;
 import org.sakaiproject.entity.api.ResourceProperties;
+
 import org.sakaiproject.event.cover.EventTrackingService;
+
+import org.sakaiproject.entity.api.ResourcePropertiesEdit;
+
 import org.sakaiproject.event.cover.NotificationService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.PermissionException;
@@ -193,7 +215,7 @@ public class SimplePageBean {
 
 	public Long itemId = null;
 	public boolean isMultimedia = false;
-	
+
 	public String commentsId;
 	public boolean anonymous;
 	public String comment;
@@ -203,6 +225,8 @@ public class SimplePageBean {
 	public boolean comments;
 	public boolean forcedAnon;
 	
+	public boolean isWebsite = false;
+
 	private String linkUrl;
 
 	private String height, width;
@@ -237,6 +261,7 @@ public class SimplePageBean {
 	private String topictool = null;
 	
 	private Integer editPrivs = null;
+	private String currentSiteId = null;
 
 	public Map<String, MultipartFile> multipartMap;
 
@@ -541,6 +566,10 @@ public class SimplePageBean {
 	public void setMultimedia(boolean isMm) {
 	    isMultimedia = isMm;
 	}
+	
+	public void setWebsite(boolean isWebsite) {
+	    this.isWebsite = isWebsite;
+	}
 
     // hibernate interposes something between us and saveItem, and that proxy gets an
     // error after saveItem does. Thus we never see any value that saveItem might 
@@ -553,9 +582,7 @@ public class SimplePageBean {
 		
 		try {
 			simplePageToolDao.saveItem(i,  elist, messageLocator.getMessage("simplepage.nowrite"), requiresEditPermission);
-		} catch (Throwable t) {
-			t.printStackTrace();
-			
+		} catch (Throwable t) {	
 			// this is probably a bogus error, but find its root cause
 			while (t.getCause() != null) {
 				t = t.getCause();
@@ -681,11 +708,15 @@ public class SimplePageBean {
 	}
 
 	public String processMultimedia() {
-		return processResource(SimplePageItem.MULTIMEDIA);
+	    return processResource(SimplePageItem.MULTIMEDIA, false);
 	}
 
 	public String processResource() {
-		return processResource(SimplePageItem.RESOURCE);
+	    return processResource(SimplePageItem.RESOURCE, false);
+	}
+
+        public String processWebSite() {
+	    return processResource(SimplePageItem.RESOURCE, true);
 	}
 
     // get mime type for a URL. connect to the server hosting
@@ -724,7 +755,7 @@ public class SimplePageBean {
 
     // return call from the file picker, used by add resource
     // the picker communicates with us by session variables
-	public String processResource(int type) {
+	public String processResource(int type, boolean isWebSite) {
 		if (!canEditPage())
 		    return "permission-failed";
 
@@ -804,6 +835,13 @@ public class SimplePageBean {
 		toolSession.removeAttribute(FilePickerHelper.FILE_PICKER_CANCEL);
 		toolSession.removeAttribute(LESSONBUILDER_ITEMID);
 
+		if("application/zip".equals(mimeType) && isWebSite) {
+		    // We need to set the sakaiId to the resource id of the index file
+		    id = expandZippedResource(id);
+		    if (id == null)
+			return "failed";
+		}
+
 		String[] split = id.split("/");
 
 		SimplePageItem i;
@@ -864,7 +902,7 @@ public class SimplePageBean {
 		}
 		
 		editPrivs = 2;
-		String ref = "/site/" + toolManager.getCurrentPlacement().getContext();
+		String ref = "/site/" + getCurrentSiteId();
 		boolean ok = securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_UPDATE, ref);
 		if(ok) editPrivs = 0;
 		
@@ -891,11 +929,11 @@ public class SimplePageBean {
 	}
 
 	public boolean canReadPage() {
-		String ref = "/site/" + toolManager.getCurrentPlacement().getContext();
+		String ref = "/site/" + getCurrentSiteId();
 		return securityService.unlock(SimplePage.PERMISSION_LESSONBUILDER_READ, ref);
 	}
 	public boolean canEditSite() {
-		String ref = "/site/" + toolManager.getCurrentPlacement().getContext();
+		String ref = "/site/" + getCurrentSiteId();
 		return securityService.unlock("site.upd", ref);
 	}
 
@@ -1273,11 +1311,19 @@ public class SimplePageBean {
 	}
 
 	public String getCurrentSiteId() {
+		if (currentSiteId != null)
+		    return currentSiteId;
 		try {
-		    return toolManager.getCurrentPlacement().getContext();
+		    currentSiteId = toolManager.getCurrentPlacement().getContext();
+		    return currentSiteId;
 		} catch (Exception impossible) {
 		    return null;
 		}
+	}
+
+    // so access can inject the siteid
+	public void setCurrentSiteId(String siteId) {       
+		currentSiteId = siteId;
 	}
 
     // recall that code typically operates on a "current page." See below for
@@ -1315,7 +1361,7 @@ public class SimplePageBean {
 	public void updatePageObject(long l) throws PermissionException {
 		if (l != previousPageId) {
 			currentPage = simplePageToolDao.getPage(l);
-			String siteId = toolManager.getCurrentPlacement().getContext();
+			String siteId = getCurrentSiteId();
 			
 			// get a rare error here, trying to debug it
 			if(currentPage == null || currentPage.getSiteId() == null) {
@@ -1392,7 +1438,7 @@ public class SimplePageBean {
 				String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
 				String title = getCurrentSite().getPage(toolId).getTitle(); // Use title supplied
 																			// during creation
-				SimplePage page = simplePageToolDao.makePage(toolId, toolManager.getCurrentPlacement().getContext(), title, null, null);
+				SimplePage page = simplePageToolDao.makePage(toolId, getCurrentSiteId(), title, null, null);
 				if (!saveItem(page)) {
 					currentPage = null;
 					return 0;
@@ -1624,6 +1670,15 @@ public class SimplePageBean {
 		boolean makeNewPage = (selectedEntity == null || selectedEntity.length() == 0);
 		boolean makeNewItem = (itemId == null || itemId == -1);
 
+		// make sure the page is legit
+		if (!makeNewPage) {
+		    SimplePage p = simplePageToolDao.getPage(Long.valueOf(selectedEntity));
+		    if (p == null || !getCurrentSiteId().equals(p.getSiteId())) {
+			log.warn("addpage tried to add invalid page: " + selectedEntity);
+			return "invalidpage";
+		    }
+		}
+
 		if ((title == null || title.length() == 0) &&
 		    (selectedEntity == null || selectedEntity.length() == 0)) {
 			return "notitle";
@@ -1645,7 +1700,7 @@ public class SimplePageBean {
 		String toolId = ((ToolConfiguration) toolManager.getCurrentPlacement()).getPageId();
 		SimplePage subpage = null;
 		if (makeNewPage) {
-		    subpage = simplePageToolDao.makePage(toolId, toolManager.getCurrentPlacement().getContext(), title, parent, topParent);
+		    subpage = simplePageToolDao.makePage(toolId, getCurrentSiteId(), title, parent, topParent);
 		    subpage.setOwner(owner);
 		    subpage.setGroupOwned(groupOwned);
 		    saveItem(subpage);
@@ -1699,7 +1754,7 @@ public class SimplePageBean {
 	    if (getEditPrivs() != 0)
 	    	return "permission-failed";
 
-	    String siteId = toolManager.getCurrentPlacement().getContext();
+	    String siteId = getCurrentSiteId();
 
 	    for (int i = 0; i < selectedEntities.length; i++) {
 	    	SimplePage target = simplePageToolDao.getPage(Long.valueOf(selectedEntities[i]));
@@ -1962,7 +2017,7 @@ public class SimplePageBean {
 	}
 
         public String assignmentRef(String id) {
-	    return "/assignment/a/" + toolManager.getCurrentPlacement().getContext() + "/" + id;
+	    return "/assignment/a/" + getCurrentSiteId() + "/" + id;
 	}
 
     // called by add forum dialog. Create a new item that points to a forum or
@@ -2158,6 +2213,8 @@ public class SimplePageBean {
 	    	   return null;
 	       }
 	   }
+	   if (entity == null)
+	       return null;
 
 	   // in principle the groups are stored in a SimplePageGroup if we
 	   // are doing access control, and in the tool if not. We can
@@ -2641,7 +2698,7 @@ public class SimplePageBean {
 				// simplepage.upd privileges, but site.save requires site.upd.
 				securityService.pushAdvisor(new SecurityAdvisor() {
 					public SecurityAdvice isAllowed(String userId, String function, String reference) {
-						if (function.equals(SITE_UPD) && reference.equals("/site/" + toolManager.getCurrentPlacement().getContext())) {
+						if (function.equals(SITE_UPD) && reference.equals("/site/" + getCurrentSiteId())) {
 							return SecurityAdvice.ALLOWED;
 						} else {
 							return SecurityAdvice.PASS;
@@ -2779,14 +2836,19 @@ public class SimplePageBean {
 		SimplePageItem item = simplePageToolDao.makeItem(0, 0, SimplePageItem.PAGE, Long.toString(page.getPageId()), title);
 		saveItem(item);
 
-		if (copyCurrent) {
-			long oldPageId = getCurrentPageId();
-			long newPageId = page.getPageId();
-			for (SimplePageItem oldItem: simplePageToolDao.findItemsOnPage(oldPageId)) {
-				SimplePageItem newItem = simplePageToolDao.copyItem(oldItem);
-				newItem.setPageId(newPageId);
-				saveItem(newItem);
-			}
+	    if (copyCurrent) {
+		long oldPageId = getCurrentPageId();
+		long newPageId = page.getPageId();
+		for (SimplePageItem oldItem: simplePageToolDao.findItemsOnPage(oldPageId)) {
+		    // don't copy pages. It's not clear whether we want to deep copy or
+		    // not. If we do the wrong thing the user coudl end up editing the
+		    // wrong page and losing content.
+		    if (oldItem.getType() == SimplePageItem.PAGE)
+			continue;
+		    SimplePageItem newItem = simplePageToolDao.copyItem(oldItem);
+		    newItem.setPageId(newPageId);
+		    saveItem(newItem);
+		}
 	    }
 
 	    return page;
@@ -4303,6 +4365,140 @@ public class SimplePageBean {
 		}else {
 			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
 			return "failure";
+		}
+	}
+	
+	private String expandZippedResource(String resourceId) {
+
+		String contentCollectionId = resourceId.substring(0, resourceId.lastIndexOf(".")) + "/";
+
+		try {
+			contentHostingService.removeCollection(contentCollectionId);
+		} catch (Exception e) {
+			log.info("Failed to delete expanded collection");
+		}
+
+		// Q: Are we running a kernel with KNL-273?
+		Class contentHostingInterface = ContentHostingService.class;
+		try {
+			Method expandMethod = contentHostingInterface.getMethod("expandZippedResource", new Class[] { String.class });
+			// Expand the website
+			expandMethod.invoke(contentHostingService, new Object[] { resourceId });
+		} catch (NoSuchMethodException nsme) {
+			// A: No; should be impossible, UI already tested
+			return null;
+		} catch (Exception e) {
+			// A: Not sure
+			log.error("SecurityException thrown by expandZippedResource method lookup", e);
+			setErrKey("simplepage.website.cantexpand", null);
+			return null;
+		}
+
+		// Now set the html ok flag
+
+		try {
+			ContentCollectionEdit cce = contentHostingService.editCollection(contentCollectionId);
+
+			ResourcePropertiesEdit props = cce.getPropertiesEdit();
+			props.addProperty(ResourceProperties.PROP_ALLOW_INLINE, "true");
+			List<String> children = cce.getMembers();
+			for (int j = 0; j < children.size(); j++) {
+				String resId = children.get(j);
+				if (resId.endsWith("/")) {
+					setPropertyOnFolderRecursively(resId, ResourceProperties.PROP_ALLOW_INLINE, "true");
+				}
+			}
+
+			contentHostingService.commitCollection(cce);
+
+			// Now lets work out what type it is and return the appropriate
+			// index url
+
+			String index = null;
+
+			String name = contentCollectionId.substring(0, contentCollectionId.lastIndexOf("/"));
+			name = name.substring(name.lastIndexOf("/") + 1);
+			if (name.endsWith("_HTML")) {
+				// This is probably Wimba Create as wc adds this suffix to the
+				// zips it creates
+				name = name.substring(0, name.indexOf("_HTML"));
+			}
+
+			ContentEntity ce = cce.getMember(contentCollectionId + name + ".xml");
+			if (ce != null) {
+				index = "index.htm";
+			}
+
+			// Test for Camtasia
+			ce = cce.getMember(contentCollectionId + "ProductionInfo.xml");
+			if (ce != null) {
+				index = name + ".html";
+			}
+			
+			// Test for Articulate
+			ce = cce.getMember(contentCollectionId + "player.html");
+			if (ce != null) {
+				index = "player.html";
+			}
+
+			// Test for generic web site
+			ce = cce.getMember(contentCollectionId + "index.html");
+			if (ce != null) {
+			    index = "index.html";
+			}
+
+			ce = cce.getMember(contentCollectionId + "index.htm");
+			if (ce != null) {
+			    index = "index.htm";
+			}
+
+			if (index == null) {
+			    // /content/group/nnnn/folder
+			    int i = contentCollectionId.indexOf("/", 1);
+			    i = contentCollectionId.indexOf("/", i+1);
+
+			    setErrKey("simplepage.website.noindex", contentCollectionId.substring(i));
+			    return null;
+			}
+
+			//String relativeUrl = contentCollectionId.substring(contentCollectionId.indexOf("/Lesson Builder")) + index;
+			String relativeUrl = contentCollectionId + "/" + index;
+			return relativeUrl;
+		} catch (Exception e) {
+			log.error(e);
+			setErrKey("simplepage.website.cantexpand", null);
+			return null;
+		}
+	}
+	
+	private void setPropertyOnFolderRecursively(String resourceId, String property, String value) {
+
+		try {
+			if (contentHostingService.isCollection(resourceId)) {
+				// collection
+				ContentCollectionEdit col = contentHostingService.editCollection(resourceId);
+
+				ResourcePropertiesEdit resourceProperties = col.getPropertiesEdit();
+				resourceProperties.addProperty(property, Boolean.valueOf(value).toString());
+				contentHostingService.commitCollection(col);
+
+				List<String> children = col.getMembers();
+				for (int i = 0; i < children.size(); i++) {
+					String resId = children.get(i);
+					if (resId.endsWith("/")) {
+						setPropertyOnFolderRecursively(resId, property, value);
+					}
+				}
+
+			} else {
+				// resource
+				ContentResourceEdit res = contentHostingService.editResource(resourceId);
+				ResourcePropertiesEdit resourceProperties = res.getPropertiesEdit();
+				resourceProperties.addProperty(property, Boolean.valueOf(value).toString());
+				contentHostingService.commitResource(res, NotificationService.NOTI_NONE);
+			}
+		} catch (Exception pe) {
+			pe.printStackTrace();
 		}
 	}
 }
