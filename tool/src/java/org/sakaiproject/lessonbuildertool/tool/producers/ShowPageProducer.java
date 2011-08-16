@@ -2487,7 +2487,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIBoundBoolean.make(form, "page-prerequisites", "#{simplePageBean.prerequisite}", (pageItem.isPrerequisite()));
 		}
 
-		UIOutput gradeBook = UIOutput.make(form, "gradebookDiv");
+		UIOutput gradeBook = UIOutput.make(form, "gradeBookDiv");
 		if(page.getOwner() != null) gradeBook.decorate(new UIStyleDecorator("noDisplay"));
 		
 		UIOutput.make(form, "page-gradebook");
