@@ -732,13 +732,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					if (canEditPage) {
 					    UIOutput.make(tableRow, "imageHeight", getOrig(height));
 					    UIOutput.make(tableRow, "imageWidth", getOrig(width));
-					    UIOutput.make(tableRow, "description2", i.getDescription());
 					    UIOutput.make(tableRow, "mimetype2", mimeType);
 					    UIOutput.make(tableRow, "current-item-id4", Long.toString(i.getId()));
 					    UIOutput.make(tableRow, "editmm-td");
 					    UILink.make(tableRow, "iframe-edit", messageLocator.getMessage("simplepage.editItem"), "").
 						decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.url").replace("{}", abbrevUrl(i.getURL()))));
 					}
+					
+					UIOutput.make(tableRow, "description2", i.getDescription());
 
 				} else if ((youtubeKey = simplePageBean.getYoutubeKey(i)) != null) {
 					String youtubeUrl = "http://www.youtube.com/v/" + youtubeKey + "?version=3";
@@ -787,13 +788,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    UIOutput.make(tableRow, "currentYoutubeURL", youtubeUrl);
 					    UIOutput.make(tableRow, "currentYoutubeHeight", getOrig(height));
 					    UIOutput.make(tableRow, "currentYoutubeWidth", getOrig(width));
-					    UIOutput.make(tableRow, "description4", i.getDescription());
+					    
 					    UIOutput.make(tableRow, "current-item-id5", Long.toString(i.getId()));
 
 					    UIOutput.make(tableRow, "youtube-td");
 					    UILink.make(tableRow, "youtube-edit", messageLocator.getMessage("simplepage.editItem"), "").
 						decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.youtube")));
 					}
+					
+					UIOutput.make(tableRow, "description4", i.getDescription());
 
 					// as of Oct 28, 2010, we store the mime type. mimeType null is an old entry.
 					// For that use the old approach of checking the extension.
@@ -903,7 +906,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    UIOutput.make(tableRow, "movieId", String.valueOf(i.getId()));
 					    UIOutput.make(tableRow, "movieHeight", getOrig(height));
 					    UIOutput.make(tableRow, "movieWidth", getOrig(width));
-					    UIOutput.make(tableRow, "description3", i.getDescription());
 					    UIOutput.make(tableRow, "mimetype5", oMimeType);
 					    UIOutput.make(tableRow, "current-item-id6", Long.toString(i.getId()));
 					    
@@ -911,6 +913,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    UILink.make(tableRow, "edit-movie", messageLocator.getMessage("simplepage.editItem"), "").
 						    decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.url").replace("{}", abbrevUrl(i.getURL()))));
 					}
+					
+					UIOutput.make(tableRow, "description3", i.getDescription());
 				} else {
 				    // finally, HTML. Use an iframe
 				    // definition of resizeiframe, at top of page
@@ -941,13 +945,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					if (canEditPage) {
 					    UIOutput.make(tableRow, "iframeHeight", getOrig(height));
 					    UIOutput.make(tableRow, "iframeWidth", getOrig(width));
-					    UIOutput.make(tableRow, "description5", i.getDescription());
 					    UIOutput.make(tableRow, "mimetype3", mimeType);
 					    UIOutput.make(tableRow, "current-item-id3", Long.toString(i.getId()));
 					    UIOutput.make(tableRow, "editmm-td");
 					    UILink.make(tableRow, "iframe-edit", messageLocator.getMessage("simplepage.editItem"), "").
 						decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.url").replace("{}", abbrevUrl(i.getURL()))));
 					}
+					
+					UIOutput.make(tableRow, "description5", i.getDescription());
 				}
 
 				// end of multimedia object
