@@ -1363,24 +1363,27 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						UIOutput.make(tofill, "delete-dialog");
 					    }
 
+					    // forced comments have to be edited on the main page
 					    if (canEditPage) {
 						UIOutput.make(tableRow, "comments-td");
 						
-						UILink.make(tableRow, "edit-comments", messageLocator.getMessage("simplepage.editItem"), "")
+						if (i.getSequence() > 0) {
+						    UILink.make(tableRow, "edit-comments", messageLocator.getMessage("simplepage.editItem"), "")
 								.decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.comments")));
 
-						UIOutput.make(tableRow, "commentsId", String.valueOf(i.getId()));
-						UIOutput.make(tableRow, "commentsAnon", String.valueOf(i.isAnonymous()));
-						UIOutput.make(tableRow, "commentsitem-required", String.valueOf(i.isRequired()));
-						UIOutput.make(tableRow, "commentsitem-prerequisite", String.valueOf(i.isPrerequisite()));
-						String itemGroupString = simplePageBean.getItemGroupString(i, null, true);
-						if (itemGroupString != null) {
-						    String itemGroupTitles = simplePageBean.getItemGroupTitles(itemGroupString);
-						    if (itemGroupTitles != null) {
-							itemGroupTitles = "[" + itemGroupTitles + "]";
+						    UIOutput.make(tableRow, "commentsId", String.valueOf(i.getId()));
+						    UIOutput.make(tableRow, "commentsAnon", String.valueOf(i.isAnonymous()));
+						    UIOutput.make(tableRow, "commentsitem-required", String.valueOf(i.isRequired()));
+						    UIOutput.make(tableRow, "commentsitem-prerequisite", String.valueOf(i.isPrerequisite()));
+						    String itemGroupString = simplePageBean.getItemGroupString(i, null, true);
+						    if (itemGroupString != null) {
+							String itemGroupTitles = simplePageBean.getItemGroupTitles(itemGroupString);
+							if (itemGroupTitles != null) {
+							    itemGroupTitles = "[" + itemGroupTitles + "]";
+							}
+							UIOutput.make(tableRow, "comments-groups", itemGroupString);
+							UIOutput.make(tableRow, "item-group-titles6", itemGroupTitles);
 						    }
-						    UIOutput.make(tableRow, "comments-groups", itemGroupString);
-						    UIOutput.make(tableRow, "item-group-titles6", itemGroupTitles);
 						}
 					    }
 
