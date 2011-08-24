@@ -137,6 +137,7 @@ $(function() {
 		$("#select-resource-group").hide();
 
 		$('.subpage-link').click(function(){
+			closeDropdown();
 			var position =  $(this).position();
 			$("#subpage-dialog").dialog("option", "position", [position.left, position.top]);
 			$('.hideOnDialog').hide();
@@ -146,6 +147,7 @@ $(function() {
 		});
 
 		$('#edit-title').click(function(){
+			closeDropdown();
 			var position =  $(this).position();
 			$("#edit-title-dialog").dialog("option", "position", [position.left, position.top]);
 			$('.hideOnDialog').hide();
@@ -161,6 +163,7 @@ $(function() {
 		});
 
 		$('#import-cc').click(function(){
+			closeDropdown();
 			var position =  $(this).position();
 			$("#import-cc-dialog").dialog("option", "position", [position.left, position.top]);
 			$('.hideOnDialog').hide();
@@ -190,6 +193,7 @@ $(function() {
 	    });
 
 		$('#new-page').click(function(){
+			closeDropdown();
 			var position =  $(this).position();
 			$("#new-page-dialog").dialog("option", "position", [position.left, position.top]);
 			$('.hideOnDialog').hide();
@@ -199,6 +203,7 @@ $(function() {
 		});
 
 		$('#remove-page').click(function(){
+			closeDropdown();
 			var position =  $(this).position();
 			$("#remove-page-dialog").dialog("option", "position", [position.left, position.top]);
 			// rsf puts the URL on the non-existent src attribute
@@ -234,6 +239,7 @@ $(function() {
 		}
 		
 		$(".edit-youtube").click(function(){
+			closeDropdown();
 			$("#editgroups-youtube").after($("#grouplist"));
 			$("#grouplist").hide();
 			$("#editgroups-youtube").hide();
@@ -272,7 +278,7 @@ $(function() {
 		    });
 
 		$('.edit-movie').click(function(){
-
+			closeDropdown();
 	                //var object = this.parentNode.parentNode.childNodes[3].childNodes[1];                                                                
 			$("#expert-movie").hide();
 			$("#expert-movie-toggle-div").show();
@@ -309,6 +315,7 @@ $(function() {
 		});
 		
 		$(".edit-comments").click(function(){
+			closeDropdown();
 			$("#editgroups-comments").after($("#grouplist"));
 			$("#grouplist").hide();
 			$("#editgroups-comments").hide();
@@ -365,6 +372,7 @@ $(function() {
 		    });
 
 		$(".edit-student").click(function(){
+			closeDropdown();
 			$("#editgroups-student").after($("#grouplist"));
 			$("#grouplist").hide();
 			$("#editgroups-student").hide();
@@ -485,6 +493,7 @@ $(function() {
 		});
 		
 		$(".edit-link").click(function(){
+			closeDropdown();
 			$("#require-label2").hide();
 			$("#item-required2").hide();
 			$("#assignment-dropdown-selection").hide();
@@ -786,6 +795,7 @@ $(function() {
 		});
 
 		$(".add-multimedia").click(function(){
+			closeDropdown();
 			$("#mm-item-id").val(-1);
 			$("#mm-is-mm").val('true');
 			$("#mm-is-website").val('false');
@@ -807,6 +817,7 @@ $(function() {
 		});
 
 		$(".add-resource").click(function(){
+			closeDropdown();
 			$("#mm-item-id").val(-1);
 			$("#mm-is-mm").val('false');
 			$("#mm-is-website").val('false');
@@ -827,6 +838,7 @@ $(function() {
 		});
 
 		$(".add-website").click(function(){
+			closeDropdown();
 			$("#mm-item-id").val(-1);
 			$("#mm-is-mm").val('false');
 			$("#mm-is-website").val('true');
@@ -848,6 +860,7 @@ $(function() {
 		});
 
 		$(".multimedia-edit").click(function(){
+			closeDropdown();
 			$("#expert-multimedia").hide();
 			$("#expert-multimedia-toggle-div").show();
 			$("#editgroups-mm").after($("#grouplist"));
@@ -1260,6 +1273,19 @@ function toggleDropdown() {
 			reposition();
 			$("#dropDownDiv").show("slide", {direction: "up"}, 300, unlockAnimation);
 			dropdownViaClick = true;
+		}
+	}
+	return false;
+}
+
+function closeDropdown() {
+
+	if(!lessonBuilderAnimationLocked) {
+		if($("#dropDownDiv").is(":visible")) {
+			hasBeenInMenu = false;
+			$('.hideOnDialog').show();
+			$("#dropDownDiv").hide();
+			dropdownViaClick = false;
 		}
 	}
 	return false;
