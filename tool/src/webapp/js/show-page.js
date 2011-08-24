@@ -991,11 +991,21 @@ $(function() {
 			sensitivity: 7,
 			over: addHighlight,
 			timeout: 700,
-			out: removeHighlight
+			out: buttonRemoveHighlight
 	};
 	
+	var dropdownConfig = {	
+			interval: 200,
+			sensitivity: 7,
+			over: menuAddHighlight,
+			timeout: 700,
+			out: removeHighlight
+	};
+
+
 	$("li.dropdown").hoverIntent(megaConfig);
-	$("li.dropdown").children("div").hide();
+	$("#dropDownDiv").hide();
+	$("#dropDownDiv").hoverIntent(dropdownConfig);
 	$("li.dropdown").click(toggleDropdown);
 	dropDownViaClick = false;
 });
@@ -1200,13 +1210,25 @@ $(function() {
 	});
 });
 
+var hasBeenInMenu = false;
+
+function menuAddHighlight() {
+    hasBeenInMenu = true;
+    addHighLight();
+}
+
+function buttonRemoveHighlight() {
+    if (!hasBeenInMenu)
+	removeHighlight();
+}
+
 function addHighlight() {
 	if(!lessonBuilderAnimationLocked) {
-		if(!$(this).children("div").is(":visible")) {
+		if(!$("#dropDownDiv").is(":visible")) {
 			lessonBuilderAnimationLocked = true;
-			reposition();
 			$('.hideOnDialog').hide();
-			$(this).children("div").show("slide", {direction: "up"}, 300, unlockAnimation);
+			reposition();
+			$("#dropDownDiv").show("slide", {direction: "up"}, 300, unlockAnimation);
 		}
 	}
 	//$(this).addClass("hovering");
@@ -1214,10 +1236,11 @@ function addHighlight() {
 
 function removeHighlight() {
 	if(!lessonBuilderAnimationLocked) {
-		if($(this).children("div").is(":visible") && !dropdownViaClick) {
+		if($("#dropDownDiv").is(":visible") && !dropdownViaClick) {
+			hasBeenInMenu = false;
 			lessonBuilderAnimationLocked = true;
 			$('.hideOnDialog').show();
-			$(this).children("div").hide("slide", {direction: "up"}, 300, unlockAnimation);
+			$("#dropDownDiv").hide("slide", {direction: "up"}, 300, unlockAnimation);
 		}
 	}
 	//$(this).removeClass("hovering");
@@ -1225,16 +1248,17 @@ function removeHighlight() {
 
 function toggleDropdown() {
 	if(!lessonBuilderAnimationLocked) {
-		if($(this).children("div").is(":visible")) {
+		if($("#dropDownDiv").is(":visible")) {
 			lessonBuilderAnimationLocked = true;
+			hasBeenInMenu = false;
 			$('.hideOnDialog').show();
-			$(this).children("div").hide("slide", {direction: "up"}, 300, unlockAnimation);
+			$("#dropDownDiv").hide("slide", {direction: "up"}, 300, unlockAnimation);
 			dropdownViaClick = false;
 		}else {
 			lessonBuilderAnimationLocked = true;
-			reposition();
 			$('.hideOnDialog').hide();
-			$(this).children("div").show("slide", {direction: "up"}, 300, unlockAnimation);
+			reposition();
+			$("#dropDownDiv").show("slide", {direction: "up"}, 300, unlockAnimation);
 			dropdownViaClick = true;
 		}
 	}
@@ -1242,17 +1266,17 @@ function toggleDropdown() {
 }
 
 function reposition() {
-	var dropX = $("li.dropdown").offset().left;
-	var dropdown = $("li.dropdown").children("div");
+	var dropX = $(".dropdown a").offset().left;
+	var dropdown = $("#dropDownDiv");
 	//alert("DropX: " + dropX);
 	//alert("Width: " + window.innerWidth);
 	//alert("Width2: " + dropdown.width());
-	if(dropX + dropdown.width() > $(window).width() ) {
-	    dropdown.css("left", Math.max(0,($(window).width() - dropdown.width() - dropX - 100)) + "px");
+	if(dropX + dropdown.width() > ($(window).width()-30)) {
+	    dropdown.css("left", Math.max(0,($(window).width() - dropdown.width() - 30)) + "px");
 	} else {
 	    // in case user changes zoom and then tries again, we could end up
             // with a value from the case above that is now incorrect                        	    
-            dropdown.css("left", "0px");
+            dropdown.css("left", dropX);
 	}
 
 }
