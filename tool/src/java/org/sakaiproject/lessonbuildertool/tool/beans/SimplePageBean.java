@@ -3307,7 +3307,7 @@ public class SimplePageBean {
 
 	public String getCurrentUserId() {
 	    if (currentUserId == null)
-	    	currentUserId = sessionManager.getCurrentSessionUserId();
+	    	currentUserId = UserDirectoryService.getCurrentUser().getId();
 	    return currentUserId;
 	}
 	    
