@@ -4012,7 +4012,8 @@ public class SimplePageBean {
 	}
 
 	public void deleteYoutubeItem() {
-		simplePageToolDao.deleteItem(findItem(youtubeId));
+		itemId = findItem(youtubeId).getId();
+		deleteItem();
 	}
 
 	public void setMmUrl(String url) {

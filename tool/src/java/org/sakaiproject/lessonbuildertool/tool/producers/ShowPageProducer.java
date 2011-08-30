@@ -1076,19 +1076,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						UIOutput.make(tableRow, "description2", i.getDescription());
 
 					} else if ((youtubeKey = simplePageBean.getYoutubeKey(i)) != null) {
-						String youtubeUrl = "http://www.youtube.com/v/" + youtubeKey + "?version=3";
-						// this is very odd. The official youtube embedding uses
-						// <OBJECT> with
-						// a stylesheet to specify size. But the only values
-						// that actually
-						// work are px and percent. I.e. it works just like the
-						// old
-						// HTML length types. A real stylesheet length
-						// understands other units.
-						// I'm generating a style sheet, so that our HTML
-						// embedding is as close
-						// to theirs as possible, even the lengths are actually
-						// interpreted as old style
+						String youtubeUrl = "http://www.youtube.com/embed/" + youtubeKey;
 
 						UIOutput.make(tableRow, "youtubeSpan");
 
@@ -1119,19 +1107,18 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						// allowfullscreen="true" allowScriptAccess="always"
 						// width="640" height="390"></object>
 
-						item = UIOutput.make(tableRow, "youtubeObject");
+						item = UIOutput.make(tableRow, "youtubeIFrame");
 						// youtube seems ok with length and width
-						if (lengthOk(height) && lengthOk(width)) {
-							item.decorate(new UIFreeAttributeDecorator("style", getStyle(width, height)));
+						if(lengthOk(height)) {
+							item.decorate(new UIFreeAttributeDecorator("height", height.getOld()));
 						}
+						
+						if(lengthOk(width)) {
+							item.decorate(new UIFreeAttributeDecorator("width", width.getOld()));
+						}
+						
 						item.decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.youtube_player")));
-
-						UIOutput.make(tableRow, "youtubeURLInject").decorate(new UIFreeAttributeDecorator("value", youtubeUrl));
-
-						item = UIOutput.make(tableRow, "youtubeEmbed").decorate(new UIFreeAttributeDecorator("type", "application/x-shockwave-flash")).decorate(new UIFreeAttributeDecorator("src", youtubeUrl));
-						if (lengthOk(height) && lengthOk(width)) {
-							item.decorate(new UIFreeAttributeDecorator("height", height.getOld())).decorate(new UIFreeAttributeDecorator("width", width.getOld()));
-						}
+						item.decorate(new UIFreeAttributeDecorator("src", youtubeUrl));
 
 						if (canEditPage) {
 							UIOutput.make(tableRow, "youtubeId", String.valueOf(i.getId()));
@@ -1143,7 +1130,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							UIOutput.make(tableRow, "youtube-td");
 							UILink.make(tableRow, "youtube-edit", messageLocator.getMessage("simplepage.editItem"), "").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.youtube")));
 						}
-						
+
 						UIOutput.make(tableRow, "description4", i.getDescription());
 
 						// as of Oct 28, 2010, we store the mime type. mimeType
