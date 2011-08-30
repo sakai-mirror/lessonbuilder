@@ -2040,7 +2040,10 @@ public class SimplePageBean {
 				}
 				if (lessonEntity != null) {
 				    String groups = group.getGroups();
-				    lessonEntity.setGroups(Arrays.asList(groups.split(",")));
+				    List<String> groupList = null;
+				    if (groups != null && !groups.equals(""))
+					groupList = Arrays.asList(groups.split(","));
+				    lessonEntity.setGroups(groupList);
 				    simplePageToolDao.deleteItem(group);
 				}
 			    }

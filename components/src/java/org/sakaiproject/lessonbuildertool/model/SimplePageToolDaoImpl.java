@@ -392,7 +392,8 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		 */
 		if(requiresEditPermission && !(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
 				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
-				&& !(o instanceof SimplePageLogEntry)) {
+				&& !(o instanceof SimplePageLogEntry)
+				&& !(o instanceof SimplePageGroup)) {
 			elist.add(nowriteerr);
 			return false;
 		}
@@ -494,7 +495,8 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		 */
 		if(requiresEditPermission && !(o instanceof SimplePageItem && canEditPage(((SimplePageItem)o).getPageId()))
 				&& !(o instanceof SimplePage && canEditPage(((SimplePage)o).getOwner()))
-				&& !(o instanceof SimplePageLogEntry)) {
+		   		&& !(o instanceof SimplePageLogEntry)
+				&& !(o instanceof SimplePageGroup)) {
 			elist.add(nowriteerr);
 			return false;
 		}
