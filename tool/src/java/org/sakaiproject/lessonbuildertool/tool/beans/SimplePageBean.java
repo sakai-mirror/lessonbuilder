@@ -149,6 +149,7 @@ public class SimplePageBean {
 	}
 
 	public static final Pattern YOUTUBE_PATTERN = Pattern.compile("v[=/_][\\w-]{11}");
+	public static final Pattern SHORT_YOUTUBE_PATTERN = Pattern.compile("[\\w-]{11}");
 	public static final String GRADES[] = { "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "E", "F" };
 	public static final String FILTERHTML = "lessonbuilder.filterhtml";
 	public static final String LESSONBUILDER_ITEMID = "lessonbuilder.itemid";
@@ -3918,6 +3919,12 @@ public class SimplePageBean {
 				Matcher match = YOUTUBE_PATTERN.matcher(URL);
 				if (match.find()) {
 					return match.group().substring(2);
+				}
+			}else if(URL.startsWith("http://youtu.be/")) {
+				Matcher match = SHORT_YOUTUBE_PATTERN.matcher(URL);
+				if(match.find()) {
+					System.out.println(match.group());
+					return match.group();
 				}
 			}
 			

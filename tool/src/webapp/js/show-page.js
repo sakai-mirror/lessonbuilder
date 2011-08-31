@@ -950,7 +950,7 @@ $(function() {
 	    $('.usebutton').css('border', '1px solid black').css('padding', '1px 4px').css('color', 'black');
 	}
 
-	
+	$('.buttonset').buttonset();
 
 	function fixhref(href, pageitemid, resourcetype, website) {
 	    href = href.replace(/&pageItemId=-?[0-9]*/, "&pageItemId=" + pageitemid);
