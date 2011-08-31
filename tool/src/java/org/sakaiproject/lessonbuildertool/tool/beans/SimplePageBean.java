@@ -900,7 +900,14 @@ public class SimplePageBean {
     // main code for adding a new item to a page
 	private SimplePageItem appendItem(String id, String name, int type)   {
 	    // add at the end of the page
-		int seq = getItemsOnPage(getCurrentPageId()).size() + 1;
+	        List<SimplePageItem> items = getItemsOnPage(getCurrentPageId());
+		// ideally the following should be the same, but there can be odd cases. So be safe
+		int size = items.size();
+		int seq = items.get(size-1).getSequence();
+		if (size > seq)
+		    seq = size;
+		seq++;
+
 		SimplePageItem i = simplePageToolDao.makeItem(getCurrentPageId(), seq, type, id, name);
 
 		// defaults to a fixed width and height, appropriate for some things, but for an
@@ -3241,6 +3248,27 @@ public class SimplePageBean {
 		this.order = order;
 	}
 
+	public void fixorder() {
+	    List<SimplePageItem> items = getItemsOnPage(getCurrentPageId());
+	    
+	    for(int i = 0; i < items.size(); i++) {
+		if(items.get(i).getSequence() <= 0) {
+		    items.remove(items.get(i));
+		    i--;
+		}
+	    }
+
+	    int i = 1;
+	    for(SimplePageItem item: items) {
+		if (item.getSequence() != i) {
+		    item.setSequence(i);
+		    update(item);
+		}
+		i++;
+	    }
+
+	}
+
     // called by reorder tool to do the reordering
 	public String reorder() {
 
@@ -4003,7 +4031,8 @@ public class SimplePageBean {
 
 			checkControlGroup(item, false);
 
-			simplePageToolDao.deleteItem(group);
+			// huh? checkcontrolgroup just deleted it
+			//simplePageToolDao.deleteItem(group);
 
 			// We've undone it; call ourselves again, since the code at the
 			// start will recreate the group
