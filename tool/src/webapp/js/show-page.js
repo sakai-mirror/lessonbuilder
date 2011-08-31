@@ -16,9 +16,9 @@ function msg(s) {
 
 function checksize(oe) {
 	var nsize = oe.height() + oe.parent().position().top;
-	var bsize = $(document).height();
+	var bsize = $("#outer").height();
 	if ((nsize) > bsize) {
-		$(document).height(nsize);
+		$("#outer").height(nsize);
 		setMainFrameHeight(window.name);
 	}
 }
@@ -1306,4 +1306,6 @@ function hideMultimedia() {
 // When dialogs close, this shows the stuff that was hidden
 function unhideMultimedia() {
 	$('.hideOnDialog').show();
+	$("#outer").height("auto");
+	setMainFrameHeight(window.name);
 }
