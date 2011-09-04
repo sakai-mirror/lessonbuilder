@@ -1401,6 +1401,7 @@ public class SimplePageBean {
 			
 			// get a rare error here, trying to debug it
 			if(currentPage == null || currentPage.getSiteId() == null) {
+			    throw new PermissionException(getCurrentUserId(), "set page", Long.toString(l));
 			}
 			
 			// page should always be in this site, or someone is gaming us
@@ -1843,6 +1844,9 @@ public class SimplePageBean {
 		//		    removeId = getCurrentPageId();
 		SimplePage page = simplePageToolDao.getPage(removeId);
 		
+		if (page == null)
+		    return "no-such-page";
+
 		if(page.getOwner() == null) {
 			Site site = getCurrentSite();
 			SitePage sitePage = site.getPage(page.getToolId());
