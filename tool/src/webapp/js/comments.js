@@ -108,6 +108,16 @@ function switchEditors(link, show) {
 	
 	if(show) {
 		evolved.show();
+
+		if (noEditor) {
+		    // the submit expects HTML, so stick BRs at every newline
+		    var submit = $(link).parents(".commentsDiv").find(".submitButton");
+		   submit.click(function(link) {
+			    var text = $(this).parents(".commentsDiv").find(".evolved-box");
+			    text.val(text.val().replace(/\r\n/g, "<br/>\n").replace(/[\r\n]/g, "<br/>\n"));
+			    return true;
+			});
+		}
 		
 		$(link).parents(".commentsDiv").find(".submitButton").show();
 		$(link).parents(".commentsDiv").find(".cancelButton").show();
@@ -182,7 +192,15 @@ function edit(link, id) {
 	var evolved = $(link).parents(".commentsDiv").find(".evolved-box");
 	
 	if(noEditor) {
-		evolved.val($(link).parent().children(".commentBody").html());
+	    var body = $(link).parent().children(".commentBody");
+	    // this should get the text out of the comment with newlines
+	    // however innertext doesn't work on FF and I've heard rumors
+	    // about IE 9. Hence provide a standard backup. It will handle
+	    // newlines if they were entered via this text box, but 
+	    // may not if entered in the editor
+	    body = body.get(0).innerText || body.text();
+	    evolved.val(body);
+
 	} else if(sakai.editor.editors.ckeditor==undefined) {
 		FCKeditorAPI.GetInstance(evolved.children("textarea").attr("name")).SetHTML($(link).parent().children(".commentBody").html());
 	}else {
