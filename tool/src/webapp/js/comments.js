@@ -91,6 +91,34 @@ function performHighlight() {
 	$(".highlight-comment").effect("highlight", {}, 4000);
 }
 
+function replyToComment(link, replytext) {
+
+	var evolved = $(link).parents(".commentsDiv").find(".evolved-box");
+	
+	if(noEditor) {
+	    var body = $(link).parent().children(".commentBody");
+	    // this should get the text out of the comment with newlines
+	    // however innertext doesn't work on FF and I've heard rumors
+	    // about IE 9. Hence provide a standard backup. It will handle
+	    // newlines if they were entered via this text box, but 
+	    // may not if entered in the editor
+	    body = body.get(0).innerText || body.text().replace(/^\s*/,"").replace(/\n\s*/g,"\n");
+	    body = replytext + '\n\n' + body.replace(/^/,"|  ").replace(/\n/g,"\n|  ") + '\n\n';
+	    evolved.val(body);
+	} else if(sakai.editor.editors.ckeditor==undefined) {
+		FCKeditorAPI.GetInstance(evolved.children("textarea").attr("name")).SetHTML(replytext + '<div style="border-left: 2px solid black; padding-eleft:6px">' + (link).parent().children(".commentBody").html() + '</div>\n<p></p>');
+	}else {
+		CKEDITOR.instances[evolved.children("textarea").attr("name")].setData(replytext + '<div style="border-left: 2px solid black; padding-left:6px">' + $(link).parent().children(".commentBody").html() + '</div>\n<p></p>');
+	}
+	
+	$(link).parents(".commentsDiv").find(".comment-edit-id").val(null);
+	$(link).parents(".commentsDiv").find(".submitButton").val(msg("simplepage.add-comment"));
+	
+	switchEditors(link);
+	return false;
+}
+
+
 function switchEditors(link, show) {
 	if(show==undefined) show = true;
 	
@@ -198,7 +226,7 @@ function edit(link, id) {
 	    // about IE 9. Hence provide a standard backup. It will handle
 	    // newlines if they were entered via this text box, but 
 	    // may not if entered in the editor
-	    body = body.get(0).innerText || body.text();
+	    body = body.get(0).innerText || body.text().replace(/^\s*/,"").replace(/\n\s*/g,"\n");
 	    evolved.val(body);
 
 	} else if(sakai.editor.editors.ckeditor==undefined) {

@@ -1349,6 +1349,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    if (params.postedComment) {
 						eParams.postedComment = postedCommentId;
 					    }
+					    eParams.siteId = simplePageBean.getCurrentSiteId();
+					    eParams.pageId = currentPage.getPageId();
 
 					    UIInternalLink.make(tableRow, "commentsLink", eParams);
 
