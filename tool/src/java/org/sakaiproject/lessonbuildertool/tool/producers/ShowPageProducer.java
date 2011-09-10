@@ -164,6 +164,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	private static List urlCacheLock = new ArrayList();
 	private static Cache urlCache = null;
 
+        String browserString = null; // set by checkIEVersion;
+
 	protected static final int DEFAULT_EXPIRATION = 10 * 60;
 
 	public String getViewID() {
@@ -357,8 +359,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIOutput.make(tofill, "error", errMessage);
 		}
 
-		// Find the MSIE version, if we're running it.
 		int ieVersion = checkIEVersion();
+		// browserString set by checkIEVersion
+		// as far as I can tell, none of these supports fck or ck
+		// we can make it configurable if necessary, or use WURFL
+		boolean noEditor = browserString.indexOf("iPhone") >= 0 ||
+		    browserString.indexOf("iPad") >= 0 ||
+		    browserString.indexOf("Android") >= 0;
 
 		if (simplePageBean.getTopRefresh()) {
 			UIOutput.make(tofill, "refresh");
@@ -1334,7 +1341,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    UIOutput.make(tableRow, "commentsDiv");
 					    Placement placement = toolManager.getCurrentPlacement();
 					    UIOutput.make(tableRow, "placementId", placement.getId());
-
+					    
+					    // note: the URL will be rewritten in comments.js to look like
+					    //  /sakai-lessonbuildertool-tool/faces/Comments...
 					    CommentsViewParameters eParams = new CommentsViewParameters(CommentsProducer.VIEW_ID);
 					    eParams.itemId = i.getId();
 					    if (params.postedComment) {
@@ -1390,7 +1399,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    fckInput.decorate(new UIFreeAttributeDecorator("width", "800"));
 					    fckInput.decorate(new UIStyleDecorator("evolved-box"));
 
-					    ((SakaiFCKTextEvolver) richTextEvolver).evolveTextInput(fckInput, "" + commentsCount);
+					    if (!noEditor)
+						((SakaiFCKTextEvolver) richTextEvolver).evolveTextInput(fckInput, "" + commentsCount);
 
 					    UICommand.make(form, "add-comment", "#{simplePageBean.addComment}");
 					}
@@ -1981,7 +1991,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UsageSession usageSession = UsageSessionService.getSession();
 		if (usageSession == null)
 		    return 0;
-		String browserString = usageSession.getUserAgent();
+		browserString = usageSession.getUserAgent();
 		int ieIndex = browserString.indexOf(" MSIE ");
 		int ieVersion = 0;
 		if (ieIndex >= 0) {

@@ -9,6 +9,7 @@ import java.util.List;
 
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
+import org.sakaiproject.lessonbuildertool.SimplePage;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
 import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
@@ -58,8 +59,18 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 
 		try {
 		
-
 		SimplePageItem commentsItem = simplePageToolDao.findItem(params.itemId);
+
+		// we're not going through the normal tool dispatch, so there's no placement.
+		// set up some of the SimplePageBean internal variables that would normally
+		// be set from the placement
+		if (commentsItem != null) {
+		    SimplePage currentPage = simplePageToolDao.getPage(commentsItem.getPageId());
+		    simplePageBean.setCurrentSiteId(currentPage.getSiteId());
+		    simplePageBean.setCurrentPage(currentPage);
+		    simplePageBean.setCurrentPageId(currentPage.getPageId());
+		}
+
 		if(commentsItem != null && commentsItem.getSakaiId() != null && !commentsItem.getSakaiId().equals("")) {
 			SimpleStudentPage studentPage = simplePageToolDao.findStudentPage(Long.valueOf(commentsItem.getSakaiId()));
 			if(studentPage != null) {
@@ -156,7 +167,9 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIOutput.make(tofill, "editAlert");
 		}
 
-		} catch (Exception e) {};
+		} catch (Exception e) {
+		    System.out.println("comments error " + e);
+		};
 
 	}
 	
