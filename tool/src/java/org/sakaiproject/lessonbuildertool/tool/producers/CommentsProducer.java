@@ -249,8 +249,13 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			
 			UIInternalLink.make(commentContainer, "deleteCommentURL", eParams);
 			
-			UIOutput.make(commentContainer, "editComment").decorate(
-					new UIFreeAttributeDecorator("onclick", "edit($(this), " + comment.getId() + ");"));
+			UIOutput.make(commentContainer, "deleteComment").
+			    decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.comment-delete").replace("{}", author)));
+
+			UIOutput.make(commentContainer, "editComment").
+			    decorate(new UIFreeAttributeDecorator("onclick", "edit($(this), " + comment.getId() + ");")).
+			    decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.comment-edit").replace("{}", author)));
+
 		}
 		
 		String dateString = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, M_locale).format(comment.getTimePosted());
@@ -258,7 +263,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		UIOutput.make(commentContainer, "replyTo").
 		    decorate(new UIFreeAttributeDecorator("onclick", "replyToComment($(this),'" + 
 							     messageLocator.getMessage("simplepage.in-reply-to").replace("{1}", author).replace("{2}", dateString) + "')")).
-		    decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.reply")));
+		    decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.comment-reply").replace("{}",author)));
 
 		if(!comment.getHtml()) {
 			UIOutput.make(commentContainer, "comment", comment.getComment());
