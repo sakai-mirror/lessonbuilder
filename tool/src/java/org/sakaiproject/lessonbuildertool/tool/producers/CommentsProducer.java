@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.text.SimpleDateFormat;
 import java.text.DateFormat;
+import java.util.Calendar;
 
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
 import org.sakaiproject.lessonbuildertool.SimplePageItem;
@@ -21,6 +22,8 @@ import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.cover.UserDirectoryService;
+import org.sakaiproject.time.cover.TimeService;
+import org.sakaiproject.util.ResourceLoader;
 
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.localeutil.LocaleGetter;
@@ -50,6 +53,9 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 	private String currentUserId;
 	private String owner = null;
         Locale M_locale = null;
+        DateFormat df = null;
+        DateFormat dfTime = null;
+        DateFormat dfDate = null;
 	
 	public String getViewID() {
 		return VIEW_ID;
@@ -69,6 +75,14 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		} else {
 			M_locale = new Locale(langLoc[0]);
 		}
+
+		df = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, new ResourceLoader().getLocale());
+		df.setTimeZone(TimeService.getLocalTimeZone());
+		System.out.println(TimeService.getLocalTimeZone().getDisplayName());
+		dfTime = DateFormat.getTimeInstance(DateFormat.SHORT, M_locale);
+		dfTime.setTimeZone(TimeService.getLocalTimeZone());
+		dfDate = DateFormat.getDateInstance(DateFormat.MEDIUM, M_locale);
+		dfDate.setTimeZone(TimeService.getLocalTimeZone());
 
 		// errors redirect back to ShowPage. But if thisi s embeded in the page, ShowPage
 		// will call us again. This is very hard for the user to recover from. So trap
@@ -260,7 +274,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 
 		}
 		
-		String dateString = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, M_locale).format(comment.getTimePosted());
+		String dateString = df.format(comment.getTimePosted());
 
 		UIOutput.make(commentContainer, "replyTo").
 		    decorate(new UIFreeAttributeDecorator("onclick", "replyToComment($(this),'" + 
@@ -313,12 +327,20 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		Date d = new Date(timeMillis);
 		Date now = new Date();
-		if(d.getMonth() == now.getMonth() && d.getDate() == now.getDate() && d.getYear() == now.getYear()) {
-			return DateFormat.getTimeInstance(DateFormat.SHORT, M_locale).format(d) + " (" + descrip + ")";
+		
+		Calendar cpost = Calendar.getInstance(TimeService.getLocalTimeZone(), M_locale);
+		Calendar cnow = Calendar.getInstance(TimeService.getLocalTimeZone(), M_locale);
+		cpost.setTime(d);
+		cnow.setTime(now);
+
+		if(cpost.get(Calendar.MONTH) == cnow.get(Calendar.MONTH) &&
+		   cpost.get(Calendar.DATE) == cnow.get(Calendar.DATE) &&
+		   cpost.get(Calendar.YEAR) == cnow.get(Calendar.YEAR)) {
+			return dfTime.format(d) + " (" + descrip + ")";
 		}else if(d.getYear() == now.getYear()) {
-			return DateFormat.getDateInstance(DateFormat.MEDIUM, M_locale).format(d) + " (" + descrip + ")";
+			return dfDate.format(d) + " (" + descrip + ")";
 		}else {
-			return DateFormat.getDateInstance(DateFormat.MEDIUM, M_locale).format(d) + " (" + descrip + ")";
+			return dfDate.format(d) + " (" + descrip + ")";
 		}
 	}
 	
