@@ -1451,17 +1451,50 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						
 						SimplePageLogEntry entry = cache.get(page.getPageId());
 						UIBranchContainer row = UIBranchContainer.make(tableRow, "studentRow:");
-						UIOutput.make(row, "studentCell");
 						
+						String label = "";
+
+						// There's content they haven't seen
+						if(entry == null || entry.getLastViewed().compareTo(page.getLastUpdated()) < 0) {
+						    UIOutput.make(row, "newContentImg");
+						    label = messageLocator.getMessage("simplepage.new-student-content");
+						} else
+						    UIOutput.make(row, "newContentImgT");
+
+						// The comments tool exists, so we might have to show the icon
+						if(i.getShowComments() != null && i.getShowComments()) {
+						
+						    // New comments have been added since they last viewed the page
+						    if(page.getLastCommentChange() != null && (entry == null || entry.getLastViewed().compareTo(page.getLastCommentChange()) < 0)) {
+							UIOutput.make(row, "newCommentsImg");
+							if (!label.equals(""))
+							    label += ", ";
+							label += messageLocator.getMessage("simplepage.new-student-comments");
+						    } else
+							UIOutput.make(row, "newCommentsImgT");							
+						}
+
+						// Never visited page
+						if(entry == null) {
+						    UIOutput.make(row, "newPageImg");
+						    // if the page is new, no need to say that there's new content/comments on it
+						    label = messageLocator.getMessage("simplepage.new-student-content-page");
+						} else
+						    UIOutput.make(row, "newPageImgT");
+
+						if (!label.equals(""))
+						    UIOutput.make(row, "contentLabel", label);
+
 						GeneralViewParameters eParams = new GeneralViewParameters(ShowPageProducer.VIEW_ID, page.getPageId());
 						eParams.setItemId(i.getId());
 						eParams.setPath("push");
 						
 						String studentTitle = page.getTitle();
 						
+						String ownerName = null;
 						try {
 						    if(!i.isAnonymous() || canEditPage) {
-							String ownerName = UserDirectoryService.getUser(page.getOwner()).getDisplayName();
+							ownerName = UserDirectoryService.getUser(page.getOwner()).getDisplayName();
 							if (ownerName != null && ownerName.equals(studentTitle))
 							    studentTitle = "(" + ownerName + ")";
 							else
@@ -1473,26 +1506,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						}
 						
 						UIInternalLink.make(row, "studentLink", studentTitle, eParams);
-						
-						// Never visited page
-						if(entry == null) {
-							UIOutput.make(row, "newPageImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-page")));
-						}
-						
-						// There's content they haven't seen
-						if(entry == null || entry.getLastViewed().compareTo(page.getLastUpdated()) < 0) {
-							UIOutput.make(row, "newContentImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-content")));
-						}
-						
-						// The comments tool exists, so we might have to show the icon
-						if(i.getShowComments() != null && i.getShowComments()) {
-							UIOutput.make(row, "commentsImgCell");
-						}
-						
-						// New comments have been added since they last viewed the page
-						if(page.getLastCommentChange() != null && (entry == null || entry.getLastViewed().compareTo(page.getLastCommentChange()) < 0)) {
-							UIOutput.make(row, "newCommentsImg").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-student-comments")));
-						}
 						
 						if(page.getOwner().equals(userId)) {
 							hasOwnPage = true;
