@@ -1229,6 +1229,7 @@ function addHighlight() {
 			$('.hideOnDialog').hide();
 			reposition();
 			$("#dropDownDiv").show("slide", {direction: "up"}, 300, unlockAnimation);
+			$(".add-forum-link").focus();
 		}
 	}
 	//$(this).addClass("hovering");
@@ -1259,6 +1260,7 @@ function toggleDropdown() {
 			$('.hideOnDialog').hide();
 			reposition();
 			$("#dropDownDiv").show("slide", {direction: "up"}, 300, unlockAnimation);
+			$(".add-forum-link").focus();
 			dropdownViaClick = true;
 		}
 	}
