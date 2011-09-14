@@ -192,7 +192,8 @@ function resizeiframe(id) {
 		<div class="itemclass" rsf:id="itemContainer:" role="main" style="z-index: 1;">
 			<div style="display:none" rsf:id="current-item-id"></div>
 			
-			<table class="indent mainList" rsf:id="itemTable:" border="0" width="95%" style="z-index: 1;" role="list">
+			<h2 rsf:id="msg=simplepage.maincontent" class="offscreen" id="maintablelabel"></h2>
+			<table class="indent mainList" rsf:id="itemTable:" border="0" width="95%" style="z-index: 1;" role="list" aria-labelledby="maintablelabel">
 				<colgroup rsf:id="colgroup"/>
 				<col width="20" rsf:id="col1"/>
 				<col width="100%" rsf:id="col2"/>
@@ -366,13 +367,12 @@ function resizeiframe(id) {
   							<div class="studentContentTable" rsf:id="studentContentTable" role="list">
   							  <h3 class="studentContentTitle"  rsf:id="studentContentTitle" id="studentContentTitle"></h3>
 							  <div rsf:id="studentRow:" class="studentRow" role="listitem">
-							    <img src="$context/images/new-page.png" alt="" rsf:id="newPageImg" class="imgCell"></img>
+							    <img src="$context/images/new-page.png" rsf:id="newPageImg" class="imgCell"></img>
 							    <img src="$context/images/transparent16.png" alt="" rsf:id="newPageImgT" class="imgCell"></img>
-							    <img src="$context/images/new-content.png" alt="" rsf:id="newContentImg" class="imgCell"></img>
+							    <img src="$context/images/new-content.png" rsf:id="newContentImg" class="imgCell"></img>
 							    <img src="$context/images/transparent16.png" alt="" rsf:id="newContentImgT" class="imgCell"></img>
-							    <img src="$context/images/new-comments.png" alt="" rsf:id="newCommentsImg" class="imgCell"></img>
-							    <img src="$context/images/transparent16.png" alt=""  rsf:id="newCommentsImgT" class="imgCell"></img>
-							    <span rsf:id="contentLabel" class="offscreen"></span>
+							    <img src="$context/images/new-comments.png" rsf:id="newCommentsImg" class="imgCell"></img>
+							    <img src="$context/images/transparent16.png" alt="" rsf:id="newCommentsImgT" class="imgCell"></img>
 							    <a href="#" rsf:id="studentLink" class="studentLink"></a>
 							    <div rsf:id="linkCell" style="text-align:center;">
 							      <img rsf:id="student-required-image" src="/sakai-lessonbuildertool-tool/images/available.png" height="18" width="18" style="margin-right:3px"/>

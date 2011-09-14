@@ -78,7 +78,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 
 		df = DateFormat.getDateTimeInstance(DateFormat.DEFAULT, DateFormat.DEFAULT, new ResourceLoader().getLocale());
 		df.setTimeZone(TimeService.getLocalTimeZone());
-		System.out.println(TimeService.getLocalTimeZone().getDisplayName());
 		dfTime = DateFormat.getTimeInstance(DateFormat.SHORT, M_locale);
 		dfTime.setTimeZone(TimeService.getLocalTimeZone());
 		dfDate = DateFormat.getDateInstance(DateFormat.MEDIUM, M_locale);
