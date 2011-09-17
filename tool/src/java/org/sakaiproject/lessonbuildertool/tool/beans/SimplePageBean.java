@@ -615,7 +615,7 @@ public class SimplePageBean {
 		return saveItem(i, true);
 	}
 	
-	boolean update(Object i) {
+	public boolean update(Object i) {
 		return update(i, true);
 	}
 

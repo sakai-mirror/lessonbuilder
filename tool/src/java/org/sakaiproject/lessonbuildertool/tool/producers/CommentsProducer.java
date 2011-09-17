@@ -134,14 +134,41 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		
 		boolean highlighted = false;
 		
+		Date lastViewed = null;  // remains null if never viewed before
+		SimplePageLogEntry log = simplePageBean.getLogEntry(params.itemId);
+		if (log != null)
+		    lastViewed = log.getLastViewed();
+ 
+		int newItems = 0;
+
 		// Remove any "phantom" comments. So that the anonymous order stays the same,
 		// comments are deleted by removing all content.
 		for(int i = comments.size()-1; i >= 0; i--) {
 			if(comments.get(i).getComment() == null || comments.get(i).getComment().equals("")) {
 				comments.remove(i);
+			} else {
+		        	if (lastViewed == null)
+				    newItems ++;  // all items are new if never viewed
+				else if (comments.get(i).getTimePosted().after(lastViewed))
+				    newItems ++;
 			}
 		}
 		
+		System.out.println("lastviewed " + lastViewed + " count " + newItems);
+
+		// update date only if we actually are going to see all the comments
+		//   The situation with items <= 5 is actually dubious. The user has them on the
+		// screen, but there's no way to know whether he's actually seen them. Some users
+		// are going to be surprised either way we do it.
+		if (params.showAllComments || params.showNewComments || newItems <= 5) {
+		    if (log != null) {
+			simplePageBean.update(log);
+		    } else {
+			log = simplePageToolDao.makeLogEntry(currentUserId, params.itemId, null);
+			simplePageBean.saveItem(log);
+		    }
+		}
+
 		// We don't want page owners to edit comments on their page
 		// at the moment.  Perhaps add option?
 		boolean canEditPage = simplePageBean.getEditPrivs() == 0;
@@ -149,6 +176,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		boolean editable = false;
 		
 		if(comments.size() <= 5 || params.showAllComments) {
+		    System.out.println("short loop");
 			for(int i = 0; i < comments.size(); i++) {
 				boolean canEdit = simplePageBean.canModifyComment(comments.get(i), canEditPage);
 				
@@ -164,15 +192,36 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			CommentsViewParameters eParams = new CommentsViewParameters(VIEW_ID);
 			eParams.itemId = params.itemId;
 			eParams.showAllComments=true;
+			eParams.showNewComments=false;
 			eParams.pageId = params.pageId;
 			eParams.siteId = params.siteId;
-			
 			UIInternalLink.make(container, "to-load", eParams);
-			
 			UIOutput.make(container, "load-more-link", messageLocator.getMessage("simplepage.see_all_comments").replace("{}", Integer.toString(comments.size())));
 			
+			System.out.println(params.showNewComments + " " + newItems);
+			if (!params.showNewComments && newItems > 5) {
+			    container = UIBranchContainer.make(tofill, "commentDiv:");
+			    // UIBranchContainer container = UIBranchContainer.make(tofill, "commentDiv:");
+			    eParams = new CommentsViewParameters(VIEW_ID);
+			    eParams.itemId = params.itemId;
+			    eParams.showAllComments=false;
+			    eParams.showNewComments=true;
+			    eParams.pageId = params.pageId;
+			    eParams.siteId = params.siteId;
+			    UIInternalLink.make(container, "to-load", eParams);
+			    UIOutput.make(container, "load-more-link", messageLocator.getMessage("simplepage.see_new_comments").replace("{}", Integer.toString(newItems)));
+			}
+
+			int start = comments.size()-5;
+			if (params.showNewComments)
+			    start = 0;
+
 			// Show 5 most recent comments
-			for(int i = comments.size()-5; i < comments.size(); i++) {
+			for(int i = start; i < comments.size(); i++) {
+			    if (!params.showNewComments || lastViewed == null || comments.get(i).getTimePosted().after(lastViewed)) {
+				System.out.println(!params.showNewComments + " " + lastViewed == null + " " + 
+						   comments.get(i).getTimePosted().after(lastViewed));
+
 				boolean canEdit = simplePageBean.canModifyComment(comments.get(i), canEditPage);
 				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEdit, params);
 				if(!highlighted) {
@@ -180,6 +229,7 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 				}
 				
 				if(!editable) editable = canEdit;
+			    }
 			}
 		}
 		
@@ -188,11 +238,9 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIOutput.make(tofill, "highlightScript");
 		}
 		
-		if(anonymous && canEditPage && comments.size() > 0 && simplePageBean.getLogEntry(params.itemId) == null) {
+		if(anonymous && canEditPage && comments.size() > 0 && lastViewed == null) {
 			// Tells the admin that they can see the names, but everyone else can't
 			UIOutput.make(tofill, "anonymousAlert");
-			SimplePageLogEntry log = simplePageToolDao.makeLogEntry(currentUserId, params.itemId, null);
-			simplePageBean.saveItem(log);
 		}else if(editable && simplePageBean.getEditPrivs() != 0) {
 			// Warns user that they only have 30 mins to edit.
 			UIOutput.make(tofill, "editAlert");

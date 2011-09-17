@@ -76,7 +76,7 @@ function loadMore(link) {
 		cache: false
 	});
 	
-	var pageToRequest = $(link).parent().parent().find(".to-load").attr("href");
+	var pageToRequest = $(link).parent().find(".to-load").attr("href");
 	var i = pageToRequest.indexOf("Comment");
 	pageToRequest = "/sakai-lessonbuildertool-tool/faces/" + pageToRequest.substring(i);
 	
@@ -111,11 +111,8 @@ function replyToComment(link, replytext) {
 	
 	$(link).parents(".commentsDiv").find(".comment-edit-id").val(null);
 	$(link).parents(".commentsDiv").find(".submitButton").val(msg("simplepage.add-comment"));
-	
-	switchEditors(link);
 
-	var pos = evolved.offset();
-	window.scrollTo(pos.left, pos.top);
+        switchEditors(link);
 
 	return false;
 }
@@ -137,7 +134,11 @@ function switchEditors(link, show) {
 	}
 	
 	if(show) {
+
 		evolved.show();
+
+		var pos = evolved.offset();
+		window.scrollTo(pos.left, pos.top);
 
 		if (noEditor) {
 		    // the submit expects HTML, so stick BRs at every newline
