@@ -154,8 +154,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			}
 		}
 		
-		System.out.println("lastviewed " + lastViewed + " count " + newItems);
-
 		// update date only if we actually are going to see all the comments
 		//   The situation with items <= 5 is actually dubious. The user has them on the
 		// screen, but there's no way to know whether he's actually seen them. Some users
@@ -176,7 +174,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 		boolean editable = false;
 		
 		if(comments.size() <= 5 || params.showAllComments) {
-		    System.out.println("short loop");
 			for(int i = 0; i < comments.size(); i++) {
 				boolean canEdit = simplePageBean.canModifyComment(comments.get(i), canEditPage);
 				
@@ -198,7 +195,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			UIInternalLink.make(container, "to-load", eParams);
 			UIOutput.make(container, "load-more-link", messageLocator.getMessage("simplepage.see_all_comments").replace("{}", Integer.toString(comments.size())));
 			
-			System.out.println(params.showNewComments + " " + newItems);
 			if (!params.showNewComments && newItems > 5) {
 			    container = UIBranchContainer.make(tofill, "commentDiv:");
 			    // UIBranchContainer container = UIBranchContainer.make(tofill, "commentDiv:");
@@ -219,8 +215,6 @@ public class CommentsProducer implements ViewComponentProducer, ViewParamsReport
 			// Show 5 most recent comments
 			for(int i = start; i < comments.size(); i++) {
 			    if (!params.showNewComments || lastViewed == null || comments.get(i).getTimePosted().after(lastViewed)) {
-				System.out.println(!params.showNewComments + " " + lastViewed == null + " " + 
-						   comments.get(i).getTimePosted().after(lastViewed));
 
 				boolean canEdit = simplePageBean.canModifyComment(comments.get(i), canEditPage);
 				printComment(comments.get(i), tofill, (params.postedComment == comments.get(i).getId()), anonymous, canEdit, params);
