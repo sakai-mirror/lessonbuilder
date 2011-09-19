@@ -481,8 +481,11 @@ $(function() {
 			$(".mm-url-section").show();
 			$("#add-multimedia-dialog").dialog('open');
 			checksize($("#add-multimedia-dialog"));
-			$('.edit-multimedia-input').blur();
-			$('.mm-additional-instructions').blur();
+			// originally I thought it was confusing to start with the focus on some
+			// specific item in the dialog. The problem is that JAWS won't announce
+			// the dialog unless some item has focus
+			//$('.edit-multimedia-input').blur();
+			//$('.mm-additional-instructions').blur();
 			return false;
 		});
 
@@ -789,8 +792,8 @@ $(function() {
 			$(".mm-url-section").show();
 			$("#add-multimedia-dialog").dialog('open');
 			checksize($("#add-multimedia-dialog"));
-			$('.edit-multimedia-input').blur();
-			$('.edit-multimedia-input').blur();
+			//$('.edit-multimedia-input').blur();
+			//$('.edit-multimedia-input').blur();
 			return false;
 		});
 
@@ -811,8 +814,8 @@ $(function() {
 			oldloc = $(this);
 			$("#add-multimedia-dialog").dialog('open');
 			checksize($("#add-multimedia-dialog"));
-			$('.edit-multimedia-input').blur();
-			$('.mm-additional-instructions').blur();
+			//$('.edit-multimedia-input').blur();
+			//$('.mm-additional-instructions').blur();
 			return false;
 		});
 
@@ -833,7 +836,7 @@ $(function() {
 			oldloc = $(this);
 			$("#add-multimedia-dialog").dialog('open');
 			checksize($("#add-multimedia-dialog"));
-			$('.edit-multimedia-input').blur();
+			//$('.edit-multimedia-input').blur();
 			return false;
 		});
 
@@ -854,8 +857,8 @@ $(function() {
 			oldloc = ($this);
 			$("#add-multimedia-dialog").dialog('open');
 			checksize($("#add-multimedia-dialog"));
-			$('.edit-multimedia-input').blur();
-			$('.mm-additional-website-instructions').blur();
+			//$('.edit-multimedia-input').blur();
+			//$('.mm-additional-website-instructions').blur();
 			return false;
 		});
 
@@ -933,8 +936,8 @@ $(function() {
 			$(".mm-url-section").show();
 			$("#add-multimedia-dialog").dialog('open');
 			checksize($("#add-multimedia-dialog"));
-			$('.edit-multimedia-input').blur();
-			$('.mm-additional-instructions').blur();
+			//$('.edit-multimedia-input').blur();
+			//$('.mm-additional-instructions').blur();
 			return false;
 		});
 
