@@ -157,6 +157,12 @@ $(function() {
 	    $('.usebutton').css('border', '1px solid black').css('padding', '1px 4px').css('color', 'black');
 	}
 
+	function fixhref(href, pageitemid, resourcetype) {
+	    href = href.replace(/&pageItemId=-?[0-9]*/, "&pageItemId=" + pageitemid);
+	    href = href.replace(/&resourceType=[a-z]*/, "&resourceType=" + resourcetype);
+	    return href;
+	}
+
 	$(".edit-youtube").click(function(){
 		var row = $(this).parent().parent().parent();
 		var itemid = row.find(".mm-item-id").text();
@@ -199,8 +205,7 @@ $(function() {
 		$("#mm-item-id").val($("#movieEditId").val());
 		$("#mm-is-mm").val('true');
 		var href=$("#mm-choose").attr("href");
-		var i=href.indexOf("&pageItemId=");
-		href=href.substring(0,i) + "&pageItemId=" + $("#movieEditId").val() + "&resourceType=true";
+		href=fixhref(href, $("#movieEditId").val(), "true");
 		$("#mm-choose").attr("href",href);
 		$("#add-multimedia-dialog").prev().children(".ui-dialog-title").text($(this).text());
 
@@ -427,8 +432,7 @@ $(function() {
 		$("#mm-item-id").val($("#item-id").val());
 		$("#mm-is-mm").val('false');
 		var href=$("#mm-choose").attr("href");
-		var i=href.indexOf("&pageItemId=");
-		href=href.substring(0,i) + "&pageItemId=" + $("#item-id").val() + "&resourceType=false";
+		href=fixhref(href, $("#item-id").val(), "false");
 		$("#mm-choose").attr("href",href);
 		$("#add-multimedia-dialog").prev().children(".ui-dialog-title").text($(this).text());
 		var position =  $("#edit-item-dialog").dialog('option','position');
@@ -445,8 +449,7 @@ $(function() {
 		$("#mm-item-id").val(-1);
 		$("#mm-is-mm").val('true');
 		var href=$("#mm-choose").attr("href");
-		var i=href.indexOf("&pageItemId=");
-		href=href.substring(0,i) + "&pageItemId=-1&resourceType=true";
+		href=fixhref(href, "-1", "true");
 		$("#mm-choose").attr("href",href);
 		$("#add-multimedia-dialog").prev().children(".ui-dialog-title").text($(this).text());
 		var position =  $(this).position();
@@ -463,8 +466,7 @@ $(function() {
 		$("#mm-item-id").val(-1);
 		$("#mm-is-mm").val('false');
 		var href=$("#mm-choose").attr("href");
-		var i=href.indexOf("&pageItemId=");
-		href=href.substring(0,i) + "&pageItemId=-1&resourceType=false";
+		href=fixhref(href, "-1", "false");
 		$("#mm-choose").attr("href",href);
 		var position =  $(this).position();
 		$("#add-multimedia-dialog").prev().children(".ui-dialog-title").text($(this).text());
@@ -519,8 +521,7 @@ $(function() {
 		$("#mm-item-id").val($("#multimedia-item-id").val());
 		$("#mm-is-mm").val('true');
 		var href=$("#mm-choose").attr("href");
-		var i=href.indexOf("&pageItemId=");
-		href=href.substring(0,i) + "&pageItemId=" + $("#multimedia-item-id").val() + "&resourceType=true";
+		href=fixhref(href, $("#multimedia-item-id").val(), "true");
 		$("#add-multimedia-dialog").prev().children(".ui-dialog-title").text($(this).text());
 		$("#mm-choose").attr("href",href);
 		var position =  $("#edit-multimedia-dialog").dialog('option','position');
