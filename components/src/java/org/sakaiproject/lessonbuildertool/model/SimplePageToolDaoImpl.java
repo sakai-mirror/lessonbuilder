@@ -222,16 +222,15 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		    return false;
 		}
 
-		if (o instanceof SimplePageItem) {
-		    SimplePageItem i = (SimplePageItem)o;
-		    EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.create", "/lessonbuilder/item/" + i.getId(), true));
-		} else if (o instanceof SimplePage) {
-		    SimplePage i = (SimplePage)o;
-		    EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.create", "/lessonbuilder/page/" + i.getPageId(), true));
-		} 
-
 		try {
 		    getHibernateTemplate().save(o);
+		    if (o instanceof SimplePageItem) {
+			SimplePageItem i = (SimplePageItem)o;
+			EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.create", "/lessonbuilder/item/" + i.getId(), true));
+		    } else if (o instanceof SimplePage) {
+			SimplePage i = (SimplePage)o;
+			EventTrackingService.post(EventTrackingService.newEvent("lessonbuilder.create", "/lessonbuilder/page/" + i.getPageId(), true));
+		    } 
 		    return true;
 		} catch (org.springframework.dao.DataIntegrityViolationException e) {
 		    getCause(e, elist);
