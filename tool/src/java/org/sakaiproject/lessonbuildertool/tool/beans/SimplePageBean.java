@@ -2352,8 +2352,14 @@ public class SimplePageBean {
 	    String[] groupIds = split(itemGroups, ",");
 	    for (int i = 0; i < groupIds.length; i++) {
 		Group group=site.getGroup(groupIds[i]);
-		if (group != null)
-		    groupNames.add(group.getTitle());
+		if (group != null) {
+		    String title = group.getTitle();
+		    if (title != null && !title.equals(""))
+			groupNames.add(title);
+		    else
+			groupNames.add(messageLocator.getMessage("simplepage.deleted-group"));
+		} else
+		    groupNames.add(messageLocator.getMessage("simplepage.deleted-group"));
 	    }
 	    Collections.sort(groupNames);
 	    String ret = "";
