@@ -152,6 +152,7 @@ public class SimplePageBean {
         public static final String PROP_ALLOW_INLINE = "SAKAI:allow_inline";
 
 	public static final Pattern YOUTUBE_PATTERN = Pattern.compile("v[=/_][\\w-]{11}");
+	public static final Pattern YOUTUBE2_PATTERN = Pattern.compile("embed/[\\w-]{11}");
 	public static final Pattern SHORT_YOUTUBE_PATTERN = Pattern.compile("[\\w-]{11}");
 	public static final String GRADES[] = { "A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D", "D-", "E", "F" };
 	public static final String FILTERHTML = "lessonbuilder.filterhtml";
@@ -3893,6 +3894,10 @@ public class SimplePageBean {
 	       Matcher match = YOUTUBE_PATTERN.matcher(URL);
 	       if (match.find()) {
 		   return match.group().substring(2);
+	       }
+	       match = YOUTUBE2_PATTERN.matcher(URL);
+	       if (match.find()) {
+		   return match.group().substring(6);
 	       }
 	   }else if(URL.startsWith("http://youtu.be/")) {
 	       Matcher match = SHORT_YOUTUBE_PATTERN.matcher(URL);
