@@ -1027,6 +1027,7 @@ $(function() {
 	$("#dropDownDiv").hoverIntent(dropdownConfig);
 	$("li.dropdown").click(toggleDropdown);
 	dropDownViaClick = false;
+	return false;
 });
 
 function closeSubpageDialog() {
