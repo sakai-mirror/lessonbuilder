@@ -366,7 +366,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		if (userAgent == null)
 		    userAgent = "";
 		boolean noEditor = userAgent.toLowerCase().indexOf("mobile") >= 0;
-		System.out.println(browserString);
 
 		if (simplePageBean.getTopRefresh()) {
 			UIOutput.make(tofill, "refresh");
