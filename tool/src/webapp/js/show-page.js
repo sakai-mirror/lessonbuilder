@@ -1332,11 +1332,13 @@ var hasBeenInMenu = false;
 function menuAddHighlight() {
     hasBeenInMenu = true;
     addHighlight();
+	return false;
 }
 
 function buttonRemoveHighlight() {
     if (!hasBeenInMenu)
 	removeHighlight();
+	return false;
 }
 
 function addHighlight() {
@@ -1350,6 +1352,7 @@ function addHighlight() {
 		}
 	}
 	//$(this).addClass("hovering");
+	return false;
 }
 
 function removeHighlight() {
