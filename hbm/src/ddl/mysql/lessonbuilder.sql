@@ -97,4 +97,3 @@
         points double precision,
         primary key (id)
     );
-
