@@ -46,7 +46,6 @@
                 <rsfutil.version>0.7.5</rsfutil.version>
                 <sakairsf.version>0.7.5</sakairsf.version>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
-		        <sakai.blti.version>2.0-SNAPSHOT</sakai.blti.version>
             </properties>
         </profile>
         <profile>
@@ -71,9 +70,9 @@
     </profiles>
 
     <scm>
-       <connection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.x</connection>
-       <developerConnection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.x</developerConnection>
-       <url>https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.x</url>
+       <connection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.0-b01</connection>
+       <developerConnection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.0-b01</developerConnection>
+       <url>https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.0-b01</url>
     </scm>
 
     <distributionManagement>
@@ -131,6 +130,18 @@
             </releases>
             <snapshots>
                 <enabled>true</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>uct-maven2</id>
+            <name>UCT Maven Repo</name>
+            <layout>default</layout>
+            <url>http://source.cet.uct.ac.za/nexus/content/repositories/releases/</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
             </snapshots>
         </repository>
         <repository>
