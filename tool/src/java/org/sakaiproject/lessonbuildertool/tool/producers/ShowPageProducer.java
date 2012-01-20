@@ -53,6 +53,7 @@ import java.util.StringTokenizer;
 import java.util.TimeZone;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.web.context.support.ServletContextResource;
 
 import org.apache.commons.logging.Log;
@@ -137,6 +138,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	private FormatAwareDateInputEvolver dateevolver;
 	private TimeService timeService;
 	private HttpServletRequest httpServletRequest;
+	private HttpServletResponse httpServletResponse;
 	private MemoryService memoryService = null;
 	private ToolManager toolManager;
 	public TextInputEvolver richTextEvolver;
@@ -374,6 +376,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		if (canEditPage) {
 		    // special instructor-only javascript setup.
 			UIOutput.make(tofill, "instructoronly");
+			httpServletResponse.setHeader("X-XSS-Protection", "0");
 		}
 
 		// set up locale
@@ -1671,6 +1674,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 	public void setHttpServletRequest(HttpServletRequest httpServletRequest) {
 		this.httpServletRequest = httpServletRequest;
+	}
+
+	public void setHttpServletResponse(HttpServletResponse httpServletResponse) {
+		this.httpServletResponse = httpServletResponse;
 	}
 
 	private boolean makeLink(UIContainer container, String ID, SimplePageItem i, boolean canEditPage, SimplePage currentPage, boolean notDone, Status status) {

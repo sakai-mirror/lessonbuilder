@@ -51,6 +51,7 @@
 		<property name="timeService" ref="org.sakaiproject.time.api.TimeService" />
 		<property name="localeGetter" ref="requestLocaleProxy" />
 		<property name="httpServletRequest" ref="httpServletRequest" />
+		<property name="httpServletResponse" ref="httpServletResponse" />
 		<property name="memoryService"><ref bean="org.sakaiproject.memory.api.MemoryService"/></property>
 		<property name="toolManager" ref="org.sakaiproject.tool.api.ActiveToolManager" />
 		<property name="richTextEvolver" ref="richTextEvolver" />
