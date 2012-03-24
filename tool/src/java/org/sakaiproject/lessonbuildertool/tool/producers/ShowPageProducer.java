@@ -1983,7 +1983,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				LessonEntity lessonEntity = assignmentEntity.getEntity(i.getSakaiId(), simplePageBean);
 				params.setSource((lessonEntity == null) ? "dummy" : lessonEntity.getUrl());
 				params.setItemId(i.getId());
-				UIInternalLink.make(container, "link", params);
+				UILink link = UIInternalLink.make(container, "link", params);
+				if (lessonEntity == null)
+				    disableLink(link, messageLocator);
 			} else {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, false);
@@ -2009,7 +2011,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				LessonEntity lessonEntity = quizEntity.getEntity(i.getSakaiId());
 				view.setSource((lessonEntity == null) ? "dummy" : lessonEntity.getUrl());
 				view.setItemId(i.getId());
-				UIInternalLink.make(container, "link", view);
+				UILink link = UIInternalLink.make(container, "link", view);
+				if (lessonEntity == null)
+				    disableLink(link, messageLocator);
 			} else {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, false);
@@ -2027,7 +2031,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				view.setItemId(i.getId());
 				LessonEntity lessonEntity = forumEntity.getEntity(i.getSakaiId());
 				view.setSource((lessonEntity == null) ? "dummy" : lessonEntity.getUrl());
-				UIInternalLink.make(container, "link", view);
+				UILink link = UIInternalLink.make(container, "link", view);
+				if (lessonEntity == null)
+				    disableLink(link, messageLocator);
 			} else {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, false);
@@ -2065,8 +2071,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				view.setSendingPage(currentPage.getPageId());
 				view.setItemId(i.getId());
 				view.setSource((lessonEntity==null)?"dummy":lessonEntity.getUrl());
-				UIInternalLink.make(container, "link", view);
-
+				UILink link = UIInternalLink.make(container, "link", view);
+				if (lessonEntity == null)
+				    disableLink(link, messageLocator);
 			} else {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, false);
@@ -2081,7 +2088,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 			UIInternalLink link = LinkTrackerProducer.make(container, ID, i.getName(), URL, i.getId(), notDone);
 
-			if (available) {
+			if (available && lessonEntity != null) {
 				link.decorate(new UIFreeAttributeDecorator("target", "_blank"));
 			} else {
 				disableLink(link, messageLocator);

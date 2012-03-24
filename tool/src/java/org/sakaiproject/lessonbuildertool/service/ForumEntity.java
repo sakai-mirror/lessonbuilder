@@ -26,6 +26,7 @@ package org.sakaiproject.lessonbuildertool.service;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -1129,6 +1130,65 @@ public class ForumEntity extends HibernateDaoSupport implements LessonEntity, Fo
 		session.close();
 	}
 	
+    }
+
+    // only used for topics
+    public String getObjectId(){
+	String title = getTitle();
+	// fetches topic as well
+	if (title == null)
+	    return null;
+
+	BaseForum forum = topic.getBaseForum();
+	
+	return "forum_topic/" + id + "/" + title + "\n" + forum.getTitle();
+
+    }
+
+    public String findObject(String objectid, Map<String,String>objectMap, String siteid) {
+        if (!objectid.startsWith("forum_topic/")) {
+            if (nextEntity != null) {
+                return nextEntity.findObject(objectid, objectMap, siteid);
+            }
+	}
+
+	// isolate forum_topic/NNN from title
+	int i = objectid.indexOf("/", "forum_topic/".length());
+	if (i <= 0)
+	    return null;
+	String realobjectid = objectid.substring(0, i);
+
+	// now see if it's in the map
+	String newtopic = objectMap.get(realobjectid);
+	if (newtopic != null)
+	    return "/" + newtopic;  // sakaiid is /forum_topic/ID
+
+	// this must be 2.8. Can't find the topic in the map
+	// i is start of title
+	int j = objectid.indexOf("\n");
+	String title = objectid.substring(i+1,j);
+	String forumtitle = objectid.substring(j+1);
+
+	// unfortunately we have to search the topic tree to find it.
+	SortedSet<DiscussionForum> forums = new TreeSet<DiscussionForum>(new ForumBySortIndexAscAndCreatedDateDesc());
+	for (DiscussionForum forum: forumManager.getForumsForMainPage())
+	    forums.add(forum);
+
+	// security. assume this is only used in places where it's OK, so skip security checks
+	// ignore draft status. We want to show drafts.
+	for (DiscussionForum forum: forums) {
+	    if (forum.getTitle().equals(forumtitle)) {
+		for (Object o: forum.getTopicsSet()) {
+		    DiscussionTopic topic = (DiscussionTopic)o;
+		    if (topic.getTitle().equals(title)) {
+			return "/forum_topic/" + topic.getId();
+		    }
+		}
+	    }
+	}
+
+	return null;
+
     }
 
 }
