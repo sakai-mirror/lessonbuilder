@@ -3,7 +3,7 @@
  * $Id: $
  ***********************************************************************************
  *
- * Author: Eric Jeney, jeney@rutgers.edu
+ * Author: Charlie Groll <charlieg@rutgers.edu>
  *
  * Copyright (c) 2010 Rutgers, the State University of New Jersey
  *
@@ -22,53 +22,39 @@
  **********************************************************************************/
 
 
-package org.sakaiproject.lessonbuildertool;
+package org.sakaiproject.lessonbuildertool.tool.view;
 
-public class SimplePageGroupImpl implements SimplePageGroup {
-	private long id;
-	private String itemId;  // this is actually the sakaiID
-	private String groupId;
-	private String groups;
+import org.sakaiproject.lessonbuildertool.tool.producers.ClosePageProducer;
 
-	public SimplePageGroupImpl() {}
+import uk.org.ponder.rsf.viewstate.SimpleViewParameters;
 
-	public SimplePageGroupImpl(String itemId, String groupId, String groups) {
-		this.itemId = itemId;
-		this.groupId = groupId;
-		this.groups = groups;
+public class CloseViewParameters extends SimpleViewParameters {
+	private boolean refresh = false;
+
+	public CloseViewParameters() {
+		super();
 	}
 
-	public void setId(long id) {
-		this.id = id;
+	public CloseViewParameters(String VIEW_ID) {
+		super(VIEW_ID);
 	}
 
-	public long getId() {
-		return id;
+   	public CloseViewParameters(boolean refresh) {
+		super(ClosePageProducer.VIEW_ID);
+		this.refresh = refresh;
 	}
 
-	public void setItemId(String itemId) {
-		this.itemId = itemId;
+   	public CloseViewParameters(String VIEW_ID, boolean refresh) {
+		super(VIEW_ID);
+		this.refresh = refresh;
 	}
 
-	public String getItemId() {
-		return itemId;
+   	public void setRefresh(boolean refresh) {
+	    this.refresh = refresh;
 	}
 
-	public void setGroupId(String groupId) {
-		this.groupId = groupId;
+   	public boolean getRefresh() {
+	    return refresh;
 	}
-
-	public String getGroupId() {
-		return groupId;
-	}
-
-	public void setGroups(String groups) {
-		this.groups = groups;
-	}
-
-	public String getGroups() {
-		return groups;
-	}
-
 
 }

@@ -11,7 +11,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.osedu.org/licenses/ECL-2.0
+ *       http://www.opensource.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,6 +33,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.UrlItem;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
+import org.sakaiproject.lessonbuildertool.tool.view.CloseViewParameters;
 import org.sakaiproject.tool.api.Session;
 import org.sakaiproject.tool.cover.SessionManager;
 import org.sakaiproject.tool.cover.ToolManager;
@@ -186,9 +187,9 @@ public class QuizPickerProducer implements ViewComponentProducer, NavigationCase
 
 	public List reportNavigationCases() {
 		List<NavigationCase> togo = new ArrayList<NavigationCase>();
-		togo.add(new NavigationCase("success", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		togo.add(new NavigationCase("success", new GeneralViewParameters(ShowPageProducer.VIEW_ID)));
 		togo.add(new NavigationCase("failure", new SimpleViewParameters(QuizPickerProducer.VIEW_ID)));
-		togo.add(new NavigationCase("cancel", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		togo.add(new NavigationCase("cancel", new GeneralViewParameters(ShowPageProducer.VIEW_ID)));
 		return togo;
 	}
 }

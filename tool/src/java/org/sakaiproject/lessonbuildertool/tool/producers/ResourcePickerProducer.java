@@ -11,7 +11,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.osedu.org/licenses/ECL-2.0
+ *       http://www.opensource.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,8 +31,9 @@ import org.sakaiproject.component.cover.ServerConfigurationService;
 import org.sakaiproject.content.api.ContentHostingService;
 import org.sakaiproject.content.api.FilePickerHelper;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
-import org.sakaiproject.lessonbuildertool.tool.view.FilePickerViewParameters;
 import org.sakaiproject.tool.api.SessionManager;
+import org.sakaiproject.lessonbuildertool.tool.view.FilePickerViewParameters;
+import org.sakaiproject.lessonbuildertool.tool.view.CloseViewParameters;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.tool.api.ToolSession;
 
@@ -145,8 +146,8 @@ public class ResourcePickerProducer implements ViewComponentProducer, ViewParams
 
 	public List reportNavigationCases() {
 		List l = new ArrayList();
-		l.add(new NavigationCase("cancel", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
-		l.add(new NavigationCase("importing", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		l.add(new NavigationCase("cancel", new CloseViewParameters(ClosePageProducer.VIEW_ID, false)));
+		l.add(new NavigationCase("importing", new CloseViewParameters(ClosePageProducer.VIEW_ID, true)));
 		return l;
 	}
 

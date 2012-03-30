@@ -3,13 +3,14 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<META HTTP-EQUIV="CACHE-CONTROL" CONTENT="NO-CACHE"/>
 <script rsf:id="scr=portal-matter" type="text/javascript" language="JavaScript" src="/library/js/headscripts.js"></script>
 <link rsf:id="scr=portal-matter" href="/library/skin/tool_base.css" type="text/css" rel="stylesheet" media="all" />
 <link rsf:id="scr=portal-matter" href="/library/skin/default/tool.css" type="text/css" rel="stylesheet" media="all" />
 <script type="text/javascript" src="/library/js/jquery-1.1.2.js"></script>
 <script type="text/javascript" src="../js/simple-page.js" rsf:id="scr=rewrite-url"></script>
 <link rel="stylesheet" rsf:id="scr=rewrite-url" href="../css/Simplepagetool.css" type="text/css"/>
-<link type="text/css" href="$context/css/simplepage-theme/jquery-ui-1.8.4.custom.css" rel="stylesheet" />	
+<link type="text/css" href="$context/css/simplepage-theme/jquery-ui-1.8.17.custom.css" rel="stylesheet" />	
 <title rsf:id="msg=simplepage.forum.chooser"></title>
 </head>
 <body rsf:id="scr=sakai-body">
@@ -29,7 +30,7 @@
 		<h3 rsf:id="msg=simplepage.create_topic" class="offscreen"></h3>
 
 		<div rsf:id="forum-create:" style="margin-left:2em">
-		  <a href="#" rsf:id="forum-create-link"></a>
+			<a href="#" rsf:id="forum-create-link" onclick="return openDialog('' , true, this.href, event);"></a>
 		</div>
 
 		<h3 rsf:id="msg=simplepage.select_topic" style="margin-bottom:0.75em;margin-top:1em"></h3>

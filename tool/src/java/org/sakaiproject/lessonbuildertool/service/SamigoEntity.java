@@ -11,7 +11,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.osedu.org/licenses/ECL-2.0
+ *       http://www.opensource.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,12 +54,12 @@ import org.sakaiproject.tool.assessment.facade.AssessmentFacadeQueries;
 import org.sakaiproject.tool.assessment.facade.AuthzQueriesFacadeAPI;
 import org.sakaiproject.tool.assessment.facade.PublishedAssessmentFacadeQueriesAPI;
 import org.sakaiproject.tool.assessment.data.dao.authz.AuthorizationData;
-import org.sakaiproject.tool.assessment.data.ifc.grading.AssessmentGradingIfc;
 import org.sakaiproject.tool.assessment.data.ifc.assessment.EvaluationModelIfc;
 import org.sakaiproject.tool.assessment.data.ifc.assessment.AssessmentAccessControlIfc;
 import org.sakaiproject.tool.assessment.data.dao.assessment.PublishedAssessmentData;
 import org.sakaiproject.tool.assessment.data.dao.assessment.AssessmentData;
 import org.sakaiproject.tool.assessment.data.dao.assessment.AssessmentAccessControl;
+import org.sakaiproject.tool.assessment.data.dao.grading.AssessmentGradingData;
 import org.sakaiproject.tool.assessment.services.GradingService;
 import org.sakaiproject.tool.assessment.services.PersistenceService;
 
@@ -549,11 +549,14 @@ public class SamigoEntity implements LessonEntity, QuizEntity {
 
 	Session ses = SessionManager.getCurrentSession();
 
-	AssessmentGradingIfc grading = null;
+	AssessmentGradingData grading = null;
 	if (assessment.getEvaluationModel().getScoringType() == EvaluationModelIfc.LAST_SCORE) {
 	    grading = gradingService.getLastSubmittedAssessmentGradingByAgentId(Long.toString(id), ses.getUserId(), null);
 	} else {
-	    grading = gradingService.getHighestSubmittedAssessmentGrading(Long.toString(id), ses.getUserId());
+	    // the declared return type changed from AssessmentGradingIfc to Data. But the actual
+	    // underlying object is Data. In the old code Data implemented Ifc, but that no longer
+	    // seems to be true. I believe this cast will work either way.
+	    grading = (AssessmentGradingData)gradingService.getHighestSubmittedAssessmentGrading(Long.toString(id), ses.getUserId());
 	}
 
 	if (grading == null)

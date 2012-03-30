@@ -11,7 +11,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.osedu.org/licenses/ECL-2.0
+ *       http://www.opensource.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashSet;
 import java.util.HashMap;
+import java.util.Date;
 
 import org.sakaiproject.lessonbuildertool.service.LessonEntity;
 
@@ -38,6 +39,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
+import org.sakaiproject.lessonbuildertool.tool.view.CloseViewParameters;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 import org.sakaiproject.tool.api.ToolManager;
 
@@ -123,6 +125,8 @@ public class PagePickerProducer implements ViewComponentProducer, NavigationCase
 	    if (! somePagesHavePrerequisites) {
 	    	SimplePage page = simplePageToolDao.getPage(pageId);
 	    	if (page.isHidden())
+	    		somePagesHavePrerequisites = true;		    
+		if (page.getReleaseDate() != null && page.getReleaseDate().after(new Date()))
 	    		somePagesHavePrerequisites = true;		    
 	    }
 
@@ -434,9 +438,10 @@ public class PagePickerProducer implements ViewComponentProducer, NavigationCase
 
 	public List reportNavigationCases() {
 		List<NavigationCase> togo = new ArrayList<NavigationCase>();
-		togo.add(new NavigationCase("success", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		togo.add(new NavigationCase("success", new CloseViewParameters(ClosePageProducer.VIEW_ID, true)));  
 		togo.add(new NavigationCase("failure", new SimpleViewParameters(ForumPickerProducer.VIEW_ID)));
-		togo.add(new NavigationCase("cancel", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		togo.add(new NavigationCase("cancel", new CloseViewParameters(ClosePageProducer.VIEW_ID, false)));
+
 		return togo;
 	}
 }

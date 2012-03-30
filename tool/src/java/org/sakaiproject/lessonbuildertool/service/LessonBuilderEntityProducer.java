@@ -12,7 +12,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.osedu.org/licenses/ECL-2.0
+ *       http://www.opensource.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -544,7 +544,7 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
    }
 
     // the pages are already made. this adds the elements
-    private Long makePage(Element element, String oldServer, String siteId, String fromSiteId, Map<Long,Long> pageMap, Map<String,String> entityMap) {
+    private Long makePage(Element element, String oldServer, String siteId, String fromSiteId, Map<Long,Long> pageMap, Map<Long,Long> itemMap, Map<String,String> entityMap) {
   
        String oldSiteId = element.getAttribute("siteid");
        String oldPageIdString = element.getAttribute("pageid");
@@ -577,6 +577,8 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		   String name = itemElement.getAttribute("name");
 		   String explanation = null;
 		   String sakaiTitle = itemElement.getAttribute("sakaititle");
+		   String id = itemElement.getAttribute("id");
+		   Long itemId = new Long(id);
 
 		   // URL is probably no longer used, but if it is, it probably doesn't need mapping
 		   if (type == SimplePageItem.RESOURCE || type == SimplePageItem.MULTIMEDIA) {
@@ -599,9 +601,7 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		   if (explanation != null) {
 		       item.setHtml(explanation);
 		   } else {
-		       s = itemElement.getAttribute("html");
-		       if (s != null)
-			   item.setHtml(fixUrls(s, oldServer, siteId, fromSiteId));
+		       item.setHtml(itemElement.getAttribute("html"));
 		   }
 		   s = itemElement.getAttribute("description");
 		   if (s != null)
@@ -713,26 +713,27 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		   // end if mergeGroups
 
 		   simplePageToolDao.quickSaveItem(item);
+		   itemMap.put(itemId, item.getId());
 
- 		   // this needs item id, so it has to be done here
- 		   // save item ID to object id. This will allow references to be fixed up.
- 		   // object id identifies the Sakai object in the old site. The fixup will
- 		   // find the object in the new site and fix up the item. Hence we need
- 		   // a mapping of item ID to object id.
- 		   if (type == SimplePageItem.ASSIGNMENT || type == SimplePageItem.ASSESSMENT || type == SimplePageItem.FORUM) {
- 		       String objectid = itemElement.getAttribute("objectid");
- 		       if (objectid != null) {
- 			   String entityid = null;
- 			   if (type == SimplePageItem.ASSIGNMENT)
- 			       entityid = REF_LB_ASSIGNMENT + item.getId();
- 			   else if (type == SimplePageItem.ASSESSMENT)
- 			       entityid = REF_LB_ASSESSMENT + item.getId();
- 			   else
- 			       entityid = REF_LB_FORUM + item.getId();
- 			   if (entityMap != null)
- 			       entityMap.put(entityid, objectid);
- 		       }
- 		   }
+		   // this needs item id, so it has to be done here
+		   // save item ID to object id. This will allow references to be fixed up.
+		   // object id identifies the Sakai object in the old site. The fixup will
+		   // find the object in the new site and fix up the item. Hence we need
+		   // a mapping of item ID to object id.
+		   if (type == SimplePageItem.ASSIGNMENT || type == SimplePageItem.ASSESSMENT || type == SimplePageItem.FORUM) {
+		       String objectid = itemElement.getAttribute("objectid");
+		       if (objectid != null) {
+			   String entityid = null;
+			   if (type == SimplePageItem.ASSIGNMENT)
+			       entityid = REF_LB_ASSIGNMENT + item.getId();
+			   else if (type == SimplePageItem.ASSESSMENT)
+			       entityid = REF_LB_ASSESSMENT + item.getId();
+			   else
+			       entityid = REF_LB_FORUM + item.getId();
+			   if (entityMap != null)
+			       entityMap.put(entityid, objectid);
+		       }
+		   }
 
 	       }
 	   }
@@ -740,14 +741,43 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
        return pageId;
     }
 
+    // fix up items on page. does any updates that need the whole page and item map
+    private void fixItems(Element element, String oldServer, String siteId, String fromSiteId, Map<Long,Long> pageMap, Map<Long,Long> itemMap) {
+  
+       String oldSiteId = element.getAttribute("siteid");
+       String oldPageIdString = element.getAttribute("pageid");
+       Long oldPageId = Long.valueOf(oldPageIdString);
+       Long pageId = pageMap.get(oldPageId);
+       Site site = null;
 
-    public String fixUrls(String s, String oldServer, String siteId, String fromSiteId) {
+       List<SimplePageItem> items = simplePageToolDao.findItemsOnPage(pageId);
+
+       if (items == null)
+	   return;
+
+       for (SimplePageItem item: items) {
+	   if (item.getType() == SimplePageItem.TEXT) {
+	       String s = item.getHtml();
+	       if (s != null) {
+		   String fixed = fixUrls(s, oldServer, siteId, fromSiteId, itemMap);
+		   if (!s.equals(fixed)) {
+		       item.setHtml(fixed);
+		       simplePageToolDao.quickUpdate(item);
+		   }
+	       }
+	   }
+       }
+
+    }
+
+
+    public String fixUrls(String s, String oldServer, String siteId, String fromSiteId, Map<Long,Long> itemMap) {
 
 	ContentCopyContext context = new ContentCopyContext(fromSiteId, siteId, oldServer);
 
        // should use CopyContent in kernel once KNL-737 is implemented. I'm including a copy of
        // it for the moment
-       return convertHtmlContent(context, s, null);
+	return convertHtmlContent(context, s, null, itemMap);
 
    }
 
@@ -766,6 +796,7 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
       StringBuilder results = new StringBuilder();
       // map old to new page ids
       Map <Long,Long> pageMap = new HashMap<Long,Long>();
+      Map <Long,Long> itemMap = new HashMap<Long,Long>();
 
       int count = 0;
 
@@ -805,7 +836,15 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 		 Node pageNode = pageNodes.item(p);
 		 if (pageNode.getNodeType() == Node.ELEMENT_NODE) {
 		     Element pageElement = (Element) pageNode;
-		     makePage(pageElement, oldServer, siteId, fromSiteId, pageMap, entityMap);
+		     makePage(pageElement, oldServer, siteId, fromSiteId, pageMap, itemMap, entityMap);
+		 }
+	     }
+
+	     for (int p = 0; p < numPages; p++) {
+		 Node pageNode = pageNodes.item(p);
+		 if (pageNode.getNodeType() == Node.ELEMENT_NODE) {
+		     Element pageElement = (Element) pageNode;
+		     fixItems(pageElement, oldServer, siteId, fromSiteId, pageMap, itemMap);
 		 }
 	     }
 
@@ -1100,7 +1139,6 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
     // this is mapping from LB item id to underlying object in old site.
     // find the object in the new site and fix up the item id
     public void updateEntityReferences(String toContext, Map<String, String> transversalMap) {
-	System.out.println("updateentity");
 	for (Map.Entry<String,String> entry: transversalMap.entrySet()) {
 	    String entityid = entry.getKey();
 	    String objectid = entry.getValue();
@@ -1229,14 +1267,14 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
     }
 
     private String convertHtmlContent(ContentCopyContext context,
-				      String content, String contentUrl) {
+				      String content, String contentUrl, Map<Long,Long> itemMap) {
 	StringBuilder output = new StringBuilder();
 	Matcher matcher = attributePattern.matcher(content);
 	int contentPos = 0;
 	while (matcher.find()) {
 	    String url = matcher.group(3);
 
-	    url = processUrl(context, url, contentUrl);
+	    url = processUrl(context, url, contentUrl, itemMap);
 	    // Content up to the match.
 	    int copyTo = matcher.start(3);
 	    // Start the second copy after the match.
@@ -1252,6 +1290,8 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 	    return output.toString();
     }
 
+    final String ITEMDUMMY = "http://lessonbuilder.sakaiproject.org/";
+    final int ITEMDUMMYLEN = ITEMDUMMY.length();
 
     /**
      * Takes a URL and then decides if it should be replaced.
@@ -1260,7 +1300,7 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
      * @return
      */
     private String processUrl(ContentCopyContext context, String value,
-			      String contentUrl) {
+			      String contentUrl, Map<Long,Long>itemMap) {
 	// Need to deal with backticks.
 	// - /access/group/{siteId}/
 	// - /web/{siteId}/
@@ -1269,7 +1309,15 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 	try {
 	    URI uri = new URI(value);
 	    uri = uri.normalize();
-	    if ("http".equals(uri.getScheme())
+	    if (value.startsWith(ITEMDUMMY)) {
+		String num = value.substring(ITEMDUMMYLEN);
+		int i = num.indexOf("/");
+		if (i >= 0)
+		    num = num.substring(0, i);
+		long oldItem = Long.parseLong(num);
+		Long newItem = itemMap.get(oldItem);
+		return ITEMDUMMY + newItem + "/";
+	    } else if ("http".equals(uri.getScheme())
 		|| "https".equals(uri.getScheme())) {
 		if (uri.getHost() != null) {
 		    if (uri.getHost().equals(context.getOldServer())) {

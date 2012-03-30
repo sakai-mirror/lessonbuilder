@@ -11,7 +11,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.osedu.org/licenses/ECL-2.0
+ *       http://www.opensource.org/licenses/ECL-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -35,6 +35,7 @@ import org.sakaiproject.lessonbuildertool.SimplePageItem;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean.UrlItem;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
+import org.sakaiproject.lessonbuildertool.tool.view.CloseViewParameters;
 import org.sakaiproject.lessonbuildertool.model.SimplePageToolDao;
 
 import uk.org.ponder.messageutil.MessageLocator;
@@ -191,9 +192,9 @@ public class AssignmentPickerProducer implements ViewComponentProducer, Navigati
 
 	public List reportNavigationCases() {
 		List<NavigationCase> togo = new ArrayList<NavigationCase>();
-		togo.add(new NavigationCase("success", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		togo.add(new NavigationCase("success", new GeneralViewParameters(ShowPageProducer.VIEW_ID)));
 		togo.add(new NavigationCase("failure", new SimpleViewParameters(AssignmentPickerProducer.VIEW_ID)));
-		togo.add(new NavigationCase("cancel", new SimpleViewParameters(ShowPageProducer.VIEW_ID)));
+		togo.add(new NavigationCase("cancel", new GeneralViewParameters(ShowPageProducer.VIEW_ID)));
 		return togo;
 	}
 }
