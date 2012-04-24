@@ -648,7 +648,7 @@ $(function() {
 
 			} else if(type != '') {
 				// Must be an assignment, assessment, forum
-				
+
 				var groups = row.find(".item-groups").text();
 				var grouplist = $("#grouplist");
 				if ($('#grouplist input').size() > 0) {
@@ -666,11 +666,11 @@ $(function() {
 					$("#require-label").text(msg("simplepage.require_submit_assessment"));
 					$("#edit-item-object-p").show();
 					$("#edit-item-object").attr("href", 
-						$("#edit-item-object").attr("href").replace("source=SRC", "source="+escape(editurl)));
+						$("#edit-item-object").attr("href").replace(/(source=).*?(&)/, '$1' + escape(editurl) + '$2'));
 					$("#edit-item-text").text(msg("simplepage.edit_quiz"));
 					$("#edit-item-settings-p").show();
 					$("#edit-item-settings").attr("href", 
-						$("#edit-item-settings").attr("href").replace("source=SRC", "source="+escape(editsettingsurl)));
+						$("#edit-item-settings").attr("href").replace(/(source=).*?(&)/, '$1' + escape(editsettingsurl) + '$2'));
 					$("#edit-item-settings-text").text(msg("simplepage.edit_quiz_settings"));
 
 				}else if (type == 8){
@@ -680,7 +680,7 @@ $(function() {
 					$("#require-label").text(msg("simplepage.require_submit_forum"));
 					$("#edit-item-object-p").show();
 					$("#edit-item-object").attr("href", 
-						$("#edit-item-object").attr("href").replace("source=SRC", "source="+escape(editurl)));
+						$("#edit-item-object").attr("href").replace(/(source=).*?(&)/, '$1' + escape(editurl) + '$2'));
 					$("#edit-item-text").text(msg("simplepage.edit_topic"));
 
 				}else if (type == 'b'){
@@ -706,7 +706,7 @@ $(function() {
 					$("#require-label").text(msg("simplepage.require_submit_assignment"));
 					$("#edit-item-object-p").show();
 					$("#edit-item-object").attr("href", 
-						$("#edit-item-object").attr("href").replace("source=SRC", "source="+escape(editurl)));
+						$("#edit-item-object").attr("href").replace(/(source=).*?(&)/, '$1' + escape(editurl) + '$2'));
 					$("#edit-item-text").text(msg("simplepage.edit_assignment"));
 
 				}
@@ -1016,7 +1016,20 @@ $(function() {
 		});
 		
 		$('body').bind('dialogclose', function(event) {
-			unhideMultimedia();
+			if (!($('#subpage-dialog').dialog('isOpen') ||
+				$('#edit-item-dialog').dialog('isOpen') ||
+				$('#edit-multimedia-dialog').dialog('isOpen') ||
+				$('#add-multimedia-dialog').dialog('isOpen') ||
+				$('#edit-title-dialog').dialog('isOpen') ||
+				$('#new-page-dialog').dialog('isOpen') ||
+				$('#remove-page-dialog').dialog('isOpen') ||
+				$('#youtube-dialog').dialog('isOpen') ||
+				$('#movie-dialog').dialog('isOpen') ||
+				$('#import-cc-dialog').dialog('isOpen') ||
+				$('#comments-dialog').dialog('isOpen') ||
+				$('#student-dialog').dialog('isOpen'))) {
+					unhideMultimedia();
+				}
 		});
 		 
 		$("#cssDropdown-selection").children(":contains(---" + msg("simplepage.site") + "---)").attr("disabled", "disabled");
@@ -1471,6 +1484,7 @@ function removeHighlight() {
 		}
 	}
 	//$(this).removeClass("hovering");
+	return false;
 }
 
 function toggleDropdown() {
