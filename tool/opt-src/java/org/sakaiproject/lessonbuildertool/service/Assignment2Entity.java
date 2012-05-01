@@ -212,7 +212,7 @@ public class Assignment2Entity implements LessonEntity {
 	try {
 	    String siteId = ToolManager.getCurrentPlacement().getContext();
 	    connection = SqlService.borrowConnection();
-	    String sql="select context, due_date, gradebook_item_id, title from A2_ASSIGNMENT_T where assignment_id = ?";
+	    String sql="select context, due_date, gradebook_item_id, title from A2_ASSIGNMENT_T where assignment_id = ? and draft=0 and removed=0";
 	    Object fields[] = new Object[1];
 	    fields[0] = id;
 
@@ -556,6 +556,12 @@ public class Assignment2Entity implements LessonEntity {
     public String editItemSettingsUrl(SimplePageBean bean) {
 	return null;
     }
+
+   public boolean objectExists() {
+       if (assignment == null && haveA2)
+	    assignment = getAssignment(id);
+       return assignment != null;
+   }
 
     // return the list of groups if the item is only accessible to specific groups
     // null if it's accessible to the whole site.

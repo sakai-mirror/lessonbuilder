@@ -165,6 +165,10 @@ public class MnemeEntity implements LessonEntity, QuizEntity {
 	Assessment ret = (Assessment)assessmentCache.get(id);
 
 	if (ret != null) {
+	    // don't check for published. Faculty may temporarily unpublish
+	    // to edit. We don't want it to disappear from students
+            if (ret.getArchived() || ret.getMint())
+		return null;
 	    return ret;
 	}
 
@@ -172,8 +176,15 @@ public class MnemeEntity implements LessonEntity, QuizEntity {
 	    return null;
 	ret = assessmentService.getAssessment(id);
 
-	if (ret != null) 
+	if (ret != null) {
+	    // cache it if we find it, even if not acceptable
 	    assessmentCache.put(id, ret, DEFAULT_EXPIRATION);
+
+	    // don't check for published. Faculty may temporarily unpublish
+	    // to edit. We don't want it to disappear from students
+            if (ret.getArchived() || ret.getMint())
+		return null;
+	}
 
 	return ret;
     }
@@ -384,6 +395,12 @@ public class MnemeEntity implements LessonEntity, QuizEntity {
 	}
 	return null; // for now. should be sakaiid
 
+    }
+
+    public boolean objectExists() {
+	if (assessment == null)
+	    assessment = getAssessment(id);
+	return assessment != null;
     }
 
     // return the list of groups if the item is only accessible to specific groups
