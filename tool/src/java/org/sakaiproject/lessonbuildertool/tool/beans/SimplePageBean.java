@@ -877,6 +877,8 @@ public class SimplePageBean {
 		toolSession.removeAttribute(FilePickerHelper.FILE_PICKER_CANCEL);
 		toolSession.removeAttribute(LESSONBUILDER_ITEMID);
 
+		String[] split = id.split("/");
+
 		if("application/zip".equals(mimeType) && isWebSite) {
 		    // We need to set the sakaiId to the resource id of the index file
 		    id = expandZippedResource(id);
@@ -887,10 +889,14 @@ public class SimplePageBean {
 		    // map an icon onto website links in applicationContext.xml
 		    // originally it was a special type. The problem is that this is actually
 		    // an HTML file, and we may have trouble if we don't show it that way
-		    mimeType = "text/html";
+		    mimeType = "LBWEBSITE";
+		    // strip .ZIP off the name
+		    if (name == null) {
+			name = split[split.length - 1];
+		    }
+		    if (name.lastIndexOf(".") > 0)
+			name = name.substring(0,name.lastIndexOf("."));
 		}
-
-		String[] split = id.split("/");
 
 		SimplePageItem i;
 		if (itemId != null && itemId != -1) {
@@ -4313,6 +4319,7 @@ public class SimplePageBean {
     // called by dialog to add inline multimedia item, or update existing
     // item if itemid is specified
 	public void addMultimedia() {
+	    System.out.println("add multimedia");
 		SecurityAdvisor advisor = null;
 		try {
 			if(getCurrentPage().getOwner() != null) {
@@ -5165,7 +5172,6 @@ public class SimplePageBean {
 	}
 	
 	private String expandZippedResource(String resourceId) {
-
 		String contentCollectionId = resourceId.substring(0, resourceId.lastIndexOf(".")) + "/";
 
 		try {
