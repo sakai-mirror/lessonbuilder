@@ -4421,7 +4421,6 @@ public class SimplePageBean {
     // called by dialog to add inline multimedia item, or update existing
     // item if itemid is specified
 	public void addMultimedia() {
-	    System.out.println("add multimedia");
 		SecurityAdvisor advisor = null;
 		try {
 			if(getCurrentPage().getOwner() != null) {
