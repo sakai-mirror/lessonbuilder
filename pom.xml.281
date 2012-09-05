@@ -64,7 +64,7 @@
                 <rsfutil.version>0.7.5</rsfutil.version>
                 <sakairsf.version>0.7.5</sakairsf.version>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
-	        <sakai.basiclti.version>2.0-SNAPSHOT</sakai.basiclti.version>
+	        <sakai.basiclti.version>2.0.0-b07</sakai.basiclti.version>
             </properties>
         </profile>
     </profiles>
