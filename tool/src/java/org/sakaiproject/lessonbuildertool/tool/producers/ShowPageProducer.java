@@ -1604,6 +1604,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								gp.commentsItemId = i.getId();
 								gp.pageId = currentPage.getPageId();
 								gp.pageItemId = pageItem.getId();
+								gp.siteId = simplePageBean.getCurrentSiteId();
 								
 								UIInternalLink.make(tableRow, "gradingPaneLink", messageLocator.getMessage("simplepage.show-grading-pane"), gp)
 								    .decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.show-grading-pane-comments")));

@@ -9,7 +9,7 @@ public class GradingPaneViewParameters extends SimpleViewParameters {
 	// So that we can make a back link.
 	public long pageId;
 	public long pageItemId;
-	
+	public String siteId = null;
 	
 	public GradingPaneViewParameters() {
 		super();
