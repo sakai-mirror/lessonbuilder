@@ -1575,6 +1575,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					        //  /sakai-lessonbuildertool-tool/faces/Comments...
 						CommentsViewParameters eParams = new CommentsViewParameters(CommentsProducer.VIEW_ID);
 						eParams.itemId = i.getId();
+						eParams.placementId = placement.getId();
 						if (params.postedComment) {
 							eParams.postedComment = postedCommentId;
 						}
@@ -1601,6 +1602,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							// That it is graded.  And that we didn't just come from the grading pane.
 							if(i.getPageId() > 0 && i.getGradebookId() != null && !cameFromGradingPane) {
 								GradingPaneViewParameters gp = new GradingPaneViewParameters(GradingPaneProducer.VIEW_ID);
+								gp.placementId = toolManager.getCurrentPlacement().getId();
 								gp.commentsItemId = i.getId();
 								gp.pageId = currentPage.getPageId();
 								gp.pageItemId = pageItem.getId();
@@ -1785,6 +1787,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							// just come from a grading pane (would be confusing)
 							if(i.getAltGradebook() != null && !cameFromGradingPane) {
 								GradingPaneViewParameters gp = new GradingPaneViewParameters(GradingPaneProducer.VIEW_ID);
+								gp.placementId = toolManager.getCurrentPlacement().getId();
 								gp.commentsItemId = i.getId();
 								gp.pageId = currentPage.getPageId();
 								gp.pageItemId = pageItem.getId();

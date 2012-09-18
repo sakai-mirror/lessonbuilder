@@ -14,6 +14,7 @@ import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GradingPaneViewParameters;
 import org.sakaiproject.user.cover.UserDirectoryService;
+import org.sakaiproject.tool.cover.ToolManager;
 
 import uk.org.ponder.messageutil.MessageLocator;
 import uk.org.ponder.localeutil.LocaleGetter;                                                                                          
@@ -194,6 +195,7 @@ public class GradingPaneProducer implements ViewComponentProducer, ViewParamsRep
 			
 			// Add the link that will be fetched using Ajax
 			CommentsViewParameters eParams = new CommentsViewParameters(CommentsProducer.VIEW_ID);
+			eParams.placementId = ToolManager.getCurrentPlacement().getId();
 			eParams.itemId = params.commentsItemId;
 			eParams.author = user.userId;
 			eParams.filter = true;

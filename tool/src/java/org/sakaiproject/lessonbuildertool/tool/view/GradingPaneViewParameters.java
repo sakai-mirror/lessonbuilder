@@ -10,6 +10,7 @@ public class GradingPaneViewParameters extends SimpleViewParameters {
 	public long pageId;
 	public long pageItemId;
 	public String siteId = null;
+	public String placementId = null;
 	
 	public GradingPaneViewParameters() {
 		super();

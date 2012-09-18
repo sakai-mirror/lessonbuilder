@@ -45,7 +45,7 @@
                 <sakai.mneme.scope>compile</sakai.mneme.scope>
                 <rsfutil.version>0.7.5</rsfutil.version>
 								<sakairsf.components.version>0.7.5</sakairsf.components.version>
-                <sakairsf.version>0.7.5</sakairsf.version>
+                <sakairsf.version>0.7.6</sakairsf.version>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding> 
             </properties>
         </profile>
