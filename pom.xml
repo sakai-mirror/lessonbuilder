@@ -13,7 +13,7 @@
     <name>sakai-lessonbuildertool base pom</name>
     <groupId>org.sakaiproject.lessonbuilder</groupId>
     <artifactId>sakai-lessonbuildertool-tool-base</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <modules>
@@ -74,9 +74,9 @@
     </profiles>
 
     <scm>
-       <connection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/tags/sakai-lessonbuildertool-tool-base-1.4.0</connection>
-       <developerConnection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/tags/sakai-lessonbuildertool-tool-base-1.4.0</developerConnection>
-       <url>https://source.sakaiproject.org/svn/lessonbuilder/tags/sakai-lessonbuildertool-tool-base-1.4.0</url>
+       <connection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.x</connection>
+       <developerConnection>scm:svn:https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.x</developerConnection>
+       <url>https://source.sakaiproject.org/svn/lessonbuilder/branches/lessonbuilder-1.4.x</url>
     </scm>
 
     <pluginRepositories>
