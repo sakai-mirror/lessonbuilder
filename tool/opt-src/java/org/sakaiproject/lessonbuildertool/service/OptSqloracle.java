@@ -32,7 +32,7 @@ package org.sakaiproject.lessonbuildertool.service;
 public class OptSqloracle implements OptSql {
 
     public String Assignment2InsertGroupSql () {
-	return "insert into A2_ASSIGN_GROUP_T (assignment_group_id version, assignment_id, group_ref) values (A2_ASSIGN_GROUP_S.nextval, 0, ?, ?)";
+	return "insert into A2_ASSIGN_GROUP_T (assignment_group_id, version, assignment_id, group_ref) values (A2_ASSIGN_GROUP_S.nextval, 0, ?, ?)";
     }
 
 }
