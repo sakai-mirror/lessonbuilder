@@ -26,6 +26,12 @@
             </snapshots>
         </repository>
 
+<!-- 
+  To enable YAFT, MNEME, and Assignments 2, uncomment the repository, dependencies and plugin below.
+  Look for all comment blocks that start with OPTIONAL. Remove that whole line, and the matching close
+ -->
+
+<!-- OPTIONAL
         <repository>
             <id>local-hack</id>
             <name>Backup API copies</name>
@@ -35,6 +41,7 @@
                 <enabled>true</enabled>
             </snapshots>
         </repository>
+-->
 
     </repositories>
 
@@ -178,6 +185,7 @@
         </dependency>
 
 
+<!-- OPTIONAL
         <dependency>
             <groupId>org.sakaiproject.yaft</groupId>
             <artifactId>yaft-api</artifactId>
@@ -199,10 +207,12 @@
             <scope>provided</scope>
         </dependency>
 
+-->
     </dependencies>
 
     <build>
 
+<!-- OPTIONAL
       <plugins>
 	<plugin>
           <groupId>org.codehaus.mojo</groupId>
@@ -239,6 +249,7 @@
           </executions>
 	</plugin>
       </plugins>
+-->
 
         <resources>
             <resource>
