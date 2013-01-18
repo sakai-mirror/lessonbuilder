@@ -258,6 +258,7 @@ public class SimplePageBean {
 	private String redirectViewId = null;
 	private String quiztool = null;
 	private String topictool = null;
+	private String assigntool = null;
 	
 	private Integer editPrivs = null;
 	private String currentSiteId = null;
@@ -517,6 +518,11 @@ public class SimplePageBean {
 	public void setQuiztool(String q) {
 	    if (q != null)
 		quiztool = q;
+	}
+
+	public void setAssigntool(String q) {
+	    if (q != null)
+		assigntool = q;
 	}
 
 	public void setTopictool(String q) {
@@ -4738,13 +4744,20 @@ public class SimplePageBean {
 			    quizobject = q;
 		    }
 		    
+		    LessonEntity assignobject = null;
+		    for (LessonEntity q = assignmentEntity; q != null; q = q.getNextEntity()) {
+			if (q.getToolId().equals(assigntool))
+			    assignobject = q;
+		    }
+		    
+
 		    LessonEntity topicobject = null;
 		    for (LessonEntity q = forumEntity; q != null; q = q.getNextEntity()) {
 			if (q.getToolId().equals(topictool))
 			    topicobject = q;
 		    }
 
-		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao, quizobject, topicobject, bltiEntity));
+		    parser.parse(new PrintHandler(this, cartridgeLoader, simplePageToolDao, quizobject, topicobject, bltiEntity, assignobject));
 		    setTopRefresh();
 		} catch (Exception e) {
 		    setErrKey("simplepage.cc-error", "");
