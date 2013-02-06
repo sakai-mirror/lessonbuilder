@@ -4029,7 +4029,7 @@ public class SimplePageBean {
 		List<SimplePageItem> items = getItemsOnPage(Long.valueOf(findItem(itemId).getSakaiId()));
 
 		for (SimplePageItem item : items) {
-			if (!isItemComplete(item) && isItemVisible(item)) {
+			if (!isItemComplete(item)) {
 			    if (item.getType() == SimplePageItem.PAGE) {
 				// If we get here, must be not completed or isItemComplete would be true
 				SimplePageLogEntry entry = getLogEntry(item.getId());
@@ -4099,7 +4099,7 @@ public class SimplePageBean {
 			if (i.getSakaiId().equals(currentPageId)) {
 				return needed;  // reached current page. we're done
 			}
-			if (i.isRequired() && !isItemComplete(i) && isItemVisible(i))
+			if (i.isRequired() && !isItemComplete(i))
 				needed.add(i.getName());
 		}
 
@@ -4568,7 +4568,7 @@ public class SimplePageBean {
 					}
 					sakaiId = res.getId();
 
-					if(("application/zip".equals(mimeType) || "application/x-zip-compressed".equals(mimeType))  && isWebsite) {
+					if("application/zip".equals(mimeType) && isWebsite) {
 					    // We need to set the sakaiId to the resource id of the index file
 					    sakaiId = expandZippedResource(sakaiId);
 					    if (sakaiId == null)
