@@ -15,17 +15,8 @@
 
     <description>This project creates a WAR containing the Lesson Builder Tool for Sakai.</description>
 
-    <repositories>
-        <repository>
-            <id>caret-dev</id>
-            <name>Caret Dev Repo</name>
-            <layout>default</layout>
-            <url>http://www2.caret.cam.ac.uk/maven2dev</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
 
+<repositories>
 <!-- 
   To enable YAFT, MNEME, and Assignments 2, uncomment the repository, dependencies and plugin below.
   Look for all comment blocks that start with OPTIONAL. Remove that whole line, and the matching close

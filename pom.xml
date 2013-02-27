@@ -129,18 +129,6 @@
             </snapshots>
         </repository>
         <repository>
-            <id>uct-maven2</id>
-            <name>UCT Maven Repo</name>
-            <layout>default</layout>
-            <url>http://source.cet.uct.ac.za/nexus/content/repositories/releases/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
-        <repository>
             <id>default</id>
             <name>Maven Repository Switchboard</name>
             <layout>default</layout>
