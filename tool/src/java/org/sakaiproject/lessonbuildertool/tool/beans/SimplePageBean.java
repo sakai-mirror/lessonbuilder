@@ -1634,6 +1634,8 @@ public class SimplePageBean {
 		if(ret == null && page.getOwner() != null) {
 			ret = simplePageToolDao.findItemFromStudentPage(page.getPageId());
 		}
+		if (ret == null)
+		    return null;
 		try {
 			updatePageItem(ret.getId());
 		} catch (PermissionException e) {
