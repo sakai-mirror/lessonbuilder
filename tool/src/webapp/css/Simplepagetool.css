@@ -42,10 +42,9 @@
 	text-align: center;
 }
 .expert {
-	margin-top: 15px;
-	border: 1px solid black;
+	margin-top: 10px;
 	background-color: #eee;
-	padding: 4px;
+	padding: 5px;
 }
 .nextprev {
 	font-size: 100% !important
@@ -105,6 +104,27 @@
 	border-style: solid;
 	border-width: 2px;
 }
+.instructionPanel,.controlsPanel {
+    border:1px solid #ccc;
+    font-size:12px;
+    background: #eee;
+    padding:5px;
+    margin:5px 0
+}
+.controlsPanel {
+    padding:0;
+    background:none;
+    border: 1px solid transparent;
+}
+.controlsPanel .shorttext, .controlsPanel .longtext, .controlsPanel .filepicker{
+    margin:.4em 0
+}
+.controlsPanel .act {
+    margin:1em 0;
+}
+.controlsPanel .act .delete {
+    float:right;
+}
 .inset-text {
 	margin-top: 1em;
 	border-style: solid;
@@ -132,6 +152,16 @@ a.ui-button:link, a.ui-button:visited {
 	color: black;
 	text-decoration: none !important;
 }
+.ui-buttonset .ui-button {
+    margin-right: 3px !important;
+}
+.mainList li .edit-col a.ui-button:link, .mainList li .edit-col a.ui-button:visited {
+    color: inherit;
+    font-size: 16px;
+    padding: 3px 4px;
+    text-decoration: none !important;
+}
+
 /* ff2, buttons don't work */
 a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.multimedia-edit:link, a.multimedia-edit:visited, a.edit-youtube:link, a.edit-youtube:visited, a.edit-movie:link, a.edit-movie:visited {
 	text-decoration: none !important;
@@ -148,10 +178,10 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	margin-bottom: 1.0em;
 }
 .rowdescription {
-	margin-left: 2em
+	margin: 8px  0  2px 30px;
 }
 .description {
-	margin-top: 0.5em;
+    margin-top: 0.5em;
 	margin-bottom: 1em;
 }
 .youtubeWidth {
@@ -164,8 +194,85 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	width: 95%;
 	margin-bottom: 0.5em;
 }
+
+.mainList {
+    margin: 0;
+    padding:0;
+    list-style:none;
+}
+.mainList li {
+    position: relative;
+    padding:10px;
+    margin: 15px 0;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
+    border: 1px solid #ccc;
+}
+.mainList li:hover {
+    border: 1px solid #B3B3B3;
+}
+.mainList li.question,.mainList li.studentContentType, .mainList li.commentsType {
+    background:#ffe
+}
+.mainList li.textType, .mainList li.multimediaType {
+    border:none;
+} 
+.mainList li.textType, .mainList li.multimediaType {
+    border:none
+}
+.mainList li.question .multipleChoiceAnswer {
+    margin:10px 25px;
+}
+.mainList li.question .multipleChoiceForm input.bold {
+    margin:5px 0px 0px 20px !important
+}
+.mainList li:hover .edit-col{
+    display:block;
+}
+
+.mainList li .textbox {
+
+}
+/*maybe a universal selector, instead of a p*/
+.mainList li .textbox p:first-child{
+    margin-top:0;
+}
+/*maybe a universal selector, instead of a p*/
+.mainList li .textbox p:last-child{
+    margin-bottom:0;
+}
+
 .edit-col {
-	padding-right: 10px
+    position: absolute;
+    top: -5px;
+    left:0;
+    z-index:3
+}
+.mainList li.assessmentType  .edit-col, 
+    .mainList li.commentsType  .edit-col, 
+    .mainList li.studentContentType  .edit-col, 
+    .mainList li.resourceType  .edit-col, 
+    .mainList li.assignmentType  .edit-col, 
+    .mainList li.forumType   .edit-col, 
+    .mainList li.pageType  .edit-col, 
+    .mainList li.assessmentType  .edit-col,  
+    .mainList li.studentContentType  .edit-col, 
+    .mainList li.resourceType  .edit-col, 
+    .mainList li.assignmentType  .edit-col, 
+    .mainList li.forumType   .edit-col, 
+    .mainList li.pageType  .edit-col {
+        top:-10px
+    }
+.statusCol {
+    position: absolute;
+    top:3px;
+    left:3px;
+    z-index:2;
+}
+.link-div h3.link-div-head {
+    display:inline;
+    font-size:110%;
 }
 .ui-button-text {
 	font-weight: bold;
@@ -204,40 +311,28 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 .author {
 	margin-right: 15px;
 	font-weight: bold;
-	color: #039;
 }
 .commentPageTitle {
 	margin-right: 10px;
 	color: #906;
 }
 .commentDiv {
-	margin-top: 5px;
-	margin-bottom: 5px;
-	background-color: #e4edff;
-	padding: 5px 10px;
+
 }
 .commentBody {
-	margin-top: 3px
+	margin: 0 0 0 35px;
 }
 .commentsCell {
 	margin-bottom: 10px
 }
 .specialCommenter {
-	background-color: white;
 	padding: 0 3px 1px 3px;
-	-moz-border-radius: 3px;
-	-webkit-border-radius: 3px;
-	border-radius: 3px;
-	padding-top: 1px;
-	padding-bottom: 1px;
 }
 /* Commenter looking at their own comment */
 .personalComment {
-	background-color: white
 }
 /* Site Owner Comment */
 .ownerComment {
-	background-color: #CCCEED;
 	color: black;
 }
 .item-group-titles {
@@ -250,6 +345,12 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 }
 .nextprev .usebutton span {
 	font-size: inherit
+}
+.commentDiv .editLink, .commentDiv .deleteLink,  .commentDiv .replyLink {
+    padding:5px;
+}
+.commentDiv .editLink:hover, .commentDiv .deleteLink:hover,  .commentDiv .replyLink:hover {
+    cursor:pointer;
 }
 .link-div .usebutton {
 	font-size: 160%
@@ -264,9 +365,11 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	display: none
 }
 .imgCell {
+/*
 	height: 10px;
 	width: 10px;
-}
+
+*/}
 .studentCell {
 	padding-left: 7px
 }
@@ -274,19 +377,17 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	color: black;
 	margin-top: 0px;
 }
-.studentContentTitle {
-	color: black;
-	margin-top: 0px;
-	margin-bottom: .5em;
-	margin-left: 40px;
+.studentContentTitle, .mainList li.question .questionText, h3.author {
+	margin:0 2px 5px 3px;
+    display:inline;
 }
 .studentContentTable {
-	border: none;
-	background-color: #e4edff;
-	padding: 4px;
-	padding-bottom: 1em;
-	padding-top: 1em;
 }
+.studentContentTable .studentRow{
+    padding:5px 0;
+    margin-left:30px
+}
+
 .duecol {
 	padding-left: 2em !important
 }
@@ -298,10 +399,10 @@ ul#toolbar li {
 #dropDownDiv {
 	position: absolute;
 	width: 350px;
-	margin-top: 0.9em;
+	margin-top: 0;
 	margin-left: 0.5em;
 	background-color: #EEE;
-	padding: 10px !important;
+	padding: 5px !important;
 	background: #eeeeee !important;
 	background: -moz-linear-gradient(top, #eeeeee 0%, #e4e4e4 100%) !important;
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#eeeeee), color-stop(100%,#e4e4e4)) !important;
@@ -309,41 +410,27 @@ ul#toolbar li {
 	background: -o-linear-gradient(top, #eeeeee 0%,#e4e4e4 100%) !important;
 	background: -ms-linear-gradient(top, #eeeeee 0%,#e4e4e4 100%) !important;
 	background: linear-gradient(top, #eeeeee 0%,#e4e4e4 100%) !important;
-	border: 1px solid #d1d1d1 !important;
-	z-index: 10000;
-	padding: 7px;
+    border: 1px solid #d1d1d1 !important;
+    z-index: 10000;
+    -webkit-box-shadow: 1px 1px 3px 2px #eeeeee;
+    box-shadow: 1px 1px 3px 2px #eeeeee;
 }
-/* have to undo much of the .navintratool */
-#dropDownDiv a {
-	border: none;
-	background-color: inherit;
-	padding: 0px;
-	margin: 0px 1em 0px 0px !important;
+#dropDownDiv li {
+    border-top:1px solid #ccc !important;
+    background: #fff !important;
+    padding:5px !important;
+    margin:0;
+    display:block;
 }
-#dropDownDiv span {
-	padding: 0px;
-	border: none;
-	background-color: inherit;
-	margin: 0px;
+#dropDownDiv li:first-child {
+    border-top:none !important;
 }
-#dropDownDiv * {
-	background: none !important;
-	border: none !important;
-	font-weight: normal !important;
-	margin: 0 !important;
-	padding: 0 !important;
+#dropDownDiv li a {
+    display:block;
+    padding: 5px 0 !important;
 }
-#dropDownDiv span {
-	display: block !important
-}
-#dropDownDiv span>span {
-	display: inline !important
-}
-#dropDownDiv a, #dropDownDiv a>span {
-	font-weight: bold !important
-}
-#dropDownDiv a:hover {
-	color: inherit !important
+#dropDownDiv li div {
+    font-size: .85em !important
 }
 span.nextprev {
 	margin-left: 20px
@@ -423,3 +510,15 @@ img {
 .question-multiplechoice-answer, .question-shortanswer-answer {
 	width: 250px;
 }
+div[role="dialog"] {
+    -webkit-box-shadow: 1px 1px 2px 1px #ccc;
+     box-shadow: 1px 1px 2px 1px #ccc;
+}
+#multipleChoiceAnswers, #copyableShortanswerDiv {
+    line-height:30px;
+}
+
+.controlsPanel fieldset {
+    margin 10px 0 
+}
+

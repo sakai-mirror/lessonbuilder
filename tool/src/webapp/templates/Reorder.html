@@ -14,21 +14,20 @@
 </head>
 <body rsf:id="scr=sakai-body">
 	<div class="portletBody" role="application">
-		<h2 class="firstHeader bold" id="intro" rsf:id="intro"></h2>
+		<h2  id="intro" rsf:id="intro"></h2>
 	
-		<div rsf:id="instructions" class="afterheader"></div>
-	
-		<br /><br /><br />
+		<p rsf:id="instructions" class="instruction"></p>
 	
 		<div class="error" id="error" rsf:id="error"></div>
 	
-		<table class="indent" id="itemTable" rsf:id="itemTable" border="0">
+		<table class="listHier" id="itemTable" rsf:id="itemTable" border="0" cellpadding="0" cellspacing="0" style="width:auto;">
 			<tbody id="listx">
 				<tr rsf:id="item:" class="movable" style="border:1px solid #000" aftermove="aftermove($(this))">
 					<td rsf:id="seq"></td>
 					<td><a href="#" rsf:id="link-button"><span rsf:id="link-button-text"></span></a><a href="#" rsf:id="link"><span rsf:id="link-text"></span></a><span rsf:id="text-snippet"></span>
-					<span class="italic" style="padding-left:3em" rsf:id="description"></span>
-					<a href="#" onclick="deleteitem($(this)); return false" class="deleteAnswerLink"><img src="$context/images/delete.png" rsf:id="dellink"></img></a>
+					<span class="italic" style="" rsf:id="description"></span>
+                    </td>
+					<td><a href="#" onclick="deleteitem($(this)); return false" class="deleteAnswerLink"><img src="$context/images/delete.png" rsf:id="dellink"></img></a>
 					</td>
 				</tr>
 			</tbody>
@@ -38,11 +37,13 @@
 		  <a href="#" id="subpage-choose" rsf:id="subpage-choose" ><span rsf:id="msg=simplepage.choose_existing_page"></span></a>
 		</div>
 
-		<form action="#" rsf:id="form" style="margin-top:2em">
-			<input type="hidden" rsf:id="otherpage" id="otherpage" />
-			<input type="hidden" rsf:id="order" id="order" />
-			<input type="submit" rsf:id="save" onclick="computeorder();" />
-			<input type="submit" rsf:id="cancel" />
+		<form action="#" rsf:id="form">
+		    <p class="act">
+    			<input type="hidden" rsf:id="otherpage" id="otherpage" />
+    			<input type="hidden" rsf:id="order" id="order" />
+    			<input type="submit" rsf:id="save" onclick="computeorder();" />
+    			<input type="submit" rsf:id="cancel" />
+            </p>     
 		</form>
 	
 	</div>
