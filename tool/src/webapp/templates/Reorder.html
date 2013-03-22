@@ -23,9 +23,10 @@
 		<table class="listHier" id="itemTable" rsf:id="itemTable" border="0" cellpadding="0" cellspacing="0" style="width:auto;">
 			<tbody id="listx">
 				<tr rsf:id="item:" class="movable" style="border:1px solid #000" aftermove="aftermove($(this))">
-					<td rsf:id="seq"></td>
+					<td><div rsf:id="seq"></div></td>
 					<td><a href="#" rsf:id="link-button"><span rsf:id="link-button-text"></span></a><a href="#" rsf:id="link"><span rsf:id="link-text"></span></a><span rsf:id="text-snippet"></span>
 					<span class="italic" style="" rsf:id="description"></span>
+                    <span rsf:id="dellink"></span>
                     </td>
 					<td><a href="#" onclick="deleteitem($(this)); return false" class="deleteAnswerLink"><img src="$context/images/delete.png" rsf:id="dellink"></img></a>
 					</td>

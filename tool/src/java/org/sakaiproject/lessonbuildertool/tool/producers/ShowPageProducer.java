@@ -941,8 +941,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				case SimplePageItem.BLTI: itemClassName = "bltiType"; break;
 				}
 
-				if (listItem)
+
+
+				if (listItem){
 				    itemClassName = itemClassName + " listType";
+				}
+				if (canEditPage) {
+						itemClassName = itemClassName + "  canEdit";
+				}
+
 				tableRow.decorate(new UIFreeAttributeDecorator("class", itemClassName));
 
 				// you really need the HTML file open at the same time to make
@@ -1490,7 +1497,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							item2.decorate(new UIFreeAttributeDecorator("type", mimeType));
 						}
 						if (canEditPage) {
-							item2.decorate(new UIFreeAttributeDecorator("style", "border: 1px solid black"));
+							//item2.decorate(new UIFreeAttributeDecorator("style", "border: 1px solid black"));
 						}
 
 						// some object types seem to need a specification

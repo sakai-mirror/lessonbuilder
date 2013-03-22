@@ -14,10 +14,14 @@ function aftermover(el,pos) {
     // position of the marker line
     var markerpos = list.find('.marker').parent().prevAll().length;
     // enable delete for items above the marker
-   if (newpos > markerpos)
-	el.find('img').hide();
-    else
-	el.find('img').show();
+   if (newpos > markerpos) {
+       el.find('img').hide();
+       el.addClass('deleteCandidate');
+   }
+   else {
+       el.find('img').show();
+       el.removeClass('deleteCandidate');
+   }
 }
 
 jQuery(document).ready(function () {
@@ -37,6 +41,7 @@ jQuery(document).ready(function () {
 // delete moves the item to the end, i.e. below the line
 function deleteitem(el) {
     var row = el.parent().parent();
+    row.addClass('deleteCandidate');
     $('#listx').append(row);    
     reorderlist.refresh();
     aftermover(row);
