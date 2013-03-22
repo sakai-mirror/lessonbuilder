@@ -12,7 +12,7 @@ function aftermover(el,pos) {
     var newpos = el.prevAll().length;
     var list = $('#listx');
     // position of the marker line
-    var markerpos = list.find('.marker').parent().prevAll().length;
+    var markerpos = list.find('.marker').closest('tr').prevAll().length;
     // enable delete for items above the marker
    if (newpos > markerpos) {
        el.find('img').hide();
