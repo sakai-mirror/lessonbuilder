@@ -54,9 +54,9 @@ function computeorder() {
     var max = rows.length;
 
     for (i = 0; i < max; i++) {
-		order = order + " " + rows[i].cells[0].innerHTML;
+		order = order + " " + $(rows[i].cells[0]).text();
     }
-    
+
 	$("#order").val(order);
     return true;
 }
