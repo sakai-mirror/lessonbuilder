@@ -505,3 +505,60 @@ div[role="dialog"] {
 .deleteCandidate td:first-child div {
     margin-left: 25px;
 }
+
+/*
+ alternate treatment for list
+
+.edit-col {
+    display:none;
+    position: absolute !important;
+    top: -1px;
+    right:-2px;
+    z-index:3;
+    padding:0;
+    float:none;
+}
+
+.mainList li:hover .edit-col{
+    display:block;
+}
+.mainList li.canEdit > div {
+    padding: 0 !important
+}
+
+.mainList li .edit-col a.ui-button:link, .mainList li .edit-col a.ui-button:visited {
+    text-decoration: none !important;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    -webkit-border-bottom-left-radius: 5px;
+    -moz-border-radius-bottomleft: 5px;
+    border-bottom-left-radius: 5px;
+    width:30px;
+    height:30px;
+    background-image: url(/library/image/silk/application_edit.png);
+    background-position:center center;
+    background-repeat: no-repeat;
+}
+
+.mainList li .edit-col a span {
+    display: none;
+}
+.mainList li.canEdit:hover {
+    border:1px solid #ccc;
+}
+.mainList li.assessmentType  .edit-col, 
+    .mainList li.commentsType  .edit-col, 
+    .mainList li.studentContentType  .edit-col, 
+    .mainList li.resourceType  .edit-col, 
+    .mainList li.assignmentType  .edit-col, 
+    .mainList li.forumType   .edit-col, 
+    .mainList li.pageType  .edit-col, 
+    .mainList li.assessmentType  .edit-col,  
+    .mainList li.studentContentType  .edit-col, 
+    .mainList li.resourceType  .edit-col, 
+    .mainList li.assignmentType  .edit-col, 
+    .mainList li.forumType   .edit-col, 
+    .mainList li.pageType  .edit-col {
+}
+*/
