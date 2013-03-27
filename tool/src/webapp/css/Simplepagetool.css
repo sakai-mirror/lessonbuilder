@@ -505,10 +505,12 @@ div[role="dialog"] {
 .deleteCandidate td:first-child div {
     margin-left: 25px;
 }
-
+/* dialog is open, hide all edit links till it closes */
+.mainList .edit-colHidden {
+    display:none;
+}
 /*
  alternate treatment for list
-
 .edit-col {
     display:none;
     position: absolute !important;
@@ -521,6 +523,9 @@ div[role="dialog"] {
 
 .mainList li:hover .edit-col{
     display:block;
+}
+.mainList li:hover .edit-colHidden {
+    display:none;
 }
 .mainList li.canEdit > div {
     padding: 0 !important
@@ -561,4 +566,12 @@ div[role="dialog"] {
     .mainList li.forumType   .edit-col, 
     .mainList li.pageType  .edit-col {
 }
+.editInProgress {
+    background:#eee !important;
+    border:1px dashed #aaa !important;
+}
+.editInProgress * {
+    opacity:.50;    
+}
+
 */
