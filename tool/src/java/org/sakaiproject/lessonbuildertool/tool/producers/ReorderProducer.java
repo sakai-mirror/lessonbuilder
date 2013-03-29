@@ -158,7 +158,7 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 				    // marker between used and not used
 				    UIContainer row = UIBranchContainer.make(tofill, "item:");
 				    UIOutput.make(row, "seq", "---").decorate(new UIFreeAttributeDecorator("class", "marker"));
-				    UIOutput.make(row, "text-snippet", messageLocator.getMessage(secondPageId == null ? "simplepage.reorder-belowdelete" : "simplepage.reorder-aboveuse")).decorate(new UIFreeAttributeDecorator("style", "font-weight: bold;padding-left:3em"));
+				    UIOutput.make(row, "text-snippet", messageLocator.getMessage(secondPageId == null ? "simplepage.reorder-belowdelete" : "simplepage.reorder-aboveuse"));
 				    second = true;
 				    continue;
 				}
@@ -189,7 +189,7 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 				}
 				UIComponent del = UIOutput.make(row, "dellink").decorate(new UIFreeAttributeDecorator("alt", messageLocator.getMessage("simplepage.delete")));
 				if (second)
-				    del.decorate(new UIFreeAttributeDecorator("style", "display:none"));
+				    del.decorate(new UIFreeAttributeDecorator("style", "display:block"));
 			}
 
 

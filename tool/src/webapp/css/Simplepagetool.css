@@ -268,11 +268,133 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	clip: rect(1px 1px 1px 1px); /* IE6, IE7 */
 	clip: rect(1px, 1px, 1px, 1px);
 }
-.fl-reorderer-movable-hover, .fl-reorderer-movable-selected {
-	background-color: #ccc
+.columnSetup2 {
+    padding:5px;
+    float:none;height:100%;overflow:hidden;margin:1em 0
 }
-.fl-reorderer-movable-dragging {
-	background-color: #faa
+
+.layoutReorderer-module-content {
+    padding: 6px;
+    width: 95%;
+    overflow: auto;
+}
+
+.flc-reorderer-module {
+    border: 1px solid #ccc;
+    margin:5px 0;
+    position:relative;
+    padding:5px;
+}
+.flc-reorderer-module:focus {
+    outline:1px dashed #000
+} 
+.flc-reorderer-module:hover {
+    border:1px solid #000;
+}
+.reordSeqContainer {
+    position: absolute;
+    width:50px;
+    top:5;
+    left:0;
+    padding:5px;
+    
+}
+.reordItemContainer {
+     padding: 5px 20px 5px 56px;
+}
+.reordItemContainerDesc {
+    margin-top:5px;
+    text-overflow: ellipsis;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;    
+}
+.highlightEl {
+    background:#ffa
+}
+
+.col2 .reordItemContainer {
+     padding: 5px;
+}
+.col2 .reordSeqContainer, .col2 .reordDeleteContainer {
+    display: none
+}
+
+.reordDeleteContainer {
+    position: absolute;
+    width:17px;
+    top:5px;
+    right:5px;
+
+}
+/**
+ * Interaction styling.
+ */
+
+.layoutReorderer-movable-selected {
+    border: 1px solid #fff;
+}
+
+.layoutReorderer-avatar {
+    background-color:#ccc;
+    outline: 2px solid #000;
+    opacity: 0.5;
+    filter: alpha(opacity=50); /* ie opacity fix */
+}
+.layoutReorderer-avatar .layoutReorderer-module-dragbar, 
+.layoutReorderer-avatar .layoutReorderer-module-content {
+    /* hide contents of the module's avatar, while dragging. */
+    visibility: hidden;
+}
+
+.layoutReorderer-movable-dragging {
+    margin: 6px 2px 6px 12px;
+}
+
+.layoutReorderer-movable-mousedrag {
+    /* hide the original module while being dragged. */
+    display:none;
+}
+
+.layoutReorderer-dropMarker {
+    background: #9f9 url("/library/image/silk/arrow_right.png")  1% 50% no-repeat;
+    height: 20px;
+    padding: 0 0 0 0;
+    margin-left: 1em;
+    margin-right: 1em;
+}
+
+.col1 {
+    min-width:60%;
+    width:60%;
+    min-height:50px;
+}
+.col2 {
+    border: 1px solid #CCCCCC;
+    margin-left: 16px;
+    margin-top: 4px;
+    min-height: 50px;
+    min-width: 30%;
+    padding: 5px 5px 5px;
+    width: 30%;
+}
+.col1, .col2{
+    float:left;
+    background:#fff;
+}
+.deleteListMessage {
+    padding:5px;
+    padding-left: 25px;
+    background: #fff url(/library/image/silk/bin.png) 5px 5px no-repeat;
+}
+.deleteListMessageEmpty {
+    padding:5px;
+    padding-left: 25px;
+    background: #fff url(/library/image/silk/bin_empty.png) 5px 5px no-repeat;
+    
+}
+.skip{
+    display:none
 }
 .afterheader {
 	margin-top: 1em
