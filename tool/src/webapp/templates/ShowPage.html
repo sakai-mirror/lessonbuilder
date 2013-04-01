@@ -71,13 +71,11 @@ function resizeiframe(id) {
 			<p rsf:id="msg=simplepage.needpermissions"></p>
 			<a href="#" rsf:id="callpermissions"></a>
 		</div>
-
+        <!--
 		<div rsf:id="crumbdiv" class="fullwidth breadcrumbs" role="navigation">
-                  <a href="#" rsf:id="resetbutton2"><img rsf:id="resetimage2" src="/library/skin/default/images/reload.gif" style="float:left; margin-right:4px;margin-top:2px"/></a>
-		  <span rsf:id="crumb:"><a href="#" rsf:id="crumb-link"></a><span rsf:id="crumb-follow"></span></span>
-                  <a href="#" rsf:id="helpbutton2" target="_blank"><img rsf:id="helpimage2" src="/library/skin/default/images/help.gif" style="float:right;margin-left:4px;margin-top:2px"/><span rsf:id="helpnewwindow2" class="offscreen"></span> </a>
+		  <span rsf:id="crumb:"><a href="#" rsf:id="crumb-link"></a> <span rsf:id="crumb-follow"></span> </span>
 		</div>
-
+-->
 		
 		<div rsf:id="hiddenAlert" class="ui-widget" role="alert">
 			<div class="ui-state-error ui-corner-all" style="margin-top: 20px; padding: .5em .7em;">
@@ -96,22 +94,49 @@ function resizeiframe(id) {
 		<br rsf:id="breakAfterWarnings" />
 		
                 <div class="neoPortletTitleWrap">
-		  <h2 style="margin:0px;color:inherit;font-size:inherit">
-                  <a href="#" rsf:id="resetbutton"><img rsf:id="resetimage" src="/library/skin/default/images/reload.gif" style="float:left; margin-right:4px; margin-top:3px"/></a>
-                  <div style="float:right">
-                  <a class="usebutton" href="#" rsf:id="show-pages" id="show-pages" role="note"></a>
-                  <a href="#" rsf:id="helpbutton" target="_blank"><img rsf:id="helpimage" src="/library/skin/default/images/help.gif" style="margin-left:4px; margin-top:3px"/><span rsf:id="helpnewwindow" class="offscreen"></span></a>
-                  </div>
-		  <span class="title" rsf:id="pagetitle"></span>
-		  <span class="nextprev buttonset"> <a href="#" rsf:id="prev" class="nextprev">next</a> <a href="#" rsf:id="next" class="nextprev">next</a> </span>
-		  
-		  &nbsp;
-		  <span rsf:id="gradingSpan" class="gradingarea">
-		  		<a href="#" rsf:id="gradingBack" style="margin-right:2px;" class="usebutton grading-nextprev">&#60;</a><img class="statusImg" src="$context/images/no-status.png" id="statusImg" height="16px" width="16px" alt=""></img><span style="*vertical-align:13%"  rsf:id="msg=simplepage.comments-points"></span><span style="display:none" class="uuidBox" rsf:id="commentsUUID"></span><span style="display:none" class="pointsSpan" rsf:id="commentPoints"></span> <input rsf:id="studentPointsBox"  id="studentPointsBox" type="text" style="font-size:100%"  size="3"></input> / <span rsf:id="topmaxpoints"></span> <a class="usebutton" href="#" rsf:id="msg=simplepage.submit" style="*vertical-align:13%;margin-right:.5em" id="submit-grading"></a> <a href="#" rsf:id="gradingForward" class="usebutton grading-nextprev">&#62;</a>
-		  </span>
-		  </h2>
-		</div>
-		
+		          <div class="portletTitle">
+		              <div class="title">
+                        <a href="#" rsf:id="resetbutton" class="reload">
+                            <img rsf:id="resetimage" src="/library/image/transparent.gif"/>
+                        </a>
+                        <a href="#" rsf:id="resetbutton2" class="reload">
+                            <img rsf:id="resetimage2" src="/library/image/transparent.gif"/>
+                        </a>
+                        <h2>
+                            <span rsf:id="crumbdiv" class="fullwidth breadcrumbs" role="navigation">
+                                <span rsf:id="crumb:">
+                                    <a href="#" rsf:id="crumb-link"></a>
+                                    <span rsf:id="crumb-follow"></span>&nbsp;
+                                </span>
+                            </span>
+                            <!-- should only show if top page -->
+                            <span rsf:id="pagetitle" class="singlePageTitle"></span> 
+                        </h2>
+                      </div>  
+                      <div class="action">
+                          <a class="usebutton" href="#" rsf:id="show-pages" id="show-pages" role="note"></a>
+                          <span rsf:id="gradingSpan" class="gradingarea">
+                                <a href="#" rsf:id="gradingBack" style="margin-right:2px;" class="usebutton grading-nextprev">&#60;</a>
+                                <img class="statusImg" src="$context/images/no-status.png" id="statusImg" height="16px" width="16px" alt="" />
+                                <span style="*vertical-align:13%"  rsf:id="msg=simplepage.comments-points"></span>
+                                <span style="display:none" class="uuidBox" rsf:id="commentsUUID"></span>
+                                <span style="display:none" class="pointsSpan" rsf:id="commentPoints"></span>
+                                <input rsf:id="studentPointsBox"  id="studentPointsBox" type="text" style="font-size:100%"  size="3"></input> / <span rsf:id="topmaxpoints"></span>
+                                <a class="usebutton" href="#" rsf:id="msg=simplepage.submit" style="*vertical-align:13%;margin-right:.5em" id="submit-grading"></a>
+                                <a href="#" rsf:id="gradingForward" class="usebutton grading-nextprev">&#62;</a>
+                          </span>
+                		  <span class="nextprev buttonset"> <a href="#" rsf:id="prev" class="nextprev">next</a> <a href="#" rsf:id="next" class="nextprev">next</a> </span>
+                          <a href="#" rsf:id="helpbutton2" target="_blank" class="help">
+                              <img rsf:id="helpimage2" src="/library/image/transparent.gif" />
+                              <span rsf:id="helpnewwindow2" class="offscreen"></span>
+                          </a>
+                          <a href="#" rsf:id="helpbutton" target="_blank" class="help">
+                              <img rsf:id="helpimage" src="/library/image/transparent.gif"/>
+                              <span rsf:id="helpnewwindow" class="offscreen"></span>
+                          </a>
+		              </div>
+                </div>  
+		  </div>
 	
 		<div rsf:id="tool-bar:" class="navIntraTool" role="toolbar" style="z-index:100000" aria-labelledby="tool-bar::toolbar-label">
 			<h3 id="toolbar-label" rsf:id="msg=simplepage.toolbar" class="offscreen"></h3>

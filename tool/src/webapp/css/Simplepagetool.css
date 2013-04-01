@@ -47,7 +47,7 @@
 	padding: 5px;
 }
 .nextprev {
-	font-size: 100% !important
+	font-size: 95% !important
 }
 #error {
 	left: 10px;
@@ -64,13 +64,8 @@
 	margin-top: 1px;
 	margin-bottom: 3px;
 }
-.title {
-	font-weight: bold;
-	font-size: 1.2em;
-	color: #333;
-	display: inline-block;
-	margin-top: 1px;
-	margin-left: 2px;
+.breadcrumbs + .singlePageTitle {
+    display:none
 }
 .italic {
 	font-style: italic
@@ -393,9 +388,6 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
     background: #fff url(/library/image/silk/bin_empty.png) 5px 5px no-repeat;
     
 }
-.skip{
-    display:none
-}
 .afterheader {
 	margin-top: 1em
 }
@@ -532,10 +524,13 @@ ul#toolbar li {
     font-size: .85em !important
 }
 span.nextprev {
-	margin-left: 20px
+	/*
+margin-left: 20px;
+*/
+
 }
 a.nextprev {
-	margin-left: 5px
+	margin-left: 5px;
 }
 img {
 	z-index: 1
@@ -631,8 +626,113 @@ div[role="dialog"] {
 .mainList .edit-colHidden {
     display:none;
 }
+
 /*
- alternate treatment for list
+neeeded by LB for skinning - goes in tool.css
+
+.neoPortletTitleWrap {
+    border-bottom: 2px solid #555;
+}
+.portletTitle {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.portletTitle .action {
+    padding: 2px -1px 6px 2px;
+    text-align: right;
+    vertical-align: middle;
+}
+.portletTitle .action a#jsr-edit {
+    padding: 2px;
+    background: url(images/page_edit.gif) center right no-repeat;
+}
+.portletTitle .action a#jsr-edit:hover {
+    background: url(images/page_edit.gif) center right no-repeat
+}
+.portletTitle .action img {
+    margin: 0;
+    vertical-align: text-bottom;
+    width: 18px;
+    border: none;
+    height: 18px;
+}
+.portletTitle .action a.help {
+    background: url(images/help.gif) center right no-repeat;
+    text-align: left;
+    padding: 0;
+    text-decoration: none !important;
+    width: 1em;
+    height: 1.5em;
+    outline: none;
+}
+.portletTitle .title a:focus, .portletTitle .action a:focus {
+    outline: black dotted thin
+}
+.portletTitle .action a.help:hover, .portletTitle .action a.help:focus {
+    background: url(images/help_h.gif) center right no-repeat
+}
+.portletTitle .action a.tool-directurl{
+    padding:2px;
+    background: url(/library/image/silk/link.png) center right no-repeat;
+}
+.portletTitle .action a.tool-directurl:hover{
+    background: url(/library/image/silk/link_go.png) center right no-repeat;
+}
+.direct-url-wrap {
+    font-size: 85%;
+    color: #555;
+}
+.direct-url-wrap textarea {
+    color: #000;
+    overflow:auto;
+    width:250px;
+    display:block;
+}
+.portletTitle .title {
+    padding: 2px 4px 6px 0;
+    height: 1em;
+    float: left;
+    color: #000;
+}
+.portletTitle .title img {
+    margin: 0;
+    vertical-align: text-bottom;
+    width: 18px;
+    border: none;
+    height: 18px;
+}
+.portletTitle .title h2 {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    color: #444;
+    font-weight: bold;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 1.2em !important;
+}
+.portletTitle .title h2 .siteTitle {
+    color: #333
+}
+.portletTitle .title a.reload {
+    background: url(images/reload.png) center left no-repeat;
+    text-decoration: none !important;
+    border: 1px solid #fff;
+    height: 1.5em;
+    outline: none;
+}
+.portletTitle .title a.reload:hover, .portletTitle .title a.reload:focus {
+    background: url(images/reload_h.png) center left no-repeat
+}
+
+*/
+
+
+
+
+/*
+ alternate treatment for list - can go in tool.css
+  
 .edit-col {
     display:none;
     position: absolute !important;
