@@ -186,6 +186,7 @@ function resizeiframe(id) {
                 </li>
                 <li>
                     <a href="#" rsf:id="import-cc" id="import-cc"><span rsf:id="msg=simplepage.import_cc_button"></span></a>
+                    <!-- just a message, so will display when it should not-->
                     <div role="menuitem" rsf:id="msg=simplepage.importcc-descrip"></div>
                 </li>
                 <li rsf:id="blti-descrip">
@@ -194,6 +195,7 @@ function resizeiframe(id) {
                 </li>
                 <li rsf:id="student-descrip">
                     <a href="#" role="menuitem" rsf:id="add-comments"><span rsf:id="msg.simplepage.comments"></span></a>
+                    <!-- just a message, so will display when it should not-->
                     <div rsf:id="msg=simplepage.comments-descrip"></div>
                 </li>
                 <li>
@@ -238,7 +240,14 @@ function resizeiframe(id) {
                           <img rsf:id="item-icon" height="25" width="25" alt="" style="position:relative; top:3px; margin-right:2px" />
                           <h3 class="link-div-head"><a class="itemlink" href="#" rsf:id="link" style="width:36px"><span rsf:id="link-note" class="offscreen"></span><span rsf:id="link-text" class="link-text itemtext"></span></a></h3>
                           <span><span rsf:id="link-fake-note" class="offscreen"></span><span rsf:id="link-fake" class="link-text itemtext fake-disabled"></span></span>
-                          <span rsf:id="link-button-span" class="navIntraTool" style="background-color:transparent;border:none"><a href="#" class="usebutton" rsf:id="link-button"><span rsf:id="link-button-text" class="link-text"></span></a><span rsf:id="link-button-fake" class="usebutton link-text fake-disabled"></span><span rsf:id="link-button-note" class="offscreen"></span><span rsf:id="link-button-fake-note" class="offscreen"></span></span>
+                          <span rsf:id="link-button-span" class="navIntraTool" style="background-color:transparent;border:none">
+                            <a href="#" class="usebutton" rsf:id="link-button">
+                                <span rsf:id="link-button-text" class="link-text"></span>
+                            </a>
+                            <span rsf:id="link-button-fake" class="usebutton link-text fake-disabled"></span>
+                            <span rsf:id="link-button-note" class="offscreen"></span>
+                            <span rsf:id="link-button-fake-note" class="offscreen"></span>
+                          </span>
                           <a class="itemcopylink" href="#" rsf:id="copylink"><span class="itemcopytext"  rsf:id="copylinktext"></span></a>
                           <span rsf:id="item-group-titles" class="item-group-titles"></span>
                         </div>
@@ -406,10 +415,6 @@ function resizeiframe(id) {
                     <div rsf:id="studentSpan">
                             <span rsf:id="student-missing-prereqs"></span>
                         <div class="studentDiv" rsf:id="studentDiv">
-                            <div>
-                                <a href="#" style="margin-top:15px;" class="usebutton gradingPaneLink" rsf:id="studentGradingPaneLink" ></a>
-                            </div>
-                        
                             <div rsf:id="item-group-titles7" class="item-group-titles"></div>
                             <div class="studentContentTable" rsf:id="studentContentTable" role="list">
                               <img src="/library/image/silk/page_white_stack.png" height="25" width="25"/>
@@ -429,6 +434,10 @@ function resizeiframe(id) {
                                 </div>
                               </div>
                             </div>
+                            <div>
+                                <a href="#" style="margin-top:15px;" class="usebutton gradingPaneLink" rsf:id="studentGradingPaneLink" ></a>
+                            </div>
+
                         </div>
                         
                         <div style="display:none" rsf:id="studentId" class="student-id"></div>

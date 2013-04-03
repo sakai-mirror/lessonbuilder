@@ -1080,7 +1080,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    // right. Otherwise the
 					    // description block will display underneath
 					    if ("button".equals(i.getFormat())) {
-						linkdiv.decorate(new UIFreeAttributeDecorator("style", "float:left"));
+						linkdiv.decorate(new UIFreeAttributeDecorator("style", "float:none"));
 					    }
 					    // for accessibility
 					    if (navButton) {

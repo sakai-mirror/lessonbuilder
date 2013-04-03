@@ -147,6 +147,10 @@ a.ui-button:link, a.ui-button:visited {
 	color: black;
 	text-decoration: none !important;
 }
+.gradingTable a.ui-button .ui-button-text{
+    font-size:10px;
+    font-weight:normal;
+}
 .ui-buttonset .ui-button {
     margin-right: 3px !important;
 }
@@ -403,12 +407,19 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	margin-right: 15px;
 	font-weight: bold;
 }
+.replaceWithComments {
+  margin:5px 5px 5px 20px;
+}
 .commentPageTitle {
-	margin-right: 10px;
+	margin: 0 10px;
 	color: #906;
 }
 .commentDiv {
-
+}
+.gradingTable .commentDiv {
+    padding:5px;
+    margin-top:5px;
+    outline:1px solid #ccc;
 }
 .commentBody {
 	margin: 0 0 0 35px;
@@ -476,7 +487,6 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 }
 .studentContentTable .studentRow{
     padding:5px 0;
-    margin-left:30px
 }
 
 .duecol {
@@ -557,13 +567,18 @@ img {
 	border-top: 3px solid white
 }
 .first-row {
-   background-color: #e8e8e8
+   /*
+background-color: #e8e8e8
+*/
 }
 .first-row td {
    padding: 0px;
 }
 .details-row td {
    padding-left: 2em
+}
+.details-row td:hover {
+    background: #fff
 }
 .gradingarea {
 	margin-left: 1em;
@@ -627,6 +642,16 @@ div[role="dialog"] {
     display:none;
 }
 
+.pageList {
+    padding: 0 10px;
+    list-style:none;
+}
+.pageList li {
+    padding:5px;
+}
+.pageList img {
+    vertical-align:middle;   
+}
 /*
 neeeded by LB for skinning - goes in tool.css
 
@@ -710,6 +735,9 @@ neeeded by LB for skinning - goes in tool.css
     font-weight: bold;
     font-family: 'Helvetica Neue', Arial, sans-serif;
     font-size: 1.2em !important;
+}
+.portletTitle .title h2 a {
+    text-decoration: none;    
 }
 .portletTitle .title h2 .siteTitle {
     color: #333
