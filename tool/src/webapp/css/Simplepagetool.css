@@ -117,15 +117,20 @@
 .controlsPanel .act {
     margin:1em 0;
 }
-.controlsPanel .act .deleteButton {
-    float:right;
-    background: url(/library/image/silk/bin_closed.png) center left no-repeat,-moz-linear-gradient(top, #fefefe 0%, #e9edf0 96%, #e2e5e7 100%) !important;
-    background: url(/library/image/silk/bin_closed.png) center left no-repeat,-webkit-gradient(linear, left top, left bottom, color-stop(0%,#fefefe), color-stop(96%,#e9edf0), color-stop(100%,#e2e5e7)) !important;
-    background: url(/library/image/silk/bin_closed.png) center left no-repeat,-webkit-linear-gradient(top, #fefefe 0%,#e9edf0 96%,#e2e5e7 100%) !important;
-    background: url(/library/image/silk/bin_closed.png) center left no-repeat,-o-linear-gradient(top, #fefefe 0%,#e9edf0 96%,#e2e5e7 100%) !important;
-    background: url(/library/image/silk/bin_closed.png) center left no-repeat,-ms-linear-gradient(top, #fefefe 0%,#e9edf0 96%,#e2e5e7 100%) !important;
-    background: url(/library/image/silk/bin_closed.png) center left no-repeat,linear-gradient(top, #fefefe 0%,#e9edf0 96%,#e2e5e7 100%) !important;
-    padding-left:20px !important;
+.controlsPanel .act .deleteButton, .act .deleteButton {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #c00 !important;    
+    text-shadow:none !important;
+
+}
+.act .deleteButton {
+    float: none
+}
+.controlsPanel .act .deleteButton:hover, .act .deleteButton:hover {
+    background: none !important;
+    cursor: pointer;
 }
 .inset-text {
 	margin-top: 1em;
@@ -233,8 +238,9 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 .mainList li.question .multipleChoiceForm input.bold {
     margin:5px 0px 0px 20px !important
 }
-
-
+.questionStatusText {
+    padding: 15px 20px;
+}
 .mainList li .textbox {
 
 }
@@ -669,8 +675,8 @@ div[role="dialog"] {
 .pageList img {
     vertical-align:middle;   
 }
-/*
-neeeded by LB for skinning - goes in tool.css
+/* neeeded by LB for skinning - goes in tool.css so that the
+ * portlet title looks like the rest in the system. 
 
 .neoPortletTitleWrap {
     border-bottom: 2px solid #555;
@@ -769,12 +775,7 @@ neeeded by LB for skinning - goes in tool.css
 .portletTitle .title a.reload:hover, .portletTitle .title a.reload:focus {
     background: url(images/reload_h.png) center left no-repeat
 }
-
 */
-
-
-
-
 /*
  alternate treatment for list - can go in tool.css
   
@@ -840,5 +841,7 @@ neeeded by LB for skinning - goes in tool.css
 .editInProgress * {
     opacity:.50;    
 }
-
+*/
+ /*
+end alternate treatment for list
 */

@@ -1315,7 +1315,8 @@ $(function() {
 
 	} // Closes admin if statement
 
-	$(".showPollGraph").click(function() {
+	$(".showPollGraph").click(function(e) {
+        e.preventDefault();
 		var pollGraph = $(this).parents(".questionDiv").find(".questionPollGraph");
 		
 		if($(this).find("span").text() === $(this).parent().find(".show-poll").text()) {
@@ -1339,7 +1340,7 @@ $(function() {
 			$(this).find("span").text($(this).parent().find(".show-poll").text());
 		}
 		
-		setMainFrameHeight(window.name);
+        resizeFrame('grow')
 	});
 	
 	function submitgrading(item) {
@@ -1974,3 +1975,22 @@ function resetShortanswers() {
 	$("#extraShortanswers").empty();
 }
 
+
+resizeFrame = function (updown) {
+      var frame = parent.document.getElementById( window.name );
+      if( frame ) {
+        if(updown=='shrink')
+        {
+        var clientH = document.body.clientHeight + 30;
+      }
+      else
+      {
+      var clientH = document.body.clientHeight + 30;
+      }
+        $( frame ).height( clientH );
+      } else {
+        throw( "resizeFrame did not get the frame (using name=" + window.name + ")" );
+      }
+    };
+
+    

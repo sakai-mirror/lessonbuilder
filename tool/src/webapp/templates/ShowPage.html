@@ -160,7 +160,7 @@ function resizeiframe(id) {
                 </li>
                 <li style="float:right">
                     <span rsf:id="permissions-descrip">
-                        <a href="#" role="menuitem" rsf:id="permissions"><span rsf:id="msg.simplepage.permissions"></span></a>
+                        <a href="#" role="menuitem" rsf:id="permissions"></a>
                     </span>
                 </li>
                 <li style="float:right"><a href="#" rsf:id="help" target="_blank"></a></li>
@@ -489,7 +489,7 @@ function resizeiframe(id) {
                                     </form>
                                 </div>
                                 
-                                <div rsf:id="questionStatusText" style="margin:10px"></div>
+                                <div rsf:id="questionStatusText" class="questionStatusText"></div>
                                 
                                 <div style="display:none" rsf:id="questionPollData:" class="questionPollData">
                                     <span rsf:id="questionPollText" class="questionPollText"></span>
@@ -1078,17 +1078,17 @@ function resizeiframe(id) {
                     </div>
 
                     <div class="border2 controlsPanel">                 
-                        <p class="required mm-url-section">
-                            <label rsf:id="msg=simplepage.addLink_label_add" for="mm-url">URL</label>
-                            <input type="text" name="mm-url" rsf:id="mm-url" id="mm-url" style="width:99%" class="edit-multimedia-input" />
-                        </p>
                         <p class="required">
-                            <label rsf:id="msg=simplepage.upload_label_or" for="mm-file">File</label>
+                            <label rsf:id="msg=simplepage.upload_label" for="mm-file">File</label>
                             <input type="file" name="mm-file" id="mm-file" style="width:95%" class="edit-multimedia-input" />
                         </p>
-
                         <p class="required" style="">
                             <a href="#" id="mm-choose" rsf:id="mm-choose" >...or choose exiting file</a>
+                        </p>
+
+                        <p class="required mm-url-section">
+                            <label rsf:id="msg=simplepage.addLink_label_add_or" for="mm-url">URL</label>
+                            <input type="text" name="mm-url" rsf:id="mm-url" id="mm-url" style="width:99%" class="edit-multimedia-input" />
                         </p>
 
                     <input class="bold" type="submit" id="mm-add-item" rsf:id="mm-add-item" />
