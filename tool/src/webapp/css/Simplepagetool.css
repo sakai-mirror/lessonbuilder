@@ -61,8 +61,13 @@
 }
 .breadcrumbs span {
 	display: inline-block;
-	margin-top: 1px;
-	margin-bottom: 3px;
+}
+.breadcrumbs span > span {
+    margin-left: 5px;
+    margin-right:5px    
+}
+.breadcrumbs span > span.bold {
+    margin-left:0;
 }
 .breadcrumbs + .singlePageTitle {
     display:none
@@ -263,6 +268,7 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 .canEdit .statusCol {
     top:-8px;
     left: -8px;
+    z-index: 4;
 }
 .link-div h3.link-div-head {
     display:inline;
@@ -317,7 +323,7 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
     
 }
 .reordItemContainer {
-     padding: 5px 20px 5px 56px;
+     padding: 5px 20px 5px 30px;
 }
 .reordItemContainerDesc {
     margin-top:5px;
@@ -433,6 +439,7 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 	color: #906;
 }
 .commentDiv {
+    position:relative
 }
 .gradingTable .commentDiv {
     padding:5px;
@@ -468,6 +475,11 @@ a.edit-link:link, a.edit-link:visited, a.itemLink:link, a.itemLink:visited, a.mu
 }
 .commentDiv .editLink, .commentDiv .deleteLink,  .commentDiv .replyLink {
     padding:5px;
+}
+.commentGradePanel {
+    position: absolute;
+    top: 10px;
+    right: 0;
 }
 .commentDiv .editLink:hover, .commentDiv .deleteLink:hover,  .commentDiv .replyLink:hover {
     cursor:pointer;
@@ -631,6 +643,11 @@ background-color: #e8e8e8
 	width: 400px;
 	height: 55px;
 }
+.questionText, .questionStatusText {
+	white-space:pre;
+	margin: 1em;
+}
+
 #question-text-input {
 	width: 400px;
 }
@@ -676,10 +693,32 @@ div[role="dialog"] {
     vertical-align:middle;   
 }
 /* neeeded by LB for skinning - goes in tool.css so that the
- * portlet title looks like the rest in the system. 
-
+ * portlet title looks like the rest in the system.
+ * the lines that follow mirror the default skin rendering
+ * in case adopter does not adjust skin 
+ * 
+ * if adopter wants to include overrides in their tool.css these are the 
+ * minimal adjustments below:
+ * 
+    .neoPortletTitleWrap {
+        border-bottom: 2px solid #555 !important;
+    }
+    .portletTitle .action a.help {
+        background: url(images/help.gif) center right no-repeat  !important;
+    } 
+    .portletTitle .action a.help:hover, .portletTitle .action a.help:focus {
+        background: url(images/help_h.gif) center right no-repeat  !important;
+    }
+    .portletTitle .title a.reload {
+        background: url(images/reload.png) center left no-repeat !important;
+    }
+    .portletTitle .title a.reload:hover, .portletTitle .title a.reload:focus {
+        background: url(images/reload_h.png) center left no-repeat !important
+    }
+*/
 .neoPortletTitleWrap {
-    border-bottom: 2px solid #555;
+    border-bottom: 2px solid #319DCE;
+    border-radius:0
 }
 .portletTitle {
     width: 100%;
@@ -693,10 +732,10 @@ div[role="dialog"] {
 }
 .portletTitle .action a#jsr-edit {
     padding: 2px;
-    background: url(images/page_edit.gif) center right no-repeat;
+    background: url(../images/page_edit.gif) center right no-repeat;
 }
 .portletTitle .action a#jsr-edit:hover {
-    background: url(images/page_edit.gif) center right no-repeat
+    background: url(../images/page_edit.gif) center right no-repeat
 }
 .portletTitle .action img {
     margin: 0;
@@ -706,7 +745,7 @@ div[role="dialog"] {
     height: 18px;
 }
 .portletTitle .action a.help {
-    background: url(images/help.gif) center right no-repeat;
+    background: url(../images/help.gif) center right no-repeat;
     text-align: left;
     padding: 0;
     text-decoration: none !important;
@@ -718,7 +757,7 @@ div[role="dialog"] {
     outline: black dotted thin
 }
 .portletTitle .action a.help:hover, .portletTitle .action a.help:focus {
-    background: url(images/help_h.gif) center right no-repeat
+    background: url(../images/help_h.gif) center right no-repeat
 }
 .portletTitle .action a.tool-directurl{
     padding:2px;
@@ -766,19 +805,20 @@ div[role="dialog"] {
     color: #333
 }
 .portletTitle .title a.reload {
-    background: url(images/reload.png) center left no-repeat;
+    background: url(../images/reload.gif) center left no-repeat;
     text-decoration: none !important;
     border: 1px solid #fff;
     height: 1.5em;
     outline: none;
 }
 .portletTitle .title a.reload:hover, .portletTitle .title a.reload:focus {
-    background: url(images/reload_h.png) center left no-repeat
+    background: url(../images/reload_h.gif) center left no-repeat
 }
-*/
+
 /*
  alternate treatment for list - can go in tool.css
-  
+*/
+/*
 .edit-col {
     display:none;
     position: absolute !important;

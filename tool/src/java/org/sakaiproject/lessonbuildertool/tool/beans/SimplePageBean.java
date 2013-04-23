@@ -149,7 +149,7 @@ public class SimplePageBean {
 	private static Log log = LogFactory.getLog(SimplePageBean.class);
 
 	public enum Status {
-		NOT_REQUIRED, REQUIRED, DISABLED, COMPLETED, FAILED
+	    NOT_REQUIRED, REQUIRED, DISABLED, COMPLETED, FAILED, NEEDSGRADING
 	}
 	
     // from ResourceProperites. This isn't in 2.7.1, so define it here. Let's hope it doesn't change...
@@ -3944,8 +3944,8 @@ public class SimplePageBean {
 				completeCache.put(itemId, true);
 				return true;
 			} else {
-				Float grade = submission.getGrade();
-			    if (grade >= Float.valueOf(item.getRequirementText())) {
+				Double grade = submission.getGrade();
+			    if (grade >= Double.valueOf(item.getRequirementText())) {
 			    	completeCache.put(itemId, true);
 			    	return true;
 			    } else {
@@ -4796,6 +4796,10 @@ public class SimplePageBean {
 		return ret && path.delete();
 	}
 
+	public void exportCc () {
+	    System.out.println("export cc");
+	}
+
 	public void importCc() {
 	    if (!canEditPage())
 		return;
@@ -5422,6 +5426,13 @@ public class SimplePageBean {
 		item.setAttribute("questionType", questionType);
 		
 		if(questionType.equals("shortanswer")) {
+			String shortAnswers[] = questionAnswer.split("\n");
+			questionAnswer = "";
+			for (int i = 0; i < shortAnswers.length; i ++) {
+			    String a = shortAnswers[i].trim();
+			    if (! a.equals(""))
+				questionAnswer = questionAnswer + a + "\n";
+			}
 			item.setAttribute("questionAnswer", questionAnswer);
 		}else if(questionType.equals("multipleChoice")) {
 			Long max = simplePageToolDao.maxQuestionAnswer(item);
@@ -5442,8 +5453,8 @@ public class SimplePageBean {
 				    answerId = ++max;
 				Boolean correct = fields[1].equals("true");
 				String text = fields[2];
-				
-			        Long id = simplePageToolDao.addQuestionAnswer(item, answerId, text, correct);
+				if (text != null && !text.trim().equals(""))
+				    simplePageToolDao.addQuestionAnswer(item, answerId, text, correct);
 
 			}
 			
@@ -5463,7 +5474,10 @@ public class SimplePageBean {
 			}
 		}
 		
-		if(graded && (item.getGradebookId() == null || item.getGradebookId().equals(""))) {
+		if (!graded || (gradebookTitle != null && gradebookTitle.trim().equals("")))
+		    gradebookTitle = null;
+
+		if(gradebookTitle != null && (item.getGradebookId() == null || item.getGradebookId().equals(""))) {
 			// Creating new gradebook entry
 			
 			String gradebookId = "lesson-builder:question:" + item.getId();
@@ -5479,25 +5493,28 @@ public class SimplePageBean {
 			}else {
 				item.setGradebookId(gradebookId);
 				item.setGradebookTitle(title);
-				item.setGradebookPoints(pointsInt);
 			}
-		}else if(graded) {
+		}else if(gradebookTitle != null) {
 			// Updating an old gradebook entry
 			
 			gradebookIfc.updateExternalAssessment(getCurrentSiteId(), item.getGradebookId(), null, gradebookTitle, pointsInt, null);
 			
 			item.setGradebookTitle(gradebookTitle);
-			item.setGradebookPoints(pointsInt);
-		}else if(!graded && (item.getGradebookId() != null && !item.getGradebookId().equals(""))) {
+		}else if(gradebookTitle == null && (item.getGradebookId() != null && !item.getGradebookId().equals(""))) {
 			// Removing an existing gradebook entry
 			
 			gradebookIfc.removeExternalAssessment(getCurrentSiteId(), item.getGradebookId());
 			item.setGradebookId(null);
 			item.setGradebookTitle(null);
-			item.setGradebookPoints(null);
+
 		}
 		
+		item.setAttribute("questionGraded", String.valueOf(graded));
 		item.setRequired(required);
+		if (graded)
+		    item.setGradebookPoints(pointsInt);
+		else
+		    item.setGradebookPoints(null);
 		item.setPrerequisite(prerequisite);
 		
 		update(item);
@@ -5522,12 +5539,10 @@ public class SimplePageBean {
 			return false;
 		}
 		
-		Double gradebookPoints;
-		if(question.getGradebookId() != null && !question.getGradebookId().equals("")) {
-			gradebookPoints = (double) question.getGradebookPoints();
-		}else {
-			gradebookPoints = null;
-		}
+		Double gradebookPoints = null;
+		if (question.getGradebookPoints() != null)
+		    gradebookPoints = (double)question.getGradebookPoints();
+
 		boolean correct = true;
 		if(response.isOverridden()) {
 			// The teacher set this score manually, so we'd rather not mess with it.
@@ -5572,14 +5587,14 @@ public class SimplePageBean {
 		}
 		
 		response.setCorrect(correct);
+		if ("true".equals(question.getAttribute("questionGraded")))
+		    response.setPoints(gradebookPoints);
 		
 		if(question.getGradebookId() != null && !question.getGradebookId().equals("")) {
 			gradebookIfc.updateExternalAssessmentScore(getCurrentSiteId(), question.getGradebookId(),
 			       response.getUserId(), String.valueOf(gradebookPoints));
-			
-			response.setPoints(gradebookPoints);
 		}
-		
+
 		return correct;
 	}
 	

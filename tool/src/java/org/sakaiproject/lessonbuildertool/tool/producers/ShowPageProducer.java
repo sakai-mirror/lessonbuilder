@@ -159,6 +159,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	}
         public boolean useSakaiIcons = ServerConfigurationService.getBoolean("lessonbuilder.use-sakai-icons", false);
         public boolean allowSessionId = ServerConfigurationService.getBoolean("session.parameter.allow", false);
+        public boolean allowCcExport = ServerConfigurationService.getBoolean("lessonbuilder.cc-export", false);
+
 
 	// I don't much like the static, because it opens us to a possible race
 	// condition, but I don't see much option
@@ -177,6 +179,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	private static String[] multimediaTypes = null;
         private static final String DEFAULT_MP4_TYPES = "video/mp4,video/x-m4v";
         private static String[] mp4Types = null;
+        private static final String DEFAULT_JW_TYPES = "video/x-flv,video/mp4,video/x-m4v,video/webm";
+    // jw can also handle audio: audio/mp4,audio/mpeg,audio/ogg
+        private static String[] jwTypes = null;
 
     // WARNING: this must occur after memoryService, for obvious reasons. 
     // I'm doing it this way because it doesn't appear that Spring can do this kind of initialization
@@ -307,6 +312,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		    .decorate(new UIFreeAttributeDecorator("xml:lang", localegetter.get().getLanguage()));        
 
 		boolean iframeJavascriptDone = false;
+		boolean jwLoaded = false;
 		
 		// security model:
 		// canEditPage and canReadPage are normal Sakai privileges. They apply
@@ -428,6 +434,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				mp4Types[i] = mp4Types[i].trim().toLowerCase();
 			}
 			Arrays.sort(mp4Types);
+		}
+
+		if (jwTypes == null) {
+			String jTypes = ServerConfigurationService.getString("lessonbuilder.jw.types", DEFAULT_JW_TYPES);
+			jwTypes = jTypes.split(",");
+			for (int i = 0; i < jwTypes.length; i++) {
+				jwTypes[i] = jwTypes[i].trim().toLowerCase();
+			}
+			Arrays.sort(jwTypes);
 		}
 
 		// remember that page tool was reset, so we need to give user the option
@@ -632,6 +647,16 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				UIOutput.make(tofill, "toppage-descrip");
 				UIOutput.make(tofill, "new-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-page-tooltip")));
 				UIOutput.make(tofill, "import-cc").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
+				if (allowCcExport) {
+				    // OK so this is weird. An invisible form, which is submitted by onclick attached to the <A> following.
+				    // The problem is that even if I make the button look like a link it won't show up the same in
+				    // screen readers, so I really need to trigger it with a link
+				    UIOutput.make(tofill, "export-cc-group");
+				    UIForm form = UIForm.make(tofill, "export-cc-form");
+				    UICommand.make(form, "export-cc-input", "#{simplePageBean.exportCc}");
+				    UIOutput.make(tofill, "export-cc");
+				}				    
+
 			}
 			
 			// Checks to see that user can edit and that this is either a top level page,
@@ -1428,6 +1453,44 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						// use EMBED. OBJECT does work with Flash.
 						// application/xhtml+xml is XHTML.
 
+					} else if (mimeType != null && 
+						   (Arrays.binarySearch(jwTypes, mimeType) >= 0) &&
+						   ServerConfigurationService.getBoolean("lessonbuilder.usejwplayer", false)) {
+					    
+					    if (!jwLoaded) {
+						UIOutput.make(tableRow, "jwload");
+						jwLoaded = true;
+					    }
+
+					    // new jw player code. uses javascript, so separate from normal embed
+					    // duplicates code from next section, but anything else is too confusing
+					    if (itemGroupString != null) {
+						UIOutput.make(tableRow, "item-group-titles5", itemGroupTitles);
+						UIOutput.make(tableRow, "item-groups5", itemGroupString);
+					    }
+					    UIOutput.make(tableRow, "movieSpan");
+					    String movieUrl = i.getItemURL(simplePageBean.getCurrentSiteId(),currentPage.getOwner());
+					    UIComponent movieDiv = UIOutput.make(tableRow, "jwmovie"); // dummy div to replace with player
+					    String sizeString = "";
+					    if (lengthOk(height) && height.getOld().indexOf("%") < 0)
+						sizeString = ",height: " + height.getOld();
+					    if (lengthOk(width) && width.getOld().indexOf("%") < 0)
+						sizeString += ",width: " + width.getOld();
+
+					    UIVerbatim.make(tableRow, "jwscript", "jwplayer(\"" + movieDiv.getFullID() + "\").setup({file:\"" + movieUrl + "\"" + sizeString + "});");
+					    if (canEditPage) {
+						UIOutput.make(tableRow, "movieId", String.valueOf(i.getId()));
+						UIOutput.make(tableRow, "movieHeight", getOrig(height));
+						UIOutput.make(tableRow, "movieWidth", getOrig(width));
+						UIOutput.make(tableRow, "mimetype5", mimeType);
+						UIOutput.make(tableRow, "current-item-id6", Long.toString(i.getId()));
+						
+						UIOutput.make(tableRow, "movie-td");
+						UILink.make(tableRow, "edit-movie", messageLocator.getMessage("simplepage.editItem"), "").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.url").replace("{}", abbrevUrl(i.getURL()))));
+					    }
+					    
+					    UIOutput.make(tableRow, "description3", i.getDescription());
+						    
 					} else if ((mimeType != null && !mimeType.equals("text/html") && !mimeType.equals("application/xhtml+xml")) || (mimeType == null && Arrays.binarySearch(multimediaTypes, extension) >= 0)) {
 
 						if (mimeType == null)
@@ -1939,11 +2002,16 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					
 					Status questionStatus = getQuestionStatus(i, response);
 					addStatusImage(questionStatus, tableRow, "questionStatus", null);
-					if(questionStatus == Status.COMPLETED) {
-						UIOutput.make(tableRow, "questionStatusText", i.getAttribute("questionCorrectText"));
-					}else if(questionStatus == Status.FAILED) {
-						UIOutput.make(tableRow, "questionStatusText", i.getAttribute("questionIncorrectText"));
-					}
+					String statusNote = getStatusNote(questionStatus);
+					if (statusNote != null) // accessibility version of icon
+					    UIOutput.make(tableRow, "questionNote", statusNote);
+					String statusText = null;
+					if(questionStatus == Status.COMPLETED)
+					    statusText = i.getAttribute("questionCorrectText");
+					else if(questionStatus == Status.FAILED)
+					    statusText = i.getAttribute("questionIncorrectText");
+					if (statusText != null && !"".equals(statusText.trim()))
+					    UIOutput.make(tableRow, "questionStatusText", statusText);
 					
 					// Output the poll data
 					if("multipleChoice".equals(i.getAttribute("questionType")) &&
@@ -1973,9 +2041,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					if(canEditPage) {
 						UIOutput.make(tableRow, "question-td");
 						
-						// Checks to make sure that the question is graded and that we didn't
-						// just come from a grading pane (would be confusing)
-						if(i.getGradebookId() != null && !cameFromGradingPane) {
+						// always show grading panel. Currently this is the only way to get feedback
+						if( !cameFromGradingPane) {
 							QuestionGradingPaneViewParameters gp = new QuestionGradingPaneViewParameters(QuestionGradingPaneProducer.VIEW_ID);
 							gp.placementId = toolManager.getCurrentPlacement().getId();
 							gp.questionItemId = i.getId();
@@ -1990,7 +2057,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							.decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit-title.question")));
 						
 						UIOutput.make(tableRow, "questionId", String.valueOf(i.getId()));
-						UIOutput.make(tableRow, "questionGrade", String.valueOf(i.getGradebookId() != null));
+						boolean graded = "true".equals(i.getAttribute("questionGraded")) || i.getGradebookId() != null;
+						UIOutput.make(tableRow, "questionGrade", String.valueOf(graded));
 						UIOutput.make(tableRow, "questionMaxPoints", String.valueOf(i.getGradebookPoints()));
 						UIOutput.make(tableRow, "questionGradebookTitle", String.valueOf(i.getGradebookTitle()));
 						UIOutput.make(tableRow, "questionitem-required", String.valueOf(i.isRequired()));
@@ -3228,16 +3296,48 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	 * For showing status images next to the question.
 	 */
 	private Status getQuestionStatus(SimplePageItem question, SimplePageQuestionResponse response) {
-		if(response != null && response.isCorrect()) {
+		String questionType = question.getAttribute("questionType");
+		boolean noSpecifiedAnswers = false;
+		boolean manuallyGraded = false;
+
+		if ("multipleChoice".equals(questionType) &&
+		    !simplePageToolDao.hasCorrectAnswer(question))
+		    noSpecifiedAnswers = true;
+		else if ("shortanswer".equals(questionType) &&
+			 "".equals(question.getAttribute("questionAnswer")))
+		    noSpecifiedAnswers = true;
+
+		if (noSpecifiedAnswers && "true".equals(question.getAttribute("questionGraded")))
+		    manuallyGraded = true;
+
+		if (noSpecifiedAnswers && !manuallyGraded)
+		    return Status.COMPLETED;  // a poll    
+
+		if (manuallyGraded && (response != null && !response.isOverridden())) {
+			return Status.NEEDSGRADING;
+		} else if (response != null && response.isCorrect()) {
 			return Status.COMPLETED;
-		}else if(response != null && !response.isCorrect()) {
-			return Status.FAILED;
+		} else if (response != null && !response.isCorrect()) {
+			return Status.FAILED;			
 		}else if(question.isRequired()) {
 			return Status.REQUIRED;
 		}else {
 			return Status.NOT_REQUIRED;
 		}
 	}
+
+        String getStatusNote(Status status) {
+	    if (status == Status.COMPLETED)
+		return messageLocator.getMessage("simplepage.status.completed");
+	    else if (status == Status.REQUIRED)
+		return messageLocator.getMessage("simplepage.status.required");
+	    else if (status == Status.NEEDSGRADING)
+		return messageLocator.getMessage("simplepage.status.needsgrading");
+	    else if (status == Status.FAILED)
+		return messageLocator.getMessage("simplepage.status.failed");
+	    else 
+		return null;
+	}	    
 
 	// add the checkmark or asterisk. This code supports a couple of other
 	// statuses that we
@@ -3263,6 +3363,10 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			// + " " + name;
 		} else if (status == Status.REQUIRED) {
 			imagePath += "available.png";
+			imageAlt = ""; // messageLocator.getMessage("simplepage.status.required")
+			// + " " + name;
+		} else if (status == Status.NEEDSGRADING) {
+			imagePath += "blue-question.png";
 			imageAlt = ""; // messageLocator.getMessage("simplepage.status.required")
 			// + " " + name;
 		} else if (status == Status.NOT_REQUIRED) {
