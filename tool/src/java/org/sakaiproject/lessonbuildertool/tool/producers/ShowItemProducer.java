@@ -199,7 +199,6 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		    decorate(new UIFreeAttributeDecorator("title",
 				 messageLocator.getMessage("simplepage.help-button")));
 		UIOutput.make(tofill, "helpimage2").
-		    decorate(new UIFreeAttributeDecorator("src", iconBase + "help.gif")).
 		    decorate(new UIFreeAttributeDecorator("alt",
 				 messageLocator.getMessage("simplepage.help-button")));
 		UIOutput.make(tofill, "helpnewwindow2",
@@ -213,8 +212,7 @@ public class ShowItemProducer implements ViewComponentProducer, NavigationCaseRe
 		    decorate(new UIFreeAttributeDecorator("title",
 			        messageLocator.getMessage("simplepage.reset-button")));
 		UIOutput.make(tofill, "resetimage2").
-		    decorate(new UIFreeAttributeDecorator("src", iconBase + "reload.gif")).
-		    decorate(new UIFreeAttributeDecorator("alt",
+		    		    decorate(new UIFreeAttributeDecorator("alt",
 			        messageLocator.getMessage("simplepage.reset-button")));
 	    }
 
