@@ -742,6 +742,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			decorate(new UIFreeAttributeDecorator("title",
 				 messageLocator.getMessage("simplepage.help-button")));
 		    UIOutput.make(tofill, (pageItem.getPageId() == 0 ? "helpimage" : "helpimage2")).
+			decorate(new UIFreeAttributeDecorator("src", iconBase + "help.gif")).
 			decorate(new UIFreeAttributeDecorator("alt",
 			         messageLocator.getMessage("simplepage.help-button")));
 		    UIOutput.make(tofill, (pageItem.getPageId() == 0 ? "helpnewwindow" : "helpnewwindow2"), 
@@ -755,7 +756,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			decorate(new UIFreeAttributeDecorator("title",
 			        messageLocator.getMessage("simplepage.reset-button")));
 		    UIOutput.make(tofill, (pageItem.getPageId() == 0 ? "resetimage" : "resetimage 2")).
-						decorate(new UIFreeAttributeDecorator("alt",
+			decorate(new UIFreeAttributeDecorator("src", iconBase + "reload.gif")).
+			decorate(new UIFreeAttributeDecorator("alt",
 			        messageLocator.getMessage("simplepage.reset-button")));
 		}
 
