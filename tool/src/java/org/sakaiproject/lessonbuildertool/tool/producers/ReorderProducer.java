@@ -180,6 +180,8 @@ public class ReorderProducer implements ViewComponentProducer, NavigationCaseRep
 				    UIOutput.make(row, "text-snippet", text);
 				} else if (i.getType() == SimplePageItem.QUESTION) {
 				    String text = i.getAttribute("questionText");
+				    if (text == null)
+					text = messageLocator.getMessage("simplepage.questionName");
 				    if (text.length() > 100)
 					text = text.substring(0,100);
 				    UIOutput.make(row, "text-snippet", text);
