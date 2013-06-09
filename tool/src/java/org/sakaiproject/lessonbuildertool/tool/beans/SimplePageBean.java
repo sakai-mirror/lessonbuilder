@@ -1212,7 +1212,7 @@ public class SimplePageBean {
 		return tool.getTitle();
 	}
 
-	private Site getCurrentSite() {
+	public Site getCurrentSite() {
 		if (currentSite != null) // cached value
 			return currentSite;
 		
