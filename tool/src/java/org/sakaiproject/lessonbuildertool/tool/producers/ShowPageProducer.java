@@ -82,6 +82,7 @@ import org.sakaiproject.lessonbuildertool.tool.view.CommentsViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.FilePickerViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GeneralViewParameters;
 import org.sakaiproject.lessonbuildertool.tool.view.GradingPaneViewParameters;
+import org.sakaiproject.lessonbuildertool.tool.view.ExportCCViewParameters;
 import org.sakaiproject.memory.api.Cache;
 import org.sakaiproject.memory.api.MemoryService;
 import org.sakaiproject.time.api.TimeService;
@@ -156,6 +157,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	}
         public boolean useSakaiIcons = ServerConfigurationService.getBoolean("lessonbuilder.use-sakai-icons", false);
         public boolean allowSessionId = ServerConfigurationService.getBoolean("session.parameter.allow", false);
+        public boolean allowCcExport = ServerConfigurationService.getBoolean("lessonbuilder.cc-export", false);
+
 
 	// I don't much like the static, because it opens us to a possible race
 	// condition, but I don't see much option
@@ -638,6 +641,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				UIOutput.make(tofill, "toppage-descrip");
 				UIOutput.make(tofill, "new-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-page-tooltip")));
 				UIOutput.make(tofill, "import-cc").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
+				UIOutput.make(tofill, "export-cc").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.export_cc")));
 			}
 			
 			// Checks to see that user can edit and that this is either a top level page,
@@ -2034,6 +2038,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		createNewPageDialog(tofill, currentPage, pageItem);
 		createRemovePageDialog(tofill, currentPage, pageItem);
 		createImportCcDialog(tofill);
+		createExportCcDialog(tofill);
 		createYoutubeDialog(tofill, currentPage);
 		createMovieDialog(tofill, currentPage);
 		createCommentsDialog(tofill);
@@ -2699,6 +2704,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UICommand.make(form, "import-cc-submit", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 
+		UIBoundBoolean.make(form, "import-toplevel", "#{simplePageBean.importtop}", false);
+
+
 		class ToolData {
 			String toolId;
 			String toolName;
@@ -2820,6 +2828,23 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 		}
 
+
+	}
+
+	private void createExportCcDialog(UIContainer tofill) {
+		UIOutput.make(tofill, "export-cc-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.export-cc-title")));
+
+		UIForm form = UIForm.make(tofill, "export-cc-form");
+
+		UIOutput.make(form, "export-cc-v11"); // value is handled by JS, so RSF doesn't need to treat it as input
+		UICommand.make(form, "export-cc-submit", messageLocator.getMessage("simplepage.exportcc-download"), "#{simplePageBean.importCc}");
+		UICommand.make(form, "export-cc-cancel", messageLocator.getMessage("simplepage.cancel"), null);
+
+		// the actual submission is with a GET. The submit button clicks this link.
+		ExportCCViewParameters view = new ExportCCViewParameters("exportCc");
+		view.setExportcc(true);
+		view.setVersion("1.2");
+		UIInternalLink.make(form, "export-cc-link", "export cc link", view);
 
 	}
 
