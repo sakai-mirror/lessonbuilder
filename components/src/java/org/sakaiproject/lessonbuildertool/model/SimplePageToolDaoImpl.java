@@ -52,6 +52,8 @@ import org.sakaiproject.lessonbuildertool.SimplePageLogEntry;
 import org.sakaiproject.lessonbuildertool.SimplePageLogEntryImpl;
 import org.sakaiproject.lessonbuildertool.SimpleStudentPage;
 import org.sakaiproject.lessonbuildertool.SimpleStudentPageImpl;
+import org.sakaiproject.lessonbuildertool.SimplePageProperty;
+import org.sakaiproject.lessonbuildertool.SimplePagePropertyImpl;
 import org.sakaiproject.tool.api.ToolManager;
 import org.sakaiproject.user.cover.UserDirectoryService;
 import org.springframework.dao.DataAccessException;
@@ -135,6 +137,10 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		});
 		
 		return list;
+	}
+
+	public void flush() {
+	    getHibernateTemplate().flush();
 	}
 
 	public List<SimplePageItem> findItemsInSite(String siteId) {
@@ -227,6 +233,28 @@ public class SimplePageToolDaoImpl extends HibernateDaoSupport implements Simple
 		}
 	}
 	
+	public SimplePageProperty findProperty(String attribute) {
+	    
+		DetachedCriteria d = DetachedCriteria.forClass(SimplePageProperty.class).add(Restrictions.eq("attribute", attribute));
+		
+		List<SimplePageProperty> list = null;
+		try {
+		    list = getHibernateTemplate().findByCriteria(d);
+		} catch (org.hibernate.ObjectNotFoundException e) {
+		    return null;
+		}
+
+		if (list != null && list.size() > 0) {
+			return list.get(0);
+		} else {
+			return null;
+		}
+	}
+
+        public SimplePageProperty makeProperty(String attribute, String value) {
+	    return new SimplePagePropertyImpl(attribute, value);
+	}
+
 	public List<SimplePageComment> findComments(long commentWidgetId) {
 		DetachedCriteria d = DetachedCriteria.forClass(SimplePageComment.class).add(Restrictions.eq("itemId", commentWidgetId));
 		List<SimplePageComment> list = getHibernateTemplate().findByCriteria(d);
