@@ -5,3 +5,9 @@ alter table lesson_builder_items modify description text;
 alter table lesson_builder_items modify groups text;
 alter table lesson_builder_items modify ownerGroups text;
 
+    create table lesson_builder_properties (
+        id bigint not null auto_increment,
+        attribute varchar(255) not null unique,
+        value longtext,
+        primary key (id)
+    );
