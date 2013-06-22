@@ -72,6 +72,7 @@
           <id>2.8</id>
 
           <properties>
+	    <src2>src28</src2>
             <sakai.assignment.groupId>org.sakaiproject</sakai.assignment.groupId>
 
 	    <!-- need additional properties because they are not in master in 2.9 -->
