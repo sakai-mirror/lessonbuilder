@@ -193,4 +193,6 @@ public interface SimplePageToolDao {
     
     public SimplePageItem copyItem(SimplePageItem old);
 
+    public List<String>findGradebookIds(String gradebookUid);
+
 }
