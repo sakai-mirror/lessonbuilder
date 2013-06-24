@@ -464,42 +464,50 @@ Without the property, Lesson Builder will call the
 Samigo main page when you ask to edit an assessment.
 
 
-FLV PLAYER
+VIDEO PLAYERS
 
-Lesson Builder supports two FLV players. The default is the Adobe
-Strobe player. This has a BSD license, so it is safe for anyone to use.
-The only problem is that it depends upon Flash 10. Alternatively, you
-can use the JW FLV player. It should work back to Flash 8 (although not
-if the content is H.264, which requires Flash 9). However it is licensed
-with a CC non-commercial license. It is not clear who can use that.
-If you're hosted by a commercial organization, you should check with
-JW before using this.
+Aside from Youtube (which uses a special player), Lessons handles
+video with three different approaches
 
-For licensing reasons, the JW player files are not included. If you
-want to use it you'll need to download a copy yourself, installing
+* the HTML5 video and audio tag
+* the Strobe player, from Adobe
+* the normal OBJECT and EMBED tags
 
-tool/src/webapp/js/jwplayer.flash.swf
-tool/src/webapp/js/jwplayer.html5.js
-tool/src/webapp/js/jwplayer.js
+We normally try them in that order. That is, if the MIME type is
+one that HTML5 might be able to handle, we ask the browser whether
+its HTML video player handles this MIME type. If so, we use HTML5.
 
-Strobe player: http://www.osmf.org/strobe_mediaplayback.html
-JW player: http://www.longtailvideo.com/players/
+If that fails (or if the HTML5 player isn't recognized, despite the
+browser claiming it is), and if the MIME type is one that Srobe might
+handle, we try the Strobe player.
 
-To enable the JW player, put the following in sakai.properties,
-after making sure that you have the files.
+If that fails, we use a normal OBJECT or EMBED tag, allowing the browser
+to pick a player.
 
-lessonbuilder.usejwplayer=true
+Unforunately this approach is less than foolproof. The API for HTML5
+lets us ask whether the player can handle the MIME type, but several
+browsers response "maybe". Hence we only try for types we think should
+work. That is currently MP4, webm, and ogg for video and MP3, ogg and
+WAV for audio. The list may be configured in sakai.properties
 
-By default, Lesson Builder will use this player for MIME types
-video/mp4 and video/x-m4v, except that JW player is also used
-for FLV file. The players can handle additional
-types. If you want to customize the list, you can set
-lessonbuilder.mp4.types in sakai.properties to a comma-separated list
-of MIME types, e.g.
+lessonbuilder.html5.types=video/mp4,video/m4v,video/webm,video/ogg,audio/mpeg,audio/ogg,audio/wav
 
-lessonbuilder.mp4.types=video/mp4,video/x-m4v
+Similarly, we only try Strobe for things we think will likely work.
+Currently
 
-Use lessonbuilder.jw.types for JW player.
+lessonbuilder.mp4.types=video/mp4,video/m4v,audio/mpeg
+
+plus Flash (video/x-flv). In fact, Strobe claims to handle MOV files
+as well, but it seems safer to let Quicktime handle that. This does
+require users to have quicktime installed. If you want to let Strobe
+handle Quicktime files, add their MIME types to lessonbuilder.mp4.types.
+
+For further information on Strobe, see
+http://www.osmf.org/strobe_mediaplayback.html
+
+Support for JW Player, present in previous versions, has been
+removed for licensing reasons.
+
 
 OPTIONS FOR MULTIMEDIA SUPPORT
 
@@ -530,7 +538,7 @@ type. However if a URL is added, and for some reason we can't connect
 to the server to look at it, we fall back to a check based on file
 extension. The following extensions will be displayed with OBJECT:
 
-  mp4,mov,m2v,3gp,wmv,mp3,swf,wav
+  mp4,mov,m2v,3gp,3g2,avi,m4v,mpg,rm,vob,wmv,mp3,swf,wav,aif,m4a,mid,mpa,ra,wma
 
 Everything else will use IFRAME. You can change the list in
 sakai.properties, e.g.
