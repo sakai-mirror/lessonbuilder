@@ -24,6 +24,7 @@
 package org.sakaiproject.lessonbuildertool.model;
 
 import java.util.List;
+import java.util.Map;
 
 import org.sakaiproject.lessonbuildertool.SimplePage;
 import org.sakaiproject.lessonbuildertool.SimplePageComment;
@@ -183,7 +184,7 @@ public interface SimplePageToolDao {
 
     public SimplePageItem makeItem(long pageId, int sequence, int type, String sakaiId, String name);
 
-    public SimplePageGroup makeGroup(String itemId, String groupId, String groups);
+    public SimplePageGroup makeGroup(String itemId, String groupId, String groups, String siteId);
 
     public SimplePageLogEntry makeLogEntry(String userId, long itemId, Long studentPageId);
     
@@ -194,5 +195,9 @@ public interface SimplePageToolDao {
     public SimplePageItem copyItem(SimplePageItem old);
 
     public List<String>findGradebookIds(String gradebookUid);
+
+    // items in lesson_builder_groups for specified site, map of itemId to groups
+    public Map<String,String> getExternalAssigns(String siteId);
+
 
 }
