@@ -194,7 +194,7 @@ public interface SimplePageToolDao {
     
     public SimplePageItem copyItem(SimplePageItem old);
 
-    public List<String>findGradebookIds(String gradebookUid);
+    public List<SimplePageItem>findGradebookItems(String gradebookUid);
 
     // items in lesson_builder_groups for specified site, map of itemId to groups
     public Map<String,String> getExternalAssigns(String siteId);
