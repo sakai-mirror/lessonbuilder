@@ -4,7 +4,6 @@
 alter table lesson_builder_groups add siteId varchar(250);
 alter table lesson_builder_items modify description text;
 alter table lesson_builder_items modify groups text;
-alter table lesson_builder_items modify ownerGroups text;
 
     create table lesson_builder_properties (
         id bigint not null auto_increment,

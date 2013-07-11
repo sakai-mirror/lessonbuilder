@@ -16,13 +16,6 @@ alter table lesson_builder_items drop column groups;
 alter table lesson_builder_items rename column temp to groups;
 
 
---- alter table lesson_builder_items modify ownerGroups clob;
-alter table lesson_builder_items add temp clob;
-update lesson_builder_items set temp=ownerGroups;
-alter table lesson_builder_items drop column ownerGroups;
-alter table lesson_builder_items rename column temp to ownerGroups;
-
-
     create table lesson_builder_properties (
         id number(19,0) not null,
         attribute varchar2(255 char) not null unique,
