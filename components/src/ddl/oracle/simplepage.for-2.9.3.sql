@@ -23,3 +23,7 @@ alter table lesson_builder_items rename column temp to groups;
         primary key (id)
     );
 
+create index lb_item_gb on lesson_builder_items(gradebookid);
+create index lb_item_altgb on lesson_builder_items(altGradebook);
+create index lb_prop_idx on lesson_builder_properties(attribute);
+create index lb_group_site on lesson_builder_groups(siteId);
