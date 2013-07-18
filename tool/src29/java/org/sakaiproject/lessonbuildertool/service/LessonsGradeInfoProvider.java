@@ -68,10 +68,9 @@ public class LessonsGradeInfoProvider implements ExternalAssignmentProvider {
     private static Cache cache = null;
     // currently using 10 sec. The real goal is to prevent continual
     // reevaluation of items as we follow different paths. I.e. we mostly
-    // care about it during a single transaction. Our normal 10 min default
-    // means that instructor changes won't be reflected in the gradebook for 10 min
-    // that could get confusing.
-    protected static final int DEFAULT_EXPIRATION = 10;
+    // care about it during a single transaction. But I'm using the normal
+    // default of 10 min
+    protected static final int DEFAULT_EXPIRATION = 60 * 10;
 
     // Sakai Service Beans
     private GradebookExternalAssessmentService geaService;
