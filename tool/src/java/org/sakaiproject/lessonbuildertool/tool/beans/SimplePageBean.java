@@ -767,10 +767,10 @@ public class SimplePageBean {
 				filterSpec = filterHtml;
 			    // no, default to LOW. That will allow embedding but not Javascript
 			    if (filterSpec == null) // should never be null. unspeciifed should give ""
-				filter = FILTER_LOW;
+				filter = FILTER_DEFAULT;
 			    // old specifications
 			    else if (filterSpec.equalsIgnoreCase("true"))
-				filter = FILTER_LOW; // old value of true produced the same result as missing
+				filter = FILTER_HIGH; // old value of true produced the same result as missing
 			    else if (filterSpec.equalsIgnoreCase("false"))			    
 				filter = FILTER_NONE;
 			    // new ones
@@ -784,7 +784,7 @@ public class SimplePageBean {
 				filter = FILTER_NONE;
 			    // unspecified
 			    else
-				filter = FILTER_LOW;
+				filter = FILTER_DEFAULT;
 			}			    
 			if (filter.equals(FILTER_NONE)) {
 			    html = FormattedText.processHtmlDocument(contents, error);
