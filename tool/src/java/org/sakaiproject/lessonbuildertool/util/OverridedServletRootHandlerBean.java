@@ -1,4 +1,4 @@
-package org.sakaiproject.lessonbuildertool.util;
+package org.sakaiproject.lessonbuilder.util;
 
 import uk.org.ponder.rsf.servlet.ServletRootHandlerBean;
 
