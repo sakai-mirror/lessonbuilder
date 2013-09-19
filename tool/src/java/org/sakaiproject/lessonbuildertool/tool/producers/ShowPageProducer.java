@@ -1171,7 +1171,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 						String itemGroupString = null;
 						boolean entityDeleted = false;
-
+						boolean notPublished = false;
+						
 						if (i.getType() == SimplePageItem.ASSIGNMENT) {
 							// the type indicates whether scoring is letter
 							// grade, number, etc.
@@ -1227,7 +1228,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								if (!quiz.objectExists())
 								    entityDeleted = true;
 
-							}
+							} else
+							    notPublished = quizEntity.notPublished(i.getSakaiId());
 						} else if (i.getType() == SimplePageItem.BLTI) {
 						    UIOutput.make(tableRow, "type", "b");
 						    LessonEntity blti= (bltiEntity == null ? null : bltiEntity.getEntity(i.getSakaiId()));
@@ -1281,7 +1283,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						}
 
 						String releaseString = simplePageBean.getReleaseString(i);
-						if (itemGroupString != null || releaseString != null || entityDeleted) {
+						if (itemGroupString != null || releaseString != null || entityDeleted || notPublished) {
 							if (itemGroupString != null)
 							    itemGroupString = simplePageBean.getItemGroupTitles(itemGroupString);
 							if (itemGroupString != null) {
@@ -1290,6 +1292,13 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								itemGroupString = " " + releaseString + itemGroupString;
 							} else if (releaseString != null)
 							    itemGroupString = " " + releaseString;
+							if (notPublished) {
+							    if (itemGroupString != null)
+								itemGroupString = itemGroupString + " " + 
+								    messageLocator.getMessage("simplepage.not-published");
+							    else
+								itemGroupString = messageLocator.getMessage("simplepage.not-published");
+							}
 							if (entityDeleted) {
 							    if (itemGroupString != null)
 								itemGroupString = itemGroupString + " " + 
