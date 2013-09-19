@@ -1212,7 +1212,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							// so it is
 							// safe to dedicate to assessments
 							UIOutput.make(tableRow, "requirement-text", (i.getSubrequirement() ? i.getRequirementText() : "false"));
-							LessonEntity quiz = quizEntity.getEntity(i.getSakaiId());
+							LessonEntity quiz = quizEntity.getEntity(i.getSakaiId(),simplePageBean);
 							if (quiz != null) {
 								String editUrl = quiz.editItemUrl(simplePageBean);
 								if (editUrl != null) {
@@ -2571,7 +2571,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				fake = true; // need to set this in case it's available for missing entity
 			}
 		} else if (i.getType() == SimplePageItem.ASSESSMENT) {
-			LessonEntity lessonEntity = quizEntity.getEntity(i.getSakaiId());
+			LessonEntity lessonEntity = quizEntity.getEntity(i.getSakaiId(),simplePageBean);
 			if (available && lessonEntity != null) {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, true);
