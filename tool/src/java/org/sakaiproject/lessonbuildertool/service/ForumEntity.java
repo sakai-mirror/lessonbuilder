@@ -397,7 +397,9 @@ public class ForumEntity extends HibernateDaoSupport implements LessonEntity, Fo
 	String placement = tool.getId();
 
 	if (type == TYPE_FORUM_TOPIC)
-	    return "/messageforums-tool/jsp/discussionForum/message/dfAllMessagesDirect.jsf?topicId=" + id + "&placementId=" + placement;
+	    // if /direct doesn't work, but that was only in one beta release
+	    //  return "/messageforums-tool/jsp/discussionForum/message/dfAllMessagesDirect.jsf?topicId=" + id + "&placementId=" + placement;
+	    return "/direct/forum_topic/" + id;
 	else
 	    return "/direct/forum/" + id;
     }
