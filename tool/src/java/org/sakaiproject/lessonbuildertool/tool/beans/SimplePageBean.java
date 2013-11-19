@@ -4309,12 +4309,12 @@ public class SimplePageBean {
     // as HTML is an SGML dialect.
     // If you run into trouble with &amp;, you can use ; in the following. Google seems to 
     // process it correctly. ; is a little-known alterantive to & that the RFCs do permit
-       private String normalizeParams(String URL) {
+       private static String normalizeParams(String URL) {
 	   URL = URL.replaceAll("[\\?\\&\\;]", "&");
 	   return URL.replaceFirst("\\&", "?");
        }
 
-       private String getYoutubeKeyFromUrl(String URL) {
+       public static String getYoutubeKeyFromUrl(String URL) {
 	   // 	see if it has a Youtube ID
 	   int offset = 0;
 	   if (URL.startsWith("http:"))
@@ -4403,6 +4403,12 @@ public class SimplePageBean {
 		
 		// 	no
 		return null;
+	}
+
+    // current recommended best URL for youtube. Put here because the same code is
+    // used a couple of different places
+        public static String getYoutubeUrlFromKey(String key) {
+	    return "https://www.youtube.com/embed/" + key + "?wmode=opaque";
 	}
 
 	public String[] split(String s, String p) {
