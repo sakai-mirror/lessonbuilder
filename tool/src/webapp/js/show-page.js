@@ -802,6 +802,7 @@ $(function() {
 			
 			$("#question-correct-text").val("");
 			$("#question-incorrect-text").val("");
+			$("#update-question").attr("value", msg("simplepage.save_message"));
 			
 			$("#question-dialog").dialog("option", "position", [position.left, position.top]);
 			oldloc = $(this);
@@ -935,6 +936,7 @@ $(function() {
 			$('.edit-col').addClass('edit-colHidden');
 			$(this).closest('li').addClass('editInProgress');
 			$('#question-error-container').hide();
+			$("#update-question").attr("value", msg("simplepage.edit"));
 
 			$("#question-dialog").dialog("option", "position", [position.left, position.top]);
 			oldloc = $(this);
