@@ -3280,6 +3280,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
     // this can be either a fully specified URL starting with http: or https: 
     // or something relative to the servlet base, e.g. /sakai-lessonbuildertool-tool/template/instructions/general.html
 	private boolean UrlOk(String url) {
+		String origurl = url;
 		Boolean cached = (Boolean) urlCache.get(url);
 		if (cached != null)
 		    return (boolean) cached;
@@ -3293,17 +3294,17 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			con.setRequestMethod("HEAD");
 			con.setConnectTimeout(30 * 1000);
 			boolean ret = (con.getResponseCode() == HttpURLConnection.HTTP_OK);
-			urlCache.put(url, (Boolean) ret);
+			urlCache.put(origurl, (Boolean) ret);
 			return ret;
 		    } catch (java.net.SocketTimeoutException e) {
 			log.error("Internationalization url lookup timed out for " + url + ": Please check lessonbuilder.helpfolder. It appears that the host specified is not responding.");
-			urlCache.put(url, (Boolean) false);
+			urlCache.put(origurl, (Boolean) false);
 			return false;
 		    } catch (ProtocolException e) {
-			urlCache.put(url, (Boolean) false);
+			urlCache.put(origurl, (Boolean) false);
 			return false;
 		    } catch (IOException e) {
-			urlCache.put(url, (Boolean) false);
+			urlCache.put(origurl, (Boolean) false);
 			return false;
 		    }
 		} else {
@@ -3316,15 +3317,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			// with odd deployments behind load balancers, where the user's URL may not
 			// work from one of the front ends
 			if (httpServletRequest.getSession().getServletContext().getResource(url) == null) {
-			    urlCache.put(url, (Boolean) false);
+			    urlCache.put(origurl, (Boolean) false);
 			    return false;
 			} else {
-			    urlCache.put(url, (Boolean) true);
+			    urlCache.put(origurl, (Boolean) true);
 			    return true;
 			}
 		    } catch (Exception e) {  // probably malfformed url
 			log.error("Internationalization url lookup failed for " + url + ": " + e);
-			urlCache.put(url, (Boolean) true);
+			urlCache.put(origurl, (Boolean) true);
 			return true;
 		    }
 
