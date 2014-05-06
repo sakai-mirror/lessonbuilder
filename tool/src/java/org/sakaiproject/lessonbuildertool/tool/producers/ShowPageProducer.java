@@ -771,8 +771,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 		}
 
-		UIOutput.make(tofill, "pagetitle", currentPage.getTitle());
-		
 		if(currentPage.getOwner() != null && simplePageBean.getEditPrivs() == 0) {
 			SimpleStudentPage student = simplePageToolDao.findStudentPageByPageId(currentPage.getPageId());
 			
@@ -863,7 +861,15 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 
 					index++;
 				    }
+				else {
+				    UIBranchContainer crumb = UIBranchContainer.make(tofill, "crumb:");
+				    UIOutput.make(crumb, "crumb-follow", currentPage.getTitle()).decorate(new UIStyleDecorator("bold"));
+				}
+			} else {
+			    UIOutput.make(tofill, "pagetitle", currentPage.getTitle());
 			}
+		} else {
+		    UIOutput.make(tofill, "pagetitle", currentPage.getTitle());
 		}
 
 		// see if there's a next item in sequence.
