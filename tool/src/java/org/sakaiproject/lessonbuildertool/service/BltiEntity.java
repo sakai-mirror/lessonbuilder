@@ -447,6 +447,7 @@ public class BltiEntity implements LessonEntity, BltiInterface {
 		Properties props = new Properties ();
 		props.setProperty(LTIService.LTI_LAUNCH,launchUrl);
 		props.setProperty(LTIService.LTI_TITLE, bltiTitle);
+		props.setProperty(LTIService.LTI_PAGETITLE, bltiTitle);
 		props.setProperty(LTIService.LTI_CONSUMERKEY, LTIService.LTI_SECRET_INCOMPLETE);
 		props.setProperty(LTIService.LTI_SECRET, LTIService.LTI_SECRET_INCOMPLETE);
 		props.setProperty(LTIService.LTI_ALLOWCUSTOM, "1");
@@ -466,6 +467,7 @@ public class BltiEntity implements LessonEntity, BltiInterface {
 		Properties props = new Properties ();
 		props.setProperty(LTIService.LTI_TOOL_ID,getLong(theTool.get(LTIService.LTI_ID)).toString());
 		props.setProperty(LTIService.LTI_TITLE, bltiTitle);
+		props.setProperty(LTIService.LTI_PAGETITLE, bltiTitle);
 		props.setProperty(LTIService.LTI_LAUNCH,launchUrl);
 		props.setProperty(LTIService.LTI_XMLIMPORT,strXml);
 		if ( custom != null ) props.setProperty(LTIService.LTI_CUSTOM,custom);
