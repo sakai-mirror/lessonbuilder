@@ -723,7 +723,6 @@ public class SamigoEntity implements LessonEntity, QuizEntity {
     }
 
     public boolean notPublished(String ref) {
-	System.out.println("notpub " + ref);
 	if (ref.startsWith("/sam_core/"))
 	    return true;
 	else

@@ -697,7 +697,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			    // from other students and the page can be shared
 				SimpleStudentPage studentPage = simplePageToolDao.findStudentPage(currentPage.getTopParent());
 				if (studentPage != null && studentPage.getPageId() == currentPage.getPageId()) {
-				    System.out.println("is student page 2");
 					UIOutput.make(tofill, "remove-student");
 					UIOutput.make(tofill, "remove-page-student").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-student-page-explanation")));
 				}
@@ -2248,7 +2247,6 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						// do before canEditAll because we need itemGroupString in it
 						if (canSeeAll) {
 						    itemGroupString = simplePageBean.getItemGroupString(i, null, true);
-						    System.out.println("itemGroupstring " + itemGroupString);
 						    if (itemGroupString != null) {
 							String itemGroupTitles = simplePageBean.getItemGroupTitles(itemGroupString, i);
 							if (itemGroupTitles != null) {
