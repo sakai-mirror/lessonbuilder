@@ -233,6 +233,15 @@ $(function() {
 			} else { 
 				$("#page-gradebook").attr("checked", true);
 			}
+
+			localDatePicker({
+				input: '#release_date',
+				    useTime: 1,
+				    parseFormat: 'YYYY-MM-DD HH:mm:ss',
+				    val: $("#currentReleaseDate").text(),
+				    ashidden: { iso8601: 'releaseDateISO8601' }
+			    });
+
 			oldloc = $(".dropdown a");
 			$('#edit-title-dialog').dialog('open');
 			checksize($('#edit-title-dialog'));
@@ -760,18 +769,24 @@ $(function() {
 			
 			/* RU Rubrics ********************************************* */
 			var peerEvalOpenDate = row.find(".peer-eval-open-date").text();
-			if (peerEvalOpenDate!=undefined) {
-				console.log("testing");
-				var peerEvalOpenTime = row.find(".peer-eval-open-time").text();
-				$("#peer-eval-open-date input:nth(0)").val(peerEvalOpenDate).change();
-				$("#peer-eval-open-date input:nth(4)").val(peerEvalOpenTime).change();
-				
-				var peerEvalDueDate = row.find(".peer-eval-due-date").text();
-				var peerEvalDueTime = row.find(".peer-eval-due-time").text();
-				$("#peer-eval-due-date input:nth(0)").val(peerEvalDueDate).change();
-				$("#peer-eval-due-date input:nth(4)").val(peerEvalDueTime).change();
-			}else console.log("peerEvalOpenDate is undefined!!!!");
+			var peerEvalDueDate = row.find(".peer-eval-due-date").text();
 			
+			localDatePicker({
+				input: '#due_date_dummy',
+				    useTime: 1,
+				    parseFormat: 'YYYY-MM-DD HH:mm:ss',
+				    val: peerEvalDueDate,
+				    ashidden: { iso8601: 'peer_eval_due_dateISO8601' }
+			    });
+
+			localDatePicker({
+				input: '#open_date_dummy',
+				    useTime: 1,
+				    parseFormat: 'YYYY-MM-DD HH:mm:ss',
+				    val: peerEvalOpenDate,
+				    ashidden: { iso8601: 'peer_eval_open_dateISO8601' }
+			    });
+
 			if(!$("#peer-eval-check").attr("checked")) {
 				$("#available-rubrics-container input").attr("disabled", true).removeAttr("checked");
 				$(".student-peer-review-selected").val("");
@@ -824,8 +839,8 @@ $(function() {
 			insist = false;
 			$("#student-group-errors").text("");
 			var position = row.position();
-            $('.edit-col').addClass('edit-colHidden');
-            $(this).closest('li').addClass('editInProgress');
+			$('.edit-col').addClass('edit-colHidden');
+			$(this).closest('li').addClass('editInProgress');
 			$("#student-dialog").dialog("option", "position", [position.left, position.top]);
 			oldloc = $(this);
 			$('#student-dialog').dialog('open');
@@ -851,6 +866,8 @@ $(function() {
 				return false;
 			    }
 			} 
+			$("#open_date_dummy").val($("#peer_eval_open_dateISO8601").val());
+			$("#due_date_dummy").val($("#peer_eval_due_dateISO8601").val());
 			return true;
 		    });
 
@@ -1773,20 +1790,6 @@ $(function() {
 			return false;
 		});
 		
-		$("#peer-eval-open-date input:nth(4)").blur(function(e){
-			e.target.value=e.target.value.toUpperCase();
-			if((e.target.value.substring(e.target.value.length-2) == "AM" || e.target.value.substring(e.target.value.length-2) == "PM")
-				&& e.target.value.substring(e.target.value.length-3, e.target.value.length-2)!=" ")
-				e.target.value= e.target.value.substring(0, e.target.value.length-2)+" "+e.target.value.substring(e.target.value.length-2);
-		});
-		
-		$("#peer-eval-due-date input:nth(4)").blur(function(e){
-			e.target.value=e.target.value.toUpperCase();
-			if((e.target.value.substring(e.target.value.length-2) == "AM" || e.target.value.substring(e.target.value.length-2) == "PM")
-				&& e.target.value.substring(e.target.value.length-3, e.target.value.length-2)!=" ")
-				e.target.value= e.target.value.substring(0, e.target.value.length-2)+" "+e.target.value.substring(e.target.value.length-2);
-		});
-
 	} // Closes admin if statement
 
 	$(".showPollGraph").click(function(e) {
@@ -1951,6 +1954,7 @@ $(function() {
 	$("#dropdown").click(buttonToggleDropdown);
 	$("#dropdownc").click(buttonToggleDropdownc);
 	dropDownViaClick = false;
+
 	return false;
 });
 
@@ -2047,6 +2051,7 @@ function checkEditTitleForm() {
 		$('#edit-title-error-container').show();
 	}else {
 		$('#edit-title-error-container').hide();
+		$("#release_date").val($("#releaseDateISO8601").val());
 		return true;
 	}
 }
