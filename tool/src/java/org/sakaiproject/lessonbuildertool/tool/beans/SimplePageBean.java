@@ -3441,7 +3441,7 @@ public class SimplePageBean {
 			// adjust gradebook entry
 			boolean add = false;
 			if (newPoints == null && currentPoints != null) {
-				gradebookIfc.removeExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId());
+				add = gradebookIfc.removeExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId());
 			} else if (newPoints != null && currentPoints == null) {
 				add = gradebookIfc.addExternalAssessment(site.getId(), "lesson-builder:" + page.getPageId(), null,
 						       	pageTitle, newPoints, null, "Lesson Builder");
