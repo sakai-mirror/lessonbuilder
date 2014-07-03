@@ -814,7 +814,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 
 		if (helpurl != null) {
-		    UILink.make(tofill, (pageItem.getPageId() == 0 ? "helpbutton" : "helpbutton2")).
+		    UILink.make(tofill, (pageItem.getPageId() == 0 ? "helpbutton" : "helpbutton2"), helpurl).
 			decorate(new UIFreeAttributeDecorator("onclick",
 			         "openWindow('" + helpurl + "', 'Help', 'resizeable=yes,toolbar=no,scrollbars=yes,menubar=yes,width=800,height=600'); return false")).
 			decorate(new UIFreeAttributeDecorator("title",
@@ -827,7 +827,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		}
 
 		if (reseturl != null) {
-		    UILink.make(tofill, (pageItem.getPageId() == 0 ? "resetbutton" : "resetbutton2")).
+		    UILink.make(tofill, (pageItem.getPageId() == 0 ? "resetbutton" : "resetbutton2"), reseturl).
 			decorate(new UIFreeAttributeDecorator("onclick",
 				"location.href='" + reseturl + "'; return false")).
 			decorate(new UIFreeAttributeDecorator("title",
@@ -1272,6 +1272,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 									UIOutput.make(tableRow, "item-groups", itemGroupString);
 									if (!assignment.objectExists())
 									    entityDeleted = true;
+									else if (assignment.notPublished())
+									    notPublished = true;
 								}
 							}
 
@@ -1319,6 +1321,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							UIOutput.make(tableRow, "item-groups", itemGroupString );
 							if (!blti.objectExists())
 							    entityDeleted = true;
+							else if (blti.notPublished())
+							    notPublished = true;
 						    }
 						} else if (i.getType() == SimplePageItem.FORUM) {
 							UIOutput.make(tableRow, "extra-info");
@@ -1333,6 +1337,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								UIOutput.make(tableRow, "item-groups", itemGroupString);
 								if (!forum.objectExists())
 								    entityDeleted = true;
+								else if (forum.notPublished())
+								    notPublished = true;
+
 							}
 						} else if (i.getType() == SimplePageItem.PAGE) {
 							UIOutput.make(tableRow, "type", "page");
@@ -1370,6 +1377,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								itemGroupString = simplePageBean.getItemGroupString(i, lessonEntity, true);
 							    if (!lessonEntity.objectExists())
 								entityDeleted = true;
+							    else if (lessonEntity.notPublished())
+								notPublished = true;
 							    break;
 							case SimplePageItem.ASSESSMENT:
 							    lessonEntity = quizEntity.getEntity(i.getSakaiId(),simplePageBean);
@@ -1386,6 +1395,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								itemGroupString = simplePageBean.getItemGroupString(i, lessonEntity, true);
 							    if (!lessonEntity.objectExists())
 								entityDeleted = true;
+							    else if (lessonEntity.notPublished())
+								notPublished = true;
 							    break;
 							case SimplePageItem.BLTI:
 							    if (bltiEntity != null)
@@ -1394,6 +1405,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 								itemGroupString = simplePageBean.getItemGroupString(i, null, true);
 							    if (!lessonEntity.objectExists())
 								entityDeleted = true;
+							    else if (lessonEntity.notPublished())
+								notPublished = true;
 							    break;
 							case SimplePageItem.PAGE:
 							    itemGroupString = simplePageBean.getItemGroupString(i, null, true);
@@ -2816,7 +2829,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 		} else if (i.getType() == SimplePageItem.ASSIGNMENT) {
 			LessonEntity lessonEntity = assignmentEntity.getEntity(i.getSakaiId(), simplePageBean);
-			if (available && lessonEntity != null) {
+			if (available && lessonEntity != null && (canEditPage || !lessonEntity.notPublished())) {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, true);
 				}
@@ -2835,7 +2848,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 		} else if (i.getType() == SimplePageItem.ASSESSMENT) {
 			LessonEntity lessonEntity = quizEntity.getEntity(i.getSakaiId(),simplePageBean);
-			if (available && lessonEntity != null) {
+			if (available && lessonEntity != null && (canEditPage || !quizEntity.notPublished(i.getSakaiId()))) {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, true);
 				}
@@ -2860,7 +2873,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			}
 		} else if (i.getType() == SimplePageItem.FORUM) {
 			LessonEntity lessonEntity = forumEntity.getEntity(i.getSakaiId());
-			if (available && lessonEntity != null) {
+			if (available && lessonEntity != null && (canEditPage || !lessonEntity.notPublished())) {
 				if (i.isPrerequisite()) {
 					simplePageBean.checkItemPermissions(i, true);
 				}
