@@ -177,6 +177,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
         public boolean useSakaiIcons = ServerConfigurationService.getBoolean("lessonbuilder.use-sakai-icons", false);
         public boolean allowSessionId = ServerConfigurationService.getBoolean("session.parameter.allow", false);
         public boolean allowCcExport = ServerConfigurationService.getBoolean("lessonbuilder.cc-export", true);
+        public boolean allowDeleteOrphans = ServerConfigurationService.getBoolean("lessonbuilder.delete-orphans", false);
 
 
 	// I don't much like the static, because it opens us to a possible race
@@ -721,6 +722,14 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			if(simplePageBean.getEditPrivs() == 0 && (pageItem.getPageId() == 0)) {
 				UIOutput.make(tofill, "remove-li");
 				UIOutput.make(tofill, "remove-page").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.remove-page-tooltip")));
+				
+				if (allowDeleteOrphans) {
+				    UIOutput.make(tofill, "delete-orphan-li");
+				    UIForm orphan =  UIForm.make(tofill, "delete-orphan-form");
+				    UICommand.make(orphan, "delete-orphan", "#{simplePageBean.deleteOrphanPages}");
+				    UIOutput.make(orphan, "delete-orphan-link").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.delete-orphan-pages-desc")));
+				}
+
 			} else if (simplePageBean.getEditPrivs() == 0 && currentPage.getOwner() != null) {
 			    // getEditPrivs < 2 if we want to let the student delete. Currently we don't. There can be comments
 			    // from other students and the page can be shared
