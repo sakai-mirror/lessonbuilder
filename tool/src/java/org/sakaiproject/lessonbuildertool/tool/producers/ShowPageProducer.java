@@ -681,7 +681,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		// put out link to index of pages
 		GeneralViewParameters showAll = new GeneralViewParameters(PagePickerProducer.VIEW_ID);
 		showAll.setSource("summary");
-		UIInternalLink.make(tofill, "print-view", messageLocator.getMessage("simplepage.open_new_window"), showAll);
+		UIInternalLink.make(tofill, "print-view", messageLocator.getMessage("simplepage.print_view"), showAll);
 		UIInternalLink.make(tofill, "show-pages", messageLocator.getMessage("simplepage.showallpages"), showAll);
 		
 		if (canEditPage) {
