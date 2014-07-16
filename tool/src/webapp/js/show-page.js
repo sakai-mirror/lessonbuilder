@@ -3,6 +3,7 @@ var lessonBuilderAnimationLocked = false;
 var oldloc;
 var requirementType = 0;
 var importccactive = false;
+var mmactive = false;
 
 // in case user includes the URL of a site that replaces top,
 // give them a way out. Handler is set up in the html file.
@@ -193,6 +194,7 @@ $(function() {
 			var position =  $(this).position();
 			$("#import-cc-dialog").dialog("option", "position", [position.left, position.top]);
 			oldloc = $(".dropdown a");
+			$("#import-cc-loading").hide();
 			importccactive = true;
 			$('#import-cc-dialog').dialog('open');
 			checksize($('#import-cc-dialog'));
@@ -231,10 +233,20 @@ $(function() {
 			if (!importccactive)
 			    return false;
 			importccactive = false;
-			$('#loading').show();
+			$("#import-cc-loading").show();
 			return true;
 	    	});
 		
+		$('#mm-add-item').click(function() {
+			// prevent double click
+			if (!mmactive)
+			    return false;
+			mmactive = false;
+			$('#mm-loading').show();
+			// actually do the submit
+			return true;
+	    	});
+
 		$('#releaseDiv').click(function(){
 			$('#edit-title-dialog').height(550);
 	    	});
@@ -578,6 +590,8 @@ $(function() {
 			closeMovieDialog();
 			$("#mm-item-id").val($("#movieEditId").val());
 			$("#mm-is-mm").val('true');
+			$("#mm-loading").hide();
+			mmactive = true;
 			var href=$("#mm-choose").attr("href");
 			href=fixhref(href, $("#movieEditId").val(), "true", "false");
 			$("#mm-choose").attr("href",href);
@@ -893,6 +907,8 @@ $(function() {
 			closeEditItemDialog();
 			$("#mm-item-id").val($("#item-id").val());
 			$("#mm-is-mm").val('false');
+			$("#mm-loading").hide();
+			mmactive = true;
 			var href=$("#mm-choose").attr("href");
 			href=fixhref(href, $("#item-id").val(), "false", "false");
 			$("#mm-choose").attr("href",href);
@@ -914,6 +930,8 @@ $(function() {
 			$("#mm-item-id").val(-1);
 			$("#mm-is-mm").val('true');
 			$("#mm-is-website").val('false');
+			$("#mm-loading").hide();
+			mmactive = true;
 			var href=$("#mm-choose").attr("href");
 			href=fixhref(href, "-1", "true", "false");
 			$("#mm-choose").attr("href",href);
@@ -936,6 +954,8 @@ $(function() {
 			$("#mm-item-id").val(-1);
 			$("#mm-is-mm").val('false');
 			$("#mm-is-website").val('false');
+			$("#mm-loading").hide();
+			mmactive = true;
 			var href=$("#mm-choose").attr("href");
 			href=fixhref(href,"-1","false","false");
 			$("#mm-choose").attr("href",href);
@@ -957,6 +977,8 @@ $(function() {
 			$("#mm-item-id").val(-1);
 			$("#mm-is-mm").val('false');
 			$("#mm-is-website").val('true');
+			$("#mm-loading").hide();
+			mmactive = true;
 			var href=$("#mm-choose").attr("href");
 			href=fixhref(href, "-1","false","true");
 			$("#mm-choose").attr("href",href);
@@ -1040,6 +1062,8 @@ $(function() {
 			closeMultimediaEditDialog();
 			$("#mm-item-id").val($("#multimedia-item-id").val());
 			$("#mm-is-mm").val('true');
+			$("#mm-loading").hide();
+			mmactive = true;
 			var href=$("#mm-choose").attr("href");
 			href=fixhref(href, $("#multimedia-item-id").val(), true, false);
 			$("#add-multimedia-dialog").prev().children(".ui-dialog-title").text($(this).text());
