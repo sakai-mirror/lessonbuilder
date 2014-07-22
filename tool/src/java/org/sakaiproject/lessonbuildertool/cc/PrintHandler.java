@@ -335,15 +335,27 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
       boolean isBank = type.equals(CC_QUESTION_BANK0) || type.equals(CC_QUESTION_BANK1) || type.equals(CC_QUESTION_BANK2);
 
       boolean hide = false;
-      List<String>roles = new ArrayList<String>();
+      Set<String>roles = new HashSet<String>();
+      // version 1 and higher are different formats, hence a slightly weird test
       Iterator mdroles = resource.getDescendants(new ElementFilter("intendedEndUserRole", ns.lom_ns()));
       if (mdroles != null) {
 	  while (mdroles.hasNext()) {
 	      Element role = (Element)mdroles.next();
-	      if (!"Learner".equals(role.getChildText("value",  ns.lom_ns()))) {
-		  // roles currently only implemented for visible objects. We may want to fix that.
-		  if (!hide && !isBank)
-		      usesRole = true;
+	      Iterator values = role.getDescendants(new ElementFilter("value", ns.lom_ns()));
+	      if (values != null) {
+		  while (values.hasNext()) {
+		      Element value = (Element)values.next();
+		      String roleName = value.getTextTrim();
+		      if (!"Learner".equals(roleName)) {
+			  // roles currently only implemented for visible objects. We may want to fix that.
+			  if (!hide && !isBank)
+			      usesRole = true;
+		      }
+		      if ("Mentor".equals(roleName))
+			  roles.add(getGroupForRole("Mentor"));
+		      if ("Instructor".equals(roleName))
+			  roles.add(getGroupForRole("Instructor"));
+		  }
 	      }
 	      if ("Mentor".equals(role.getChildText("value",  ns.lom_ns()))) {
 		  roles.add(getGroupForRole("Mentor"));
@@ -935,12 +947,22 @@ public class PrintHandler extends DefaultHandler implements AssessmentHandler, D
   }
 
   public void setResourceMetadataXml(Element the_md) {
+      // version 1 and higher are different formats, hence a slightly weird test
       Iterator mdroles = the_md.getDescendants(new ElementFilter("intendedEndUserRole", ns.lom_ns()));
-      while (mdroles.hasNext()) {
-	  Element role = (Element)mdroles.next();
-	  if (roles == null)
-	      roles = new HashSet<String>();
-	  roles.add(role.getChildText("value",  ns.lom_ns()));
+      if (mdroles != null) {
+	  while (mdroles.hasNext()) {
+	      Element role = (Element)mdroles.next();
+	      Iterator values = role.getDescendants(new ElementFilter("value", ns.lom_ns()));
+	      if (values != null) {
+		  while (values.hasNext()) {
+		      if (roles == null)
+			  roles = new HashSet<String>();
+		      Element value = (Element)values.next();
+		      String roleName = value.getTextTrim();
+		      roles.add(roleName);
+		  }
+	      }
+	  }
       }
 
       if (all)
