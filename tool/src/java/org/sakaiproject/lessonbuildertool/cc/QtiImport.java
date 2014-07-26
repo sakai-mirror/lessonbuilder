@@ -21,6 +21,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.DOMException;
 import org.sakaiproject.lessonbuildertool.tool.beans.SimplePageBean;
+import org.sakaiproject.util.FormattedText;
 
 public class QtiImport {
 
@@ -244,7 +245,7 @@ public class QtiImport {
 
 	String texttype = mattextl.getAttribute("texttype");
 	if (texttype != null && texttype.equals("text/plain"))
-	    retText = "<pre>\n" + retText + "\n</pre>";
+	    retText = FormattedText.convertPlaintextToFormattedText(retText);
 	else
 	    retText =  retText.replaceAll("\\$IMS-CC-FILEBASE\\$", filebase);
 
