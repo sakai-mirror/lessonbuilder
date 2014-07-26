@@ -126,13 +126,15 @@ public class CCExport {
 	String title;
 	String url;
 	boolean islink;
-	List<String> dependencies;
+	boolean isbank;
+	Set<String> dependencies;
     }
 
     // map of all file resource to be included in cartridge
     Map<String, Resource> fileMap = new HashMap<String, Resource>();
     // map of all Samigo tests
     Map<String, Resource> samigoMap = new HashMap<String, Resource>();
+    Map<Long, Resource> poolMap = new HashMap<Long, Resource>();
     Resource samigoBank = null;
     // map of all Assignments
     Map<String, Resource> assignmentMap = new HashMap<String, Resource>();
@@ -179,6 +181,7 @@ public class CCExport {
     // current we don't support 1.0
     public static final int V11 = 1;
     public static final int V12 = 2;
+    public static final int V13 = 3;
 
     /*
      * maintain global lists of resources, adding as they are referenced on a page or
@@ -197,6 +200,8 @@ public class CCExport {
 	siteId = sid;
 	if ("1.1".equals(params.getVersion()))
 	    version = V11;
+	else if ("1.3".equals(params.getVersion()))
+	    version = V13;
 	if ("1".equals(params.getBank()))
 	    doBank = true;
 
@@ -270,9 +275,10 @@ public class CCExport {
 	res.sakaiId = sakaiId;
 	res.resourceId = getResourceId();
 	res.location = location;
-	res.dependencies = new ArrayList<String>();
+	res.dependencies = new HashSet<String>();
 	res.use = use;
 	res.islink = false;
+	res.isbank = false;
 	fileMap.put(sakaiId, res);
 	return res;
     }
@@ -293,6 +299,12 @@ public class CCExport {
 
     }
 
+    public static boolean islink(ContentResource r) {
+	return r.getResourceType().equals("org.sakaiproject.content.types.urlResource") ||
+	    r.getContentType().equals("text/url");
+    }
+
+
     public boolean addAllFiles(ContentCollection baseCol, int baselen) {
 	try {
 
@@ -305,8 +317,7 @@ public class CCExport {
 		    continue;
 
 		if (e instanceof ContentResource) {
-		    boolean islink = ((ContentResource)e).getResourceType().equals("org.sakaiproject.content.types.urlResource") ||
-			((ContentResource)e).getContentType().equals("text/url");
+		    boolean islink = islink((ContentResource)e);
 		    String location = null;
 		    if (islink) {
 			location = "attachments/" + getResourceIdPeek() + ".xml";
@@ -463,20 +474,37 @@ public class CCExport {
 	    res.resourceId = getResourceId();
 	    res.location = "cc-objects/" + res.resourceId + ".xml";
 	    res.sakaiId = sakaiId;
-	    res.dependencies = new ArrayList<String>();
+	    res.dependencies = new HashSet<String>();
 	    res.use = null;
 	    res.islink = false;
+	    res.isbank = false;
 	    samigoMap.put(res.sakaiId, res);
 	}
-	if (doBank && samigoExport.havePoolItems()) {
-	    Resource res = new Resource();
-	    res.resourceId = getResourceId();
-	    res.location = "cc-objects/" + res.resourceId + ".xml";
-	    res.sakaiId = null;
-	    res.dependencies = new ArrayList<String>();
-	    res.use = null;
-	    res.islink = false;
-	    samigoBank = res;
+	List<Long> poolIds = samigoExport.getAllPools();
+	if (doBank && poolIds.size() > 0) {
+	    if (version >= V13) {
+		for (Long poolId: poolIds) {
+		    Resource res = new Resource();
+		    res.resourceId = getResourceId();
+		    res.location = "cc-objects/" + res.resourceId + ".xml";
+		    res.sakaiId = null;
+		    res.dependencies = new HashSet<String>();
+		    res.use = null;
+		    res.islink = false;
+		    res.isbank = false;
+		    poolMap.put(poolId, res);
+		}
+	    } else {
+		Resource res = new Resource();
+		res.resourceId = getResourceId();
+		res.location = "cc-objects/" + res.resourceId + ".xml";
+		res.sakaiId = null;
+		res.dependencies = new HashSet<String>();
+		res.use = null;
+		res.islink = false;
+		res.isbank = false;
+		poolMap.put(1L, res);
+	    }
 	}
 	return true;
     }
@@ -492,12 +520,14 @@ public class CCExport {
 		    return false;
 
 	    }
-	    if (samigoBank != null) {
-		ZipEntry zipEntry = new ZipEntry(samigoBank.location);
-		out.putNextEntry(zipEntry);
-		boolean ok = samigoExport.outputBank(out, errStream, this, samigoBank, version);
-		if (!ok)
-		    return false;
+	    if (poolMap.size() > 0) {
+		for (Map.Entry<Long, Resource> entry: poolMap.entrySet()) {
+		    ZipEntry zipEntry = new ZipEntry(entry.getValue().location);
+		    out.putNextEntry(zipEntry);
+		    boolean ok = samigoExport.outputBank(entry.getKey(), out, errStream, this, samigoBank, version);
+		    if (!ok)
+			return false;
+		}
 	    }
 	} catch (Exception e) {
 	    log.error("output sam " + e);
@@ -520,9 +550,10 @@ public class CCExport {
 	    int slash = sakaiId.indexOf("/");
 	    res.location = "attachments/" + sakaiId.substring(slash+1) + "/assignmentpage.html";
 	    res.sakaiId = sakaiId;
-	    res.dependencies = new ArrayList<String>();
+	    res.dependencies = new HashSet<String>();
 	    res.use = null;
 	    res.islink = false;
+	    res.isbank = false;
 	    assignmentMap.put(res.sakaiId, res);
 	}
 
@@ -540,7 +571,18 @@ public class CCExport {
 		if (!ok)
 		    return false;
 
+		if (version >= V13) {
+		    String xmlHref = "cc-objects/" + entry.getValue().resourceId + ".xml";
+
+		    zipEntry = new ZipEntry(xmlHref);
+
+		    out.putNextEntry(zipEntry);
+		    ok = assignmentExport.outputEntity2(entry.getValue().sakaiId, out, errStream, this, entry.getValue());
+		    if (!ok)
+			return false;
+		}
 	    }
+
 	} catch (Exception e) {
 	    log.error("Lessons export error outputting file, outputAllAssignments " + e);
 	    setErrKey("simplepage.exportcc-fileerr", e.getMessage());
@@ -559,9 +601,10 @@ public class CCExport {
 	    res.resourceId = getResourceId();
 	    res.location = "cc-objects/" + res.resourceId + ".xml";
 	    res.sakaiId = sakaiId;
-	    res.dependencies = new ArrayList<String>();
+	    res.dependencies = new HashSet<String>();
 	    res.use = null;
 	    res.islink = false;
+	    res.isbank = false;
 	    forumsMap.put(res.sakaiId, res);
 	}
 	return true;
@@ -597,9 +640,10 @@ public class CCExport {
 	    res.resourceId = getResourceId();
 	    res.location = ("cc-objects/" + res.resourceId + ".xml");
 	    res.sakaiId = sakaiId;
-	    res.dependencies = new ArrayList();
+	    res.dependencies = new HashSet();
 	    res.use = null;
 	    res.islink = false;
+	    res.isbank = false;
 	    bltiMap.put(res.sakaiId, res);
 	}
 	return true;
@@ -644,9 +688,10 @@ public class CCExport {
 		res.sakaiId = ("/text/" + item.getId());
 		res.resourceId = getResourceId();
 		res.location = location;
-		res.dependencies = new ArrayList();
+		res.dependencies = new HashSet();
 		res.use = null;
 		res.islink = false;
+		res.isbank = false;
 		fileMap.put(res.sakaiId, res);
 	    }
 	} catch (Exception e) {
@@ -732,9 +777,10 @@ public class CCExport {
 		    res.sakaiId = ("/text/" + item.getId());
 		    res.resourceId = getResourceId();
 		    res.location = location;
-		    res.dependencies = new ArrayList();
+		    res.dependencies = new HashSet();
 		    res.use = null;
 		    res.islink = false;
+		    res.isbank = false;
 		    fileMap.put(res.sakaiId, res);
 		    embedMap.put(item.getId(), relFixup(embedCode, res));
 		    // item won't have a title, so we have to specify one. But with an embed code
@@ -875,6 +921,31 @@ public class CCExport {
 		out.println("  </metadata>");
 	    break;
 
+	    case V13:
+		out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		out.println("<manifest identifier=\"cctd0001\"");
+		out.println("  xmlns=\"http://www.imsglobal.org/xsd/imsccv1p3/imscp_v1p1\"");
+		out.println("  xmlns:lom=\"http://ltsc.ieee.org/xsd/imsccv1p3/LOM/resource\"");
+		out.println("  xmlns:lomimscc=\"http://ltsc.ieee.org/xsd/imsccv1p3/LOM/manifest\"");
+		out.println("  xmlns:cpx=\"http://www.imsglobal.org/xsd/imsccv1p3/imscp_extensionv1p2\"");
+		out.println("  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ");
+		out.println("  xsi:schemaLocation=\"http://ltsc.ieee.org/xsd/imsccv1p3/LOM/resource http://www.imsglobal.org/profile/cc/ccv1p3/LOM/ccv1p3_lomresource_v1p0.xsd ");
+		out.println("                       http://www.imsglobal.org/xsd/imsccv1p3/imscp_v1p1 http://www.imsglobal.org/profile/cc/ccv1p3/ccv1p3_imscp_v1p2_v1p0.xsd ");
+		out.println("                       http://ltsc.ieee.org/xsd/imsccv1p3/LOM/manifest http://www.imsglobal.org/profile/cc/ccv1p3/LOM/ccv1p3_lommanifest_v1p0.xsd ");
+		out.println("                       http://www.imsglobal.org/xsd/imsccv1p3/imscp_extensionv1p2 http://www.imsglobal.org/profile/cc/ccv1p3/ccv1p3_cpextensionv1p2_v1p0.xsd\">");
+		out.println("  <metadata>");
+		out.println("    <schema>IMS Common Cartridge</schema>");
+		out.println("    <schemaversion>1.3.0</schemaversion>");
+		out.println("    <lomimscc:lom>");
+		out.println("      <lomimscc:general>");
+		out.println("        <lomimscc:title>");
+		out.println("          <lomimscc:string language=\"en-US\">" + StringEscapeUtils.escapeXml(title) + "</lomimscc:string>");
+		out.println("        </lomimscc:title>");
+		out.println("      </lomimscc:general>");
+		out.println("    </lomimscc:lom>");
+		out.println("  </metadata>");
+		break;
+
 	    default:
 	    out.print(
 		      "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<manifest identifier=\"sakai1\"\n  xmlns=\"http://www.imsglobal.org/xsd/imsccv1p2/imscp_v1p1\"\nxmlns:lom=\"http://ltsc.ieee.org/xsd/imsccv1p2/LOM/resource\"\nxmlns:lomimscc=\"http://ltsc.ieee.org/xsd/imsccv1p2/LOM/manifest\"\nxmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\nxsi:schemaLocation=\"                                                                                                                        \n  http://ltsc.ieee.org/xsd/imsccv1p2/LOM/resource http://www.imsglobal.org/profile/cc/ccv1p2/LOM/ccv1p2_lomresource_v1p0.xsd                  \n  http://www.imsglobal.org/xsd/imsccv1p2/imscp_v1p1 http://www.imsglobal.org/profile/cc/ccv1p2/ccv1p2_imscp_v1p2_v1p0.xsd                     \n  http://ltsc.ieee.org/xsd/imsccv1p2/LOM/manifest http://www.imsglobal.org/profile/cc/ccv1p2/LOM/ccv1p2_lommanifest_v1p0.xsd\">\n  <metadata>\n    <schema>IMS Common Cartridge</schema>\n    <schemaversion>1.2.0</schemaversion>\n    <lomimscc:lom>\n      <lomimscc:general>\n	<lomimscc:title>\n	  <lomimscc:string>" + StringEscapeUtils.escapeXml(title) + "</lomimscc:string>\n	</lomimscc:title>\n      </lomimscc:general>\n    </lomimscc:lom>\n  </metadata>\n ");
@@ -896,6 +967,13 @@ public class CCExport {
 		topicid = "imsdt_xmlv1p1";
 		linkid = "imswl_xmlv1p1";
 		usestr = "";
+		break;
+	    case V13:
+		qtiid = "imsqti_xmlv1p2/imscc_xmlv1p3/assessment";
+		bankid = "imsqti_xmlv1p2/imscc_xmlv1p3/question-bank";
+		topicid = "imsdt_xmlv1p3";
+		linkid = "imswl_xmlv1p3";
+		usestr = " intendeduse=\"assignment\"";
 		break;
 	    default:
 		qtiid = "imsqti_xmlv1p2/imscc_xmlv1p2/assessment";
@@ -931,19 +1009,37 @@ public class CCExport {
 	    }
 
 	    // question bank
-	    if (samigoBank != null) {
-		out.println("    <resource href=\"" + StringEscapeUtils.escapeXml(samigoBank.location) + "\" identifier=\"" + samigoBank.resourceId + "\" type=\"" + bankid + "\">");
-		out.println("      <file href=\"" + StringEscapeUtils.escapeXml(samigoBank.location) + "\"/>");
-		for (String d: samigoBank.dependencies)
-		    out.println("      <dependency identifierref=\"" + d + "\"/>");
-		out.println("    </resource>");
-	    }
-	    for (Map.Entry<String, Resource> entry: assignmentMap.entrySet()) {
-		out.println("    <resource href=\"" + StringEscapeUtils.escapeXml(entry.getValue().location) + "\" identifier=\"" + entry.getValue().resourceId + "\" type=\"webcontent\"" + usestr + ">");
+	    for (Map.Entry<Long, Resource> entry: poolMap.entrySet()) {
+		out.println("    <resource href=\"" + StringEscapeUtils.escapeXml(entry.getValue().location) + "\" identifier=\"" + entry.getValue().resourceId + "\" type=\"" + bankid + "\">");
 		out.println("      <file href=\"" + StringEscapeUtils.escapeXml(entry.getValue().location) + "\"/>");
 		for (String d: entry.getValue().dependencies)
 		    out.println("      <dependency identifierref=\"" + d + "\"/>");
 		out.println("    </resource>");
+	    }
+
+	    for (Map.Entry<String, Resource> entry: assignmentMap.entrySet()) {
+		String variantId = null;
+		out.println("    <resource href=\"" + StringEscapeUtils.escapeXml(entry.getValue().location) + "\" identifier=\"" + entry.getValue().resourceId + "\" type=\"webcontent\"" + usestr + ">");
+		out.println("      <file href=\"" + StringEscapeUtils.escapeXml(entry.getValue().location) + "\"/>");
+		for (String d: entry.getValue().dependencies)
+		    out.println("      <dependency identifierref=\"" + d + "\"/>");
+		if (version >= V13) {
+		    variantId = getResourceId();
+		    out.println("      <cpx:variant identifier=\"" + getResourceId() + "\" identifierref=\"" + variantId + "\">");
+		    out.println("        <cpx:metadata/>");
+		    out.println("      </cpx:variant>");
+		}
+		out.println("    </resource>");
+
+		// output the preferred version for 1.3 and up
+		if (version >= V13) {
+		    String xmlHref = "cc-objects/" + entry.getValue().resourceId + ".xml";
+		    out.println("    <resource href=\"" + StringEscapeUtils.escapeXml(xmlHref) + "\" identifier=\"" + variantId + "\" type=\"assignment_xmlv1p0\">");
+		    out.println("      <file href=\"" + StringEscapeUtils.escapeXml(xmlHref) + "\"/>");
+		    for (String d: entry.getValue().dependencies)
+		    out.println("      <dependency identifierref=\"" + d + "\"/>");
+		    out.println("    </resource>");
+		}
 	    }
 
 	    for (Map.Entry<String, Resource> entry: forumsMap.entrySet()) {
@@ -996,6 +1092,15 @@ public class CCExport {
 		    out.println("<webLink xmlns=\"http://www.imsglobal.org/xsd/imsccv1p1/imswl_v1p1\"");
 		    out.println("      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"");
 		    out.println("      xsi:schemaLocation=\"http://www.imsglobal.org/xsd/imsccv1p1/imswl_v1p1 http://www.imsglobal.org/profile/cc/ccv1p1/ccv1p1_imswl_v1p1.xsd\">");
+		    out.println("  <title>" + StringEscapeUtils.escapeXml(res.title) + "</title>");
+		    out.println("  <url href=\"" + StringEscapeUtils.escapeXml(res.url) + "\"/>");
+		    out.println("</webLink>");
+		    break;
+		case V13:
+		    out.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		    out.println("<webLink xmlns=\"http://www.imsglobal.org/xsd/imsccv1p3/imswl_v1p3\"");
+		    out.println("      xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://www.imsglobal.org/xsd/imsccv1p3/imswl_v1p3 ");
+		    out.println("      http://www.imsglobal.org/profile/cc/ccv1p3/ccv1p3_imswl_v1p3.xsd\">");
 		    out.println("  <title>" + StringEscapeUtils.escapeXml(res.title) + "</title>");
 		    out.println("  <url href=\"" + StringEscapeUtils.escapeXml(res.url) + "\"/>");
 		    out.println("</webLink>");
