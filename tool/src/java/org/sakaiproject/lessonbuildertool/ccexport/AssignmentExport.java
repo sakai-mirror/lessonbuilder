@@ -48,6 +48,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.sakaiproject.component.cover.ServerConfigurationService;
+import org.sakaiproject.util.Validator;
 
 import org.w3c.dom.Document;
 
@@ -170,14 +171,14 @@ public class AssignmentExport {
 	    List<String>attachments = item.attachments;
 		
 	    // special case. one attachment and nothing else.
-	    // just export the attachment
-	    String intendeduse = null;
-	    if ((instructions == null || instructions.trim().equals("")) &&
-		(attachments != null && attachments.size() == 1)) {
-		intendeduse = "assignment";  // simple case. just set intended use for attachment
-	    } else { // complex case. need to do full assignment generation
-		ret.add(item.id);
-	    }
+	    // just export the attachment. This code never worked.
+	    //	    String intendeduse = null;
+	    //	    if ((instructions == null || instructions.trim().equals("")) &&
+	    //		(attachments != null && attachments.size() == 1)) {
+	    //		intendeduse = "assignment";  // simple case. just set intended use for attachment
+	    //	    } else { // complex case. need to do full assignment generation
+	    ret.add(item.id);
+	    //	    }
 
 	    // arrange to include the attachments
 	    for (String sakaiId: attachments) {
@@ -205,9 +206,7 @@ public class AssignmentExport {
 		    assignmentId = assignmentId.substring(i+1);
 		    int lastSlash = sakaiId.lastIndexOf("/");
 		    String lastAtom = sakaiId.substring(lastSlash + 1);
-		    bean.addFile(sakaiId, "attachments/" + assignmentId + "/" + lastAtom, intendeduse);
-		} else if (intendeduse != null) {  // already there, just set intended use
-		    bean.setIntendeduse(sakaiId, intendeduse);
+		    bean.addFile(sakaiId, "attachments/" + assignmentId + "/" + lastAtom, null);
 		}
 	    }
 	}
@@ -313,14 +312,9 @@ public class AssignmentExport {
 		if (location.startsWith(attachmentDir))
 		    URL = lastAtom;  // if in attachment dir, relative reference
 		else
-		    URL = "../../" + location;  // else it's in the normal site content
+		    URL = "../../" + Validator.escapeUrl(location);  // else it's in the normal site content
 		URL = URL.replaceAll("//", "/");
-		try {
-		    out.println("<a href=\"" + URLEncoder.encode(URL, "UTF-8") + "\">" + StringEscapeUtils.escapeHtml(lastAtom) + "</a><br/>");
-
-		} catch (java.io.UnsupportedEncodingException e) {
-		    System.out.println("UTF-8 unsupported");
-		}
+		out.println("<a href=\"" + URL + "\">" + StringEscapeUtils.escapeHtml(lastAtom) + "</a><br/>");
 		bean.addDependency(resource, sakaiId);
 	    }
 	}
