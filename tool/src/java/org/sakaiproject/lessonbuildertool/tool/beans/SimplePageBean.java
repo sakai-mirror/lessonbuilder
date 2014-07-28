@@ -4271,7 +4271,10 @@ public class SimplePageBean {
 		}
 
 		Collection<String>itemGroups = null;
+		boolean pushed = false;
 		try {
+		    pushAdvisorAlways();
+		    pushed = true;
 		    LessonEntity entity = null;
 		    if (!canSeeAll()) {
 			switch (item.getType()) {
@@ -4301,6 +4304,8 @@ public class SimplePageBean {
 		} catch (IdUnusedException exc) {
 		    visibleCache.put(item.getId(), false);
 		    return false; // underlying entity missing, don't show it
+		} finally {
+		    if (pushed) popAdvisor();
 		}
 		if (itemGroups == null || itemGroups.size() == 0) {
 		    // this includes items for which for which visibility doesn't apply
@@ -4752,6 +4757,7 @@ public class SimplePageBean {
 			List<SimplePageItem> items = getItemsOnPage(pageId);
 
 			for (SimplePageItem i : items) {
+			    // System.out.println(i.getSequence() + " " + i.isRequired() + " " + isItemVisible(i) + " " + isItemComplete(i));
 				if (i.getSequence() >= item.getSequence()) {
 				    break;
 				} else if (i.isRequired() && isItemVisible(i)) {
