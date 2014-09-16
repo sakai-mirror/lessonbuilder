@@ -2638,8 +2638,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					TimeZone tz = timeService.getLocalTimeZone();
 					df.setTimeZone(tz);
 					String releaseDate = df.format(currentPage.getReleaseDate());
-					UIOutput.make(tofill, "hiddenAlert").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.notreleased")));
-					UIVerbatim.make(tofill, "hidden-text", messageLocator.getMessage("simplepage.notreleased.text").replace("{}", releaseDate));
+					UIOutput.make(tofill, "refreshAlert").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.notreleased")));
+					UIVerbatim.make(tofill, "refresh-message", messageLocator.getMessage("simplepage.notreleased.text").replace("{}", releaseDate));
 					showBreak = true;
 				}
 			}
