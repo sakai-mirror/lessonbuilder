@@ -136,6 +136,7 @@ public class SimplePageBean {
 	private String subpageTitle = null;
 	private boolean subpageNext = false;
 	private boolean subpageButton = false;
+	private String csrfToken = null;
 
 	private List<Long> currentPath = null;
 	private Set<Long> allowedPages = null;    
@@ -857,6 +858,8 @@ public class SimplePageBean {
 		
 		if (!itemOk(itemId))
 		    return "permission-failed";
+		if (!checkCsrf())
+		    return "permission-failed";
 		
 		if (canEditPage()) {
 			Placement placement = toolManager.getCurrentPlacement();
@@ -1366,6 +1369,8 @@ public class SimplePageBean {
 		if (!itemOk(itemId) || !canEditPage()) {
 		    return "permission-failed";
 		}
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		SimplePageItem i = findItem(itemId);
 		if(i == null) {
@@ -2118,10 +2123,16 @@ public class SimplePageBean {
 	    subpageButton = s;
 	}
 
+	public void setCsrfToken(String s) {
+	    csrfToken = s;
+	}
+
     // called from "select page" dialog in Reorder to insert items from anoher page
 	public String selectPage()   {
 
 		if (!canEditPage())
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 
 		ToolSession toolSession = sessionManager.getCurrentToolSession();
@@ -2140,6 +2151,8 @@ public class SimplePageBean {
 		if (!itemOk(itemId))
 		    return "permission-failed";
 		if (!canEditPage())
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 
 		String title = subpageTitle;
@@ -2232,6 +2245,8 @@ public class SimplePageBean {
 	public String deleteOrphanPages() {
 	    if (getEditPrivs() != 0)
 	    	return "permission-failed";
+	    if (!checkCsrf())
+		return "permission-failed";
 
 	    // code is mostly from PagePickerProducer
 	    // list we're going to display
@@ -2276,6 +2291,8 @@ public class SimplePageBean {
 	public String deletePages() {
 	    if (getEditPrivs() != 0)
 	    	return "permission-failed";
+	    if (!checkCsrf())
+		return "permission-failed";
 
 	    String siteId = getCurrentSiteId();
 
@@ -2348,6 +2365,8 @@ public class SimplePageBean {
 		if (getEditPrivs() != 0) {
 			return "permission-failed";
 		}
+		if (!checkCsrf())
+		    return "permission-failed";
 		
 		//		if (removeId == 0)
 		//		    removeId = getCurrentPageId();
@@ -2389,6 +2408,8 @@ public class SimplePageBean {
 		if (!itemOk(itemId))
 		    return "permission-failed";
 		if (!canEditPage())
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 
 		if (name.length() < 1) {
@@ -2620,12 +2641,23 @@ public class SimplePageBean {
 	    return "/assignment/a/" + getCurrentSiteId() + "/" + id;
 	}
 
+        public boolean checkCsrf() {
+	    Object sessionToken = sessionManager.getCurrentSession().getAttribute("sakai.csrf.token");
+	    if (sessionToken != null && sessionToken.toString().equals(csrfToken)) {
+		return true;
+	    }
+	    else
+		return false;
+	}
+
     // called by add forum dialog. Create a new item that points to a forum or
     // update an existing item, depending upon whether itemid is set
         public String addForum() {
 		if (!itemOk(itemId))
 		    return "permission-failed";
 		if (!canEditPage())
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 
 		if (selectedEntity == null) {
@@ -2685,6 +2717,8 @@ public class SimplePageBean {
 		if (!itemOk(itemId))
 		    return "permission-failed";
 		if (!canEditPage())
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 
 		if (selectedAssignment == null) {
@@ -2756,6 +2790,8 @@ public class SimplePageBean {
 		if (!itemOk(itemId))
 		    return "permission-failed";
 		if (!canEditPage())
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 
 		if (selectedBlti == null || bltiEntity == null) {
@@ -3339,6 +3375,8 @@ public class SimplePageBean {
 		    return "permission-failed";
 		if (!canEditPage())
 		    return "permission-failed";
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		if (selectedQuiz == null) {
 			return "failure";
@@ -3471,6 +3509,8 @@ public class SimplePageBean {
 		    return "permission-failed";
 		if (!canEditPage())
 		    return "permission-failed";
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		SimplePageItem i = findItem(itemId);
 		if (i != null && i.getType() == SimplePageItem.MULTIMEDIA) {
@@ -3499,6 +3539,8 @@ public class SimplePageBean {
 		if (!canEditPage()) {
 		    return "permission-failed";
 		}
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		Placement placement = toolManager.getCurrentPlacement();
 		SimplePage page = getCurrentPage();
@@ -3766,6 +3808,8 @@ public class SimplePageBean {
 	public String addPages()  {
 		if (!canEditPage())
 			return "permission-fail";
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		// javascript should have checked all this
 		if (newPageTitle == null || newPageTitle.equals(""))
@@ -3816,6 +3860,8 @@ public class SimplePageBean {
 	// Adds an existing page as a top level page
 	public String addOldPage() {
 		if (getEditPrivs() != 0)
+		    return "permission-failed";
+		if (!checkCsrf())
 		    return "permission-failed";
 		
 		SimplePage target = getPage(Long.valueOf(selectedEntity));
@@ -3972,6 +4018,8 @@ public class SimplePageBean {
 
 		if (!canEditPage())
 			return "permission-fail";
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		if (order == null) {
 			return "cancel";
@@ -5209,6 +5257,9 @@ public class SimplePageBean {
 				return;
 			if (!canEditPage())
 				return;
+			if (!checkCsrf())
+			    return;
+
 			
 			String name = null;
 			String sakaiId = null;
@@ -5435,6 +5486,8 @@ public class SimplePageBean {
 	public void importCc() {
 	    if (!canEditPage())
 		return;
+	    if (!checkCsrf())
+		return;
 
 	    MultipartFile file = null;
 
@@ -5522,6 +5575,8 @@ public class SimplePageBean {
 		if (!itemOk(youtubeId))
 		    return;
 		if (!canEditPage())
+		    return;
+		if (!checkCsrf())
 		    return;
 
 		SimplePageItem item = findItem(youtubeId);
@@ -5647,6 +5702,8 @@ public class SimplePageBean {
 		    return;
 		if (!canEditPage())
 		    return;
+		if (!checkCsrf())
+		    return;
 
 		SimplePageItem item = findItem(itemId);
 		item.setHeight(height);
@@ -5704,6 +5761,9 @@ public class SimplePageBean {
 	
 	// May add or edit comments
 	public String addComment() {
+		if (!checkCsrf())
+		    return "permission-failed";
+
 		boolean html = false;
 		
 		// Patch in the fancy editor's comment, if it's been used
@@ -5756,6 +5816,9 @@ public class SimplePageBean {
 	}
 	
 	public String updateComments() {
+		if (!checkCsrf())
+		    return "permission-failed";
+
 		if(canEditPage()) {
 			SimplePageItem comment = findItem(itemId);
 			
@@ -6083,6 +6146,8 @@ public class SimplePageBean {
 			setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
 			return "failure";
 		}
+		if (!checkCsrf())
+		    return "permission-failed";
 		
 		if(questionType == null) {
 			setErrMessage(messageLocator.getMessage("simplepage.no-question-type"));
@@ -6284,6 +6349,9 @@ public class SimplePageBean {
 		
 		if (!itemOk(questionId) || !canReadPage())
 		    return "permission-failed";
+		if (!checkCsrf())
+		    return "permission-failed";
+
 		SimplePageItem question = findItem(questionId);
 
 		SimplePageQuestionResponse response = simplePageToolDao.findQuestionResponse(questionId, userId); 
@@ -6316,6 +6384,8 @@ public class SimplePageBean {
 		
 		if (!itemOk(questionId) || !canReadPage())
 		    return "permission-failed";
+		if (!checkCsrf())
+		    return "permission-failed";
 
 		SimplePageQuestionResponse response = simplePageToolDao.findQuestionResponse(questionId, userId); 
 		if(response != null) {
@@ -6339,6 +6409,9 @@ public class SimplePageBean {
 	}
 	
 	public String updateStudent() {
+		if (!checkCsrf())
+		    return "permission-failed";
+
 		if(canEditPage()) {
 			SimplePageItem page = findItem(itemId);
 			
@@ -6929,6 +7002,8 @@ public class SimplePageBean {
 		    setErrMessage(messageLocator.getMessage("simplepage.permissions-general"));
 		    return "permission-failed";
 		}
+		if (!checkCsrf())
+		    return "permission-failed";
 		
 		List<SimplePagePeerEvalResult> result = simplePageToolDao.findPeerEvalResult(getCurrentPage().getPageId(), userId, gradeeId); 
 		if(result != null) {

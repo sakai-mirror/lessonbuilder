@@ -735,6 +735,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 				if (allowDeleteOrphans) {
 				    UIOutput.make(tofill, "delete-orphan-li");
 				    UIForm orphan =  UIForm.make(tofill, "delete-orphan-form");
+				    makeCsrf(orphan, "csrf1");
 				    UICommand.make(orphan, "delete-orphan", "#{simplePageBean.deleteOrphanPages}");
 				    UIOutput.make(orphan, "delete-orphan-link").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.delete-orphan-pages-desc")));
 				}
@@ -2064,6 +2065,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					    }
 
 					    UIForm form = UIForm.make(tableRow, "comment-form");
+					    makeCsrf(form, "csrf2");
 
 					    UIInput.make(form, "comment-item-id", "#{simplePageBean.itemId}", String.valueOf(i.getId()));
 					    UIInput.make(form, "comment-edit-id", "#{simplePageBean.editId}");
@@ -2096,6 +2098,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 					
 					UIOutput.make(tableRow, "peerReviewRubricStudent");
 					UIOutput.make(tableRow, "peer-review-form");
+
 					makePeerRubric(tableRow,i, makeStudentRubric);
 					
 					boolean isOpen = false;
@@ -2168,6 +2171,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 							
 							//form for peer evaluation results
 							UIForm form = UIForm.make(tofill, "rubricSelection");
+							makeCsrf(form, "csrf6");
+
 							UIInput.make(form, "rubricPeerGrade", "#{simplePageBean.rubricPeerGrade}");
 							UICommand.make(form, "update-peer-eval-grade", messageLocator.getMessage("simplepage.edit"), "#{simplePageBean.savePeerEvalResult}");
 						}
@@ -2439,6 +2444,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						answers = simplePageToolDao.findAnswerChoices(i);
 						UIOutput.make(tableRow, "multipleChoiceDiv");
 						UIForm questionForm = UIForm.make(tableRow, "multipleChoiceForm");
+						makeCsrf(questionForm, "csrf4");
+
 						UIInput.make(questionForm, "multipleChoiceId", "#{simplePageBean.questionId}", String.valueOf(i.getId()));
 						
 						String[] options = new String[answers.size()];
@@ -2476,6 +2483,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 						UIOutput.make(tableRow, "shortanswerDiv");
 						
 						UIForm questionForm = UIForm.make(tableRow, "shortanswerForm");
+						makeCsrf(questionForm, "csrf5");
+
 						UIInput.make(questionForm, "shortanswerId", "#{simplePageBean.questionId}", String.valueOf(i.getId()));
 						
 						UIInput shortanswerInput = UIInput.make(questionForm, "shortanswerInput", "#{simplePageBean.questionResponse}");
@@ -2685,6 +2694,12 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		createDialogs(tofill, currentPage, pageItem);
 	}
 	
+	public void makeCsrf(UIContainer tofill, String rsfid) {
+	    Object sessionToken = SessionManager.getCurrentSession().getAttribute("sakai.csrf.token");
+	    if (sessionToken != null)
+		UIInput.make(tofill, rsfid, "simplePageBean.csrfToken", sessionToken.toString());
+	}
+
 	public void createDialogs(UIContainer tofill, SimplePage currentPage, SimplePageItem pageItem) {
 		createEditItemDialog(tofill, currentPage, pageItem);
 		createAddMultimediaDialog(tofill, currentPage);
@@ -3225,6 +3240,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 	private void createSubpageDialog(UIContainer tofill, SimplePage currentPage) {
 		UIOutput.make(tofill, "subpage-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.subpage")));
 		UIForm form = UIForm.make(tofill, "subpage-form");
+		makeCsrf(form, "csrf7");
 
 		UIOutput.make(form, "subpage-label", messageLocator.getMessage("simplepage.pageTitle_label"));
 		UIInput.make(form, "subpage-title", "#{simplePageBean.subpageTitle}");
@@ -3248,6 +3264,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "edit-item-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edititem_header")));
 
 		UIForm form = UIForm.make(tofill, "edit-form");
+		makeCsrf(form, "csrf8");
 
 		UIOutput.make(form, "name-label", messageLocator.getMessage("simplepage.name_label"));
 		UIInput.make(form, "name", "#{simplePageBean.name}");
@@ -3396,6 +3413,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			    getLocalizedURL( "website.html"));
 
 		UIForm form = UIForm.make(tofill, "add-multimedia-form");
+		makeCsrf(form, "csrf9");
 
 		UIOutput.make(form, "mm-file-label", messageLocator.getMessage("simplepage.upload_label"));
 
@@ -3423,6 +3441,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "import-cc-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.import_cc")));
 
 		UIForm form = UIForm.make(tofill, "import-cc-form");
+		makeCsrf(form, "csrf11");
 
 		UICommand.make(form, "import-cc-submit", messageLocator.getMessage("simplepage.save_message"), "#{simplePageBean.importCc}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
@@ -3580,6 +3599,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "instructions");
 
 		UIForm form = UIForm.make(tofill, "edit-multimedia-form");
+		makeCsrf(form, "csrf10");
 
 		UIOutput.make(form, "height-label", messageLocator.getMessage("simplepage.height_label"));
 		UIInput.make(form, "height", "#{simplePageBean.height}");
@@ -3615,6 +3635,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "youtube-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_youtubelink")));
 
 		UIForm form = UIForm.make(tofill, "youtube-form");
+		makeCsrf(form, "csrf17");
 		UIInput.make(form, "youtubeURL", "#{simplePageBean.youtubeURL}");
 		UIInput.make(form, "youtubeEditId", "#{simplePageBean.youtubeId}");
 		UIInput.make(form, "youtubeHeight", "#{simplePageBean.height}");
@@ -3635,6 +3656,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "movie-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edititem_header")));
 
 		UIForm form = UIForm.make(tofill, "movie-form");
+		makeCsrf(form, "csrf18");
 
 		UIInput.make(form, "movie-height", "#{simplePageBean.height}");
 		UIInput.make(form, "movie-width", "#{simplePageBean.width}");
@@ -3663,6 +3685,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIOutput.make(tofill, "edit-title-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.title")));
 
 		UIForm form = UIForm.make(tofill, "title-form");
+		makeCsrf(form, "csrf14");
+
 		UIOutput.make(form, "pageTitleLabel", messageLocator.getMessage("simplepage.pageTitle_label"));
 		UIInput.make(form, "pageTitle", "#{simplePageBean.pageTitle}");
 
@@ -3750,6 +3774,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "new-page-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.new-page")));
 
 		UIForm form = UIForm.make(tofill, "new-page-form");
+		makeCsrf(form, "csrf15");
 
 		UIInput.make(form, "newPage", "#{simplePageBean.newPageTitle}");
 
@@ -3773,6 +3798,8 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			       messageLocator.getMessage("simplepage.remove-student-page-explanation")));
 
 		UIForm form = UIForm.make(tofill, "remove-page-form");
+		makeCsrf(form, "csrf16");
+
 		form.addParameter(new UIELBinding("#{simplePageBean.removeId}", page.getPageId()));
 		
 		//		if (page.getOwner() == null) {
@@ -3797,6 +3824,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "comments-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_commentslink")));
 
 		UIForm form = UIForm.make(tofill, "comments-form");
+		makeCsrf(form, "csrf19");
 
 		UIInput.make(form, "commentsEditId", "#{simplePageBean.itemId}");
 
@@ -3816,6 +3844,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "student-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_studentlink")));
 
 		UIForm form = UIForm.make(tofill, "student-form");
+		makeCsrf(form, "csrf20");
 
 		UIInput.make(form, "studentEditId", "#{simplePageBean.itemId}");
 
@@ -3864,6 +3893,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIOutput.make(tofill, "question-dialog").decorate(new UIFreeAttributeDecorator("title", messageLocator.getMessage("simplepage.edit_questionlink")));
 		
 		UIForm form = UIForm.make(tofill, "question-form");
+		makeCsrf(form, "csrf21");
 		
 		UISelect questionType = UISelect.make(form, "question-select", new String[] {"multipleChoice", "shortanswer"}, "#{simplePageBean.questionType}", "");
 		UISelectChoice.make(form, "multipleChoiceSelect", questionType.getFullID(), 0);
@@ -4176,7 +4206,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 			UIInput jsIdInput = UIInput.make(gradingForm, "gradingForm-jsId", "gradingBean.jsId");
 			UIInput pointsInput = UIInput.make(gradingForm, "gradingForm-points", "gradingBean.points");
 			UIInput typeInput = UIInput.make(gradingForm, "gradingForm-type", "gradingBean.type");
-			UIInitBlock.make(tofill, "gradingForm-init", "initGradingForm", new Object[] {idInput, pointsInput, jsIdInput, typeInput, "gradingBean.results"});
+			Object sessionToken = SessionManager.getCurrentSession().getAttribute("sakai.csrf.token");
+			UIInput csrfInput = UIInput.make(gradingForm, "csrf", "gradingBean.csrfToken", (sessionToken == null ? "" : sessionToken.toString()));
+			UIInitBlock.make(tofill, "gradingForm-init", "initGradingForm", new Object[] {idInput, pointsInput, jsIdInput, typeInput, csrfInput, "gradingBean.results"});
 			printedGradingForm = true;
 		}
 	}
