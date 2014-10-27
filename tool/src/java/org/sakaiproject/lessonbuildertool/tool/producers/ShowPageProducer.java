@@ -1758,7 +1758,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
                             if (sessionParameter != null)
                                 movieUrl = movieUrl + "?lb.session=" + sessionParameter;
 
-			    UIOutput.make(tableRow, "movie-link-div");
+			    UIComponent movieLink = UIOutput.make(tableRow, "movie-link-div");
 			    if (showDownloads)
 				UILink.make(tableRow, "movie-link-link", messageLocator.getMessage("simplepage.download_file"), movieUrl);
 
@@ -1775,6 +1775,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
                             // wrap whatever stuff we decide to put out in HTML5 if appropriate
                             // javascript is used to do the wrapping, because RSF can't really handle this
                             if (isHtml5) {
+				// flag for javascript
                                 boolean isAudio = mimeType.startsWith("audio/");
                                 UIComponent h5video = UIOutput.make(tableRow, (isAudio? "h5audio" : "h5video"));
                                 UIComponent h5source = UIOutput.make(tableRow, (isAudio? "h5asource" : "h5source"));
@@ -1784,6 +1785,21 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
                                 h5video.decorate(new UIFreeAttributeDecorator("width", width.getOld()));
                                 h5source.decorate(new UIFreeAttributeDecorator("src", movieUrl)).
                                 decorate(new UIFreeAttributeDecorator("type", mimeType));
+				String caption = i.getAttribute("captionfile");
+				if (!isAudio && caption != null && caption.length() > 0) {
+				    movieLink.decorate(new UIFreeAttributeDecorator("class", "has-caption allow-caption"));
+				    String captionUrl = "/access/lessonbuilder/item/" + i.getId() + caption;
+				    sessionParameter = getSessionParameter(captionUrl);
+				    // sessionParameter should always be non-null
+				    // because this overrides all other checks in /access/lessonbuilder,
+				    // we haven't adjusted it to handle these files otherwise
+				    if (sessionParameter != null)
+					captionUrl = captionUrl + "?lb.session=" + sessionParameter;
+				    UIOutput.make(tableRow, "h5track").
+					decorate(new UIFreeAttributeDecorator("src", captionUrl));
+				} else if (!isAudio) {
+				    movieLink.decorate(new UIFreeAttributeDecorator("class", "allow-caption"));
+				}
                             }
 
                             // FLV is special. There's no player for flash video in
@@ -3434,6 +3450,7 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		UIInput.make(form, "mm-is-mm", "#{simplePageBean.isMultimedia}");
 		UIInput.make(form, "mm-display-type", "#{simplePageBean.multimediaDisplayType}");
 		UIInput.make(form, "mm-is-website", "#{simplePageBean.isWebsite}");
+		UIInput.make(form, "mm-is-caption", "#{simplePageBean.isCaption}");
 		UICommand.make(form, "mm-cancel", messageLocator.getMessage("simplepage.cancel"), null);
 	}
 
@@ -3670,6 +3687,9 @@ public class ShowPageProducer implements ViewComponentProducer, DefaultView, Nav
 		fileparams.setResourceType(true);
 		fileparams.viewID = ResourcePickerProducer.VIEW_ID;
 		UIInternalLink.make(form, "change-resource-movie", messageLocator.getMessage("simplepage.change_resource"), fileparams);
+
+		fileparams.setCaption(true);
+		UIInternalLink.make(form, "change-caption-movie", messageLocator.getMessage("simplepage.change_caption"), fileparams);
 
 		UIBoundBoolean.make(form, "movie-prerequisite", "#{simplePageBean.prerequisite}",false);
 
