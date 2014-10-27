@@ -3311,6 +3311,11 @@ public class SimplePageBean {
 		}
 		
 		if (file != null) {
+
+			// uploadsizeok would otherwise complain about 0 length file. For
+			// this case it's valid. Means no file.
+			if (file.getSize() == 0)
+			    return null;
 			if (!uploadSizeOk(file))
 			    return null;
 
