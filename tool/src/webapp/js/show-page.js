@@ -1889,6 +1889,19 @@ $(function() {
         resizeFrame('grow');
 	});
 	
+	// only if in iframe
+	if (window.location.pathname.indexOf('/portal/site') != 0)
+	$('a.tool-directurl').cluetip({
+		local: true,
+		    arrows: true,
+		    cluetipClass: 'jtip',
+		    sticky: true,
+		    cursor: 'pointer',
+		    activation: 'click',
+		    closePosition: 'title',
+		    closeText: '<img src="/library/image/silk/cross.png" alt="close" />'
+		    });
+
 	function submitgrading(item) {
 	    var img = item.parent().children("img");
 			
@@ -2721,4 +2734,18 @@ resizeFrame = function (updown) {
       }
     };
 
-    
+function toggleShortUrlOutput(defaultUrl, checkbox, textbox) {
+    if($(checkbox).is(':checked')) {
+	$.ajax({
+		url:'/direct/url/shorten?path='+encodeURI(defaultUrl),
+		    success: function(shortUrl) {
+		    $('.'+textbox).val(shortUrl);
+		}
+	    });
+    } else {
+	$('.'+textbox).val(defaultUrl);
+    }
+}
+
+
+
