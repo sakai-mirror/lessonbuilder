@@ -118,6 +118,9 @@ public class LessonBuilderAccessService {
 	public static final String RFC1123_DATE = "EEE, dd MMM yyyy HH:mm:ss zzz";
 	public static final Locale LOCALE_US = Locale.US;
 
+	// This is the date format for Last-Modified header
+	public static final String RFC1123_DATE = "EEE, dd MMM yyyy HH:mm:ss zzz";
+
 	LessonBuilderAccessAPI lessonBuilderAccessAPI = null;
 
 	public void setLessonBuilderAccessAPI(LessonBuilderAccessAPI s) {
@@ -711,6 +714,33 @@ public class LessonBuilderAccessService {
 							// KNL-1316 tell the browser when our file was last modified for caching reasons
 							if (lastModTime > 0) {
 							    SimpleDateFormat rfc1123Date = new SimpleDateFormat(RFC1123_DATE, LOCALE_US);
+							    rfc1123Date.setTimeZone(TimeZone.getTimeZone("GMT"));
+							    res.addHeader("Last-Modified", rfc1123Date.format(lastModTime));
+							}
+
+							// KNL-1316 let's see if the user already has a cached copy. Code copied and modified from Tomcat DefaultServlet.java
+							long headerValue = req.getDateHeader("If-Modified-Since");
+							if (headerValue != -1 && (lastModTime < headerValue + 1000)) {
+							    // The entity has not been modified since the date specified by the client. This is not an error case.
+							    res.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
+							    return; 
+							}
+
+							res.addHeader("Cache-Control", "must-revalidate, private");
+							res.addHeader("Expires", "-1");
+							ResourceProperties rp = resource.getProperties();
+							long lastModTime = 0;
+
+							try {
+							    Time modTime = rp.getTimeProperty(ResourceProperties.PROP_MODIFIED_DATE);
+							    lastModTime = modTime.getTime();
+							} catch (Exception e1) {
+							    M_log.info("Could not retrieve modified time for: " + resource.getId());
+							}
+							
+							// KNL-1316 tell the browser when our file was last modified for caching reasons
+							if (lastModTime > 0) {
+							    SimpleDateFormat rfc1123Date = new SimpleDateFormat(RFC1123_DATE);
 							    rfc1123Date.setTimeZone(TimeZone.getTimeZone("GMT"));
 							    res.addHeader("Last-Modified", rfc1123Date.format(lastModTime));
 							}
