@@ -1540,6 +1540,11 @@ public class SimplePageBean {
 			return "failure";
 		}
 
+		return deleteItem(i);
+	}
+
+	public String deleteItem(SimplePageItem i) {
+
 		int seq = i.getSequence();
 
 		boolean b = false;
@@ -4266,7 +4271,7 @@ public class SimplePageBean {
 		// now kill all items on the page we didn't see in the new order
 		for (int i = 0; i < items.size(); i++) {
 		    if (!keep.contains((Integer)i))
-			simplePageToolDao.deleteItem(items.get(i));
+			deleteItem(items.get(i));
 		}
 
 		itemsCache.remove(getCurrentPage().getPageId());
