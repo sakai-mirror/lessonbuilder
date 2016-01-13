@@ -2032,7 +2032,6 @@ public class LessonBuilderEntityProducer extends AbstractEntityProvider
 	simplePageBean.setAssignmentEntity(assignmentEntity);
 	simplePageBean.setBltiEntity(bltiEntity);
 	simplePageBean.setGradebookIfc(gradebookIfc);
-	simplePageBean.setMemoryService(memoryService);
 	simplePageBean.setCurrentSiteId(siteId);
 	return simplePageBean;
     }
